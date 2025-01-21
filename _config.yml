@@ -207,6 +207,7 @@ exclude:
   - _pages/profiles.md  # added
   - _pages/projects.md  # added
   - _pages/repositories.md  # added
+  - _includes/resume  # added
       
 keep_files:
   - CNAME
