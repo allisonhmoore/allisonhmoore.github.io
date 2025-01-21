@@ -7,7 +7,7 @@ first_name: Allison
 middle_name: H.
 last_name: Moore
 contact_note: >
-  The best way to reach me is by emailing moorea14 at vcu dot edu.
+  The best way to reach me is by emailing me.
 description: > # the ">" symbol means to ignore newlines until "footer_text:"
   # A simple, whitespace theme for academics. Based on [*folio](https://github.com/bogoli/-folio) design.
 footer_text: >
@@ -20,7 +20,7 @@ icon: ⚛️ # the emoji used as the favicon (alternatively, provide image name 
 
 url: https://allisonhmoore.github.io # the base hostname & protocol for your site
 baseurl: # the subpath of your site, e.g. /blog/. Leave blank for root
-last_updated: false # set to true if you want to display last updated in the footer
+last_updated: true # set to true if you want to display last updated in the footer
 impressum_path: # set to path to include impressum link in the footer, use the same path as permalink in a page, helps to conform with EU GDPR
 back_to_top: true # set to false to disable the back to top button
 
@@ -202,6 +202,12 @@ exclude:
   - README.md
   - readme_preview/
   - vendor
+  - _pages/blog.md  # added
+  - _pages/news.md  # added
+  - _pages/profiles.md  # added
+  - _pages/projects.md  # added
+  - _pages/repositories.md  # added
+      
 keep_files:
   - CNAME
   - .nojekyll
@@ -275,8 +281,8 @@ display_categories: ["external-services"] # these categories will be displayed o
 # -----------------------------------------------------------------------------
 
 scholar:
-  last_name: [Einstein]
-  first_name: [Albert, A.]
+  last_name: [Moore]
+  first_name: [Allison H.]
 
   style: apa
   locale: en
