@@ -1,3 +1,7 @@
+{% if site.arxiv_name %}
+  <a href="https://arxiv.org/search/math?query={{ site.arxiv_name }}&searchtype=author&abstracts=show&order=-announced_date_first&size=50" title="arXiv"><i class="ai ai-arxiv"></i></a>
+{% endif %}    
+    
 {% for social in site.data.socials %}
   {% case social[0] %}
     {% when 'acm_id' %}
