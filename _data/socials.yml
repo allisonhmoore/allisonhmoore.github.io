@@ -3,6 +3,7 @@
 # the socials will be displayed in the order they are defined here
 
 # acm_id: # your dl.acm.org/profile/id
+arxiv_name: moore_a_2
 # blogger_url: # your blogger URL
 # bluesky_url: # your bluesky URL
 # dblp_url: # your DBLP profile url
@@ -30,7 +31,7 @@ orcid_id: 0000-0002-3266-9601  # your ORCID ID
 # quora_username: # your Quora username
 # research_gate_profile: # your profile on ResearchGate
 # rss_icon: true # set to true to show the RSS icon
-# scholar_userid: qc6CJjYAAAAJ # your Google Scholar ID
+scholar_userid: erd72G0AAAAJ # your Google Scholar ID
 # scopus_id: # your profile on Scopus
 # semanticscholar_id: # your Semantic Scholar ID
 # spotify_id: # your spotify id
