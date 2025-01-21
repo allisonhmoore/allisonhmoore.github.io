@@ -2,7 +2,7 @@
 layout: about
 title: about
 permalink: /
-subtitle: Associate Professor in the<a href='https://math.vcu.edu/'>Department of Mathematics and Applied Mathematics</a> at Virginia Commonwealth University. 
+subtitle: Associate Professor in the <a href='https://math.vcu.edu/'>Department of Mathematics and Applied Mathematics</a> at Virginia Commonwealth University. 
 
 profile:
   align: right
@@ -12,7 +12,8 @@ profile:
     <p>Harris Hall, Room 4149</p>
     <p>1015 Floyd Ave</p>
     <p>Box 842014</p>
-    <p>Richmond, VA 23284-2014</p>
+    <p>Richmond, VA</p> 
+    <p>23284-2014</p>
 
 news: false # includes a list of news items
 selected_papers: false # includes a list of papers marked as "selected={true}"
