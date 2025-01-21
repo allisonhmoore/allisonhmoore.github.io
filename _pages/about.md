@@ -2,24 +2,25 @@
 layout: about
 title: about
 permalink: /
-subtitle: <a href='#'>Affiliations</a>. Address. Contacts. Motto. Etc.
+subtitle: Associate Professor in the<a href='https://math.vcu.edu/'>Department of Mathematics and Applied Mathematics</a> at Virginia Commonwealth University. 
 
 profile:
   align: right
   image: prof_pic.jpg
   image_circular: false # crops the image to make it circular
   more_info: >
-    <p>555 your office number</p>
-    <p>123 your address street</p>
-    <p>Your City, State 12345</p>
+    <p>Grace E. Harris Hall, Room 4149</p>
+    <p>1015 Floyd Ave</p>
+    <p>Box 842014</p>
+    <p>Richmond, Virginia 23284-2014</p>
 
 news: true # includes a list of news items
 selected_papers: true # includes a list of papers marked as "selected={true}"
 social: true # includes social icons at the bottom of the page
 ---
 
-Write your biography here. Tell the world about yourself. Link to your favorite [subreddit](http://reddit.com). You can put a picture in, too. The code is already in, just name your picture `prof_pic.jpg` and put it in the `img/` folder.
+My research interests are in low-dimensional topology and geometry, especially knots, links and their relationships with three and four-manifolds. This involves some [Floer homology](https://en.wikipedia.org/wiki/Floer_homology#Heegaard_Floer_homology">Floer homology) (particularly Heegaard Floer homology) and Khovanov homology. I am also interested in the applications of knot theory to the study of entanglement in DNA and RNA. My work has been supported by the [Jeffress Trust Award](https://hria.org/tmf/jeffress/) in Interdisciplinary Research and the National Science Foundation, [DMS–2204148](https://nsf.gov/awardsearch/showAward?AWD_ID=2204148&HistoricalAwards=false). 
 
-Put your address / P.O. box / other info right below your picture. You can also disable any of these elements by editing `profile` property of the YAML header of your `_pages/about.md`. Edit `_bibliography/papers.bib` and Jekyll will render your [publications page](/al-folio/publications/) automatically.
+Prior to arriving at VCU, I was a Krener Assistant Professor of Mathematics at the [University of California, Davis](https://www.math.ucdavis.edu) from 2016-2019. For two of those years, I also held a joint appointment as a postdoc in the Department of Microbiology and Molecular Genetics, collaborating with the [Topological Molecular Biology lab](http://arsuaga-vazquez-lab.faculty.ucdavis.edu/).
 
-Link to your social media connections, too. This theme is set up to use [Font Awesome icons](https://fontawesome.com/) and [Academicons](https://jpswalsh.github.io/academicons/), like the ones below. Add your Facebook, Twitter, LinkedIn, Google Scholar, or just disable all of them.
+From 2013-2016, I was an RTG Lovett Instructor of Mathematics at [Rice University](https://math.rice.edu/), in Houston, Texas. I worked in low-dimensional topology. I received my Ph.D. in 2013 at [The University of Texas](https://www.ma.utexas.edu) under the direction of [Cameron Gordon](https://en.wikipedia.org/wiki/Cameron_Gordon_(mathematician)).
