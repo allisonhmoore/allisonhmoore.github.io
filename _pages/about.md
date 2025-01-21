@@ -9,10 +9,10 @@ profile:
   image: prof_pic.jpg
   image_circular: false # crops the image to make it circular
   more_info: >
-    <p>Grace E. Harris Hall, Room 4149</p>
+    <p>Harris Hall, Room 4149</p>
     <p>1015 Floyd Ave</p>
     <p>Box 842014</p>
-    <p>Richmond, Virginia 23284-2014</p>
+    <p>Richmond, VA 23284-2014</p>
 
 news: false # includes a list of news items
 selected_papers: false # includes a list of papers marked as "selected={true}"

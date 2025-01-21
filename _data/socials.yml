@@ -3,7 +3,7 @@
 # the socials will be displayed in the order they are defined here
 
 # acm_id: # your dl.acm.org/profile/id
-arxiv_name: moore_a_2
+arxiv_name: Moore%2C+Allison
 # blogger_url: # your blogger URL
 # bluesky_url: # your bluesky URL
 # dblp_url: # your DBLP profile url
@@ -42,7 +42,7 @@ scholar_userid: erd72G0AAAAJ # your Google Scholar ID
 # whatsapp_number: # your WhatsApp number (full phone number in international format. Omit any zeroes, brackets, or dashes when adding the phone number in international format.)
 # wikidata_id: # your wikidata id
 # wikipedia_id: # your wikipedia id (Case sensitive)
-# work_url: # work page URL
+work_url: https://math.vcu.edu/directory/moore.html # work page URL
 # x_username: # your X handle
 # youtube_id: # your youtube channel id (youtube.com/@<youtube_id>)
 # zotero_username: # your zotero username
