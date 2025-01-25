@@ -18,24 +18,24 @@ ninja.data = [{
           },
         },{id: "nav-cv",
           title: "cv",
-          description: "",
+          description: "Short CV available as PDF.",
           section: "Navigation",
           handler: () => {
             window.location.href = "/cv/";
           },
-        },{id: "nav-teaching",
-          title: "teaching",
-          description: "Info about classes I&#39;ve taught",
+        },{id: "nav-video-lectures",
+          title: "video lectures",
+          description: "Video lectures",
           section: "Navigation",
           handler: () => {
-            window.location.href = "/teaching/";
+            window.location.href = "/lectures/";
           },
-        },{id: "nav-teaching",
-          title: "teaching",
-          description: "Info about classes I&#39;ve taught",
+        },{id: "nav-events",
+          title: "events",
+          description: "Info about events I have organized.",
           section: "Navigation",
           handler: () => {
-            window.location.href = "/teaching/";
+            window.location.href = "/events/";
           },
         },{id: "nav-teaching",
           title: "teaching",
