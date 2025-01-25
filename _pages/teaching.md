@@ -2,7 +2,7 @@
 layout: page
 permalink: /teaching/
 title: teaching
-description: Materials for courses you taught. Replace this text with your description.
+description:  Info about classes I've taught
 nav: true
 nav_order: 6
 ---
@@ -14,7 +14,9 @@ In Spring 2025, I am teaching:
 - Linear Algebra, Math 300, Spring 2025
 - Advanced Linear Algebra, Math 610, Spring 2025
 
-For linear algebra students, I have a series of linear algebra tutorials online: <a href= "https://www.youtube.com/playlist?list=PL1oREv7xaaknZHxESRhMP24GeL9-xABFi">Linear Algebra on YouTube</a>. Enrolled students can also access lecture notes, practice exams and other materials in Canvas.
+For linear algebra students, I have a series of linear algebra tutorials online: 
+<a href= "https://www.youtube.com/playlist?list=PL1oREv7xaaknZHxESRhMP24GeL9-xABFi">Linear Algebra on YouTube</a>. 
+Enrolled students can also access lecture notes, practice exams and other materials in Canvas.
 
 
 <b>Prospective student researchers:</b> VCU undergraduates or graduate students curious about a research project, summer project, or interested in doing a reading course, do please get in touch with me by email (moorea14 at VCU dot edu). I'm often looking for student collaborators and would love to hear from you.
