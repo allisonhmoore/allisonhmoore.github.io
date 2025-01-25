@@ -2,7 +2,6 @@
 layout: about
 title: about
 permalink: /
-cv_pdf: cv.pdf 
 subtitle: Associate Professor in the <a href='https://math.vcu.edu/'>Department of Mathematics and Applied Mathematics</a> at Virginia Commonwealth University and member of the VCU <a href='https://geometryvcu.github.io'>Geometry Group</a>
 
 profile:
