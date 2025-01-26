@@ -18,14 +18,14 @@ ninja.data = [{
           },
         },{id: "nav-cv",
           title: "cv",
-          description: "Short CV available as PDF.",
+          description: "",
           section: "Navigation",
           handler: () => {
             window.location.href = "/cv/";
           },
         },{id: "nav-video-lectures",
           title: "video lectures",
-          description: "Video lectures",
+          description: "",
           section: "Navigation",
           handler: () => {
             window.location.href = "/lectures/";
