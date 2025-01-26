@@ -2,16 +2,16 @@
 layout: page
 permalink: /lectures/
 title: video lectures
-description:  Video lectures
+description:  #Video lectures
 nav: true
 nav_order: 5
 ---
 
 <b>Linear Algebra Tutorials:</b>    
 
-<a href= "https://www.youtube.com/playlist?list=PL1oREv7xaaknZHxESRhMP24GeL9-xABFi">Linear Algebra Playlist on YouTube</a
+<a href= "https://www.youtube.com/playlist?list=PL1oREv7xaaknZHxESRhMP24GeL9-xABFi">Linear Algebra Playlist on YouTube</a>
 
-<b>Videos from Research Presentations:</b>     
+<b>Videos of some of my research presentations at conferences</b>     
   
 <a href="https://www.birs.ca/events/2024/5-day-workshops/24w5291/videos/watch/202408081030-Moore.html">Tricks with tangles </a> in the `What's your trick' workshop at the Banff International Research Station in 2024.
        

@@ -30,4 +30,4 @@ January 6, 2021
  June 1-4, 2016
 
 - <a href="http://www.ams.org/meetings/sectional/2219_program_ss14.html#title">AMS Sectional at Loyola University </a>
-October 3-4, 2015. Group photo <a href="ams.html"> here</a>.
+October 3-4, 2015.

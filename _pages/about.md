@@ -2,7 +2,7 @@
 layout: about
 title: about
 permalink: /
-subtitle: Associate Professor in the <a href='https://math.vcu.edu/'>Department of Mathematics and Applied Mathematics</a> at Virginia Commonwealth University and member of the VCU <a href='https://geometryvcu.github.io'>Geometry Group</a>
+subtitle: Associate Professor in Math & Applied Math at VCU. 
 
 profile:
   align: right
@@ -34,6 +34,7 @@ My work has been supported by the [Jeffress Trust Award](https://hria.org/tmf/je
 
 <b>Bio:</b>
 
+I am an Associate Professor in the <a href='https://math.vcu.edu/'>Department of Mathematics and Applied Mathematics</a> at Virginia Commonwealth University, and member of the <a href='https://geometryvcu.github.io'>Geometry Group</a> at VCU. 
 Prior to arriving at VCU, I was a Krener Assistant Professor of Mathematics at the [University of California, Davis](https://www.math.ucdavis.edu) from 2016-2019. For two of those years, I also held a joint appointment as a postdoc in the Department of Microbiology and Molecular Genetics, collaborating with the [Topological Molecular Biology lab](http://arsuaga-vazquez-lab.faculty.ucdavis.edu/). From 2013-2016, I was an RTG Lovett Instructor of Mathematics at [Rice University](https://math.rice.edu/), in Houston, Texas. I worked in low-dimensional topology. I received my Ph.D. in 2013 at [The University of Texas](https://www.ma.utexas.edu) under the direction of [Cameron Gordon](https://en.wikipedia.org/wiki/Cameron_Gordon_(mathematician)).
 
 
