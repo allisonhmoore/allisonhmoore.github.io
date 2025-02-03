@@ -1,15 +1,34 @@
-"nicola":
-  - firstname: ["Nicola", "N.", "Nicola Tarasca"]
-    url: https://nicolatarasca.github.io/
+"adams":
+  - firstname: ["Edwin", "E.", "E. P.", "Edwin Plimpton"]
+    url: https://en.wikipedia.org/wiki/Edwin_Plimpton_Adams
 
-"tye":
-  - firstname: ["Tye", "T.", "Tye Lidman"]
-    url: https://sites.google.com/ncsu.edu/tlid/home
-    
-"ken":
-  - firstname: ["Kenneth", "Ken", "K.", "Kenneth Baker", "Kenneth L. Baker"]
-    url: https://www.math.miami.edu/~kenken/
-        
-"scott":
-  - firstname: ["Scott", "S.", "Scott Taylor"]
-    url: https://personal.colby.edu/personal/s/sataylor/home.php
+"podolsky":
+  - firstname: ["Boris", "B.", "B. Y.", "Boris Yakovlevich"]
+    url: https://en.wikipedia.org/wiki/Boris_Podolsky
+
+"rosen":
+  - firstname: ["Nathan", "N."]
+    url: https://en.wikipedia.org/wiki/Nathan_Rosen
+
+"bach":
+  - firstname: ["Johann Sebastian", "J. S."]
+    url: https://en.wikipedia.org/wiki/Johann_Sebastian_Bach
+
+  - firstname: ["Carl Philipp Emanuel", "C. P. E."]
+    url: https://en.wikipedia.org/wiki/Carl_Philipp_Emanuel_Bach
+
+"przibram":
+  - firstname: ["Karl"]
+    url: https://link.springer.com/article/10.1007/s00016-019-00242-z
+
+"schrodinger":
+  - firstname: ["Erwin"]
+    url: https://en.wikipedia.org/wiki/Erwin_Schr%C3%B6dinger
+
+"lorentz":
+  - firstname: ["Hendrik Antoon"]
+    url: https://en.wikipedia.org/wiki/Hendrik_Lorentz
+
+"planck":
+  - firstname: ["Max"]
+    url: https://en.wikipedia.org/wiki/Max_Planck
