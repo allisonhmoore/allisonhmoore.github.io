@@ -40,7 +40,7 @@ Prior to arriving at VCU, I was a Krener Assistant Professor of Mathematics at t
 <b>Miscellany</b>
 
 - My Erdos number is 4. <a href="https://mathscinet.ams.org/mathscinet/freeTools.html?version=2">Check yours here!</a>
-<img style ="width:300px;" alt="Erdos Number" src="images/erdosnumber.png">
+<img style ="width:300px;" alt="Erdos Number" src="assets/img/erdosnumber.png">
 
 - Through my advisor, <a href="https://en.wikipedia.org/wiki/Cameron_Gordon_(mathematician)">Cameron Gordon</a>, I can trace my mathematical lineage to <a href="https://en.wikipedia.org/wiki/Christopher_Zeeman">Zeeman</a>,
     <a href="https://en.wikipedia.org/wiki/Solomon_Lefschetz">Lefshetz</a>,
