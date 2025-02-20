@@ -43,19 +43,12 @@ Prior to arriving at VCU, I was a Krener Assistant Professor of Mathematics at t
 <img style ="width:300px;" alt="Erdos Number" src="images/erdosnumber.png">
 
 - Through my advisor, <a href="https://en.wikipedia.org/wiki/Cameron_Gordon_(mathematician)">Cameron Gordon</a>, I can trace my mathematical lineage to <a href="https://en.wikipedia.org/wiki/Christopher_Zeeman">Zeeman</a>,
-
     <a href="https://en.wikipedia.org/wiki/Solomon_Lefschetz">Lefshetz</a>,
-
     <a href="https://en.wikipedia.org/wiki/Carl_Gustav_Jacob_Jacobi">Jacobi</a>,
-
     <a href="https://en.wikipedia.org/wiki/Nicolaus_Copernicus">Copernicus</a>,
-
     <a href="https://en.wikipedia.org/wiki/Regiomontanus">Regiomontanus</a>,
-
     <a href="https://en.wikipedia.org/wiki/Gemistus_Pletho">Gemistus Pletho</a>, 
-
     <a href="https://en.wikipedia.org/wiki/Nasir_al-Din_al-Tusi">Nasir al-Din al-Tusi</a>, and
-
     <a href="https://en.wikipedia.org/wiki/Sharaf_al-Din_al-Tusi">Sharaf al-Din al-Tusi</a> (c. 1135~!) to name a few.</p>
 
 You can <a href="https://mathscinet.ams.org/mathscinet/freeTools.html?version=2">check your own mathematical lineage here</a>.
