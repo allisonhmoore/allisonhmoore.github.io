@@ -28,7 +28,8 @@ social: true # includes social icons at the bottom of the page
 - applied topology / DNA topology  
 - quantum invariants of knots and three-manifolds
 - Heegaard Floer homology
-- Khovanov homology. 
+- Khovanov homology
+- AI and mathematical pedagogy
 
 My work has been supported by the [Jeffress Trust Award](https://hria.org/tmf/jeffress/) in Interdisciplinary Research and the National Science Foundation, [DMS–2204148](https://nsf.gov/awardsearch/showAward?AWD_ID=2204148&HistoricalAwards=false). 
 
@@ -37,10 +38,10 @@ My work has been supported by the [Jeffress Trust Award](https://hria.org/tmf/je
 I am an Associate Professor in the <a href='https://math.vcu.edu/'>Department of Mathematics and Applied Mathematics</a> at Virginia Commonwealth University, and member of the <a href='https://geometryvcu.github.io'>Geometry Group</a> at VCU. 
 Prior to arriving at VCU, I was a Krener Assistant Professor of Mathematics at the [University of California, Davis](https://www.math.ucdavis.edu) from 2016-2019. For two of those years, I also held a joint appointment as a postdoc in the Department of Microbiology and Molecular Genetics, collaborating with the [Topological Molecular Biology lab](http://arsuaga-vazquez-lab.faculty.ucdavis.edu/). From 2013-2016, I was an RTG Lovett Instructor of Mathematics at [Rice University](https://math.rice.edu/), in Houston, Texas. I worked in low-dimensional topology. I received my Ph.D. in 2013 at [The University of Texas](https://www.ma.utexas.edu) under the direction of [Cameron Gordon](https://en.wikipedia.org/wiki/Cameron_Gordon_(mathematician)).
 
+
 <b>Miscellany</b>
 
-- My Erdos number is 4. <a href="https://mathscinet.ams.org/mathscinet/freeTools.html?version=2">Check yours here!</a>
-<img style ="width:300px;" alt="Erdos Number" src="assets/img/erdosnumber.png">
+- My <a href="https://en.wikipedia.org/wiki/Erdos_number">Erdos number</a> is 4. 
 
 - Through my advisor, <a href="https://en.wikipedia.org/wiki/Cameron_Gordon_(mathematician)">Cameron Gordon</a>, I can trace my mathematical lineage to <a href="https://en.wikipedia.org/wiki/Christopher_Zeeman">Zeeman</a>,
     <a href="https://en.wikipedia.org/wiki/Solomon_Lefschetz">Lefshetz</a>,
@@ -51,5 +52,5 @@ Prior to arriving at VCU, I was a Krener Assistant Professor of Mathematics at t
     <a href="https://en.wikipedia.org/wiki/Nasir_al-Din_al-Tusi">Nasir al-Din al-Tusi</a>, and
     <a href="https://en.wikipedia.org/wiki/Sharaf_al-Din_al-Tusi">Sharaf al-Din al-Tusi</a> (c. 1135~!) to name a few.</p>
 
-You can <a href="https://mathscinet.ams.org/mathscinet/freeTools.html?version=2">check your own mathematical lineage here</a>.
+You can check your own Erdos number and mathematical lineage at <a href="https://mathscinet.ams.org/mathscinet/freeTools.html?version=2">MathSciNet</a>.
 
