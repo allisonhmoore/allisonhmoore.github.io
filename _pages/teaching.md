@@ -47,7 +47,7 @@ I am also heading the Undergraduate Research committee! Even if you want to work
 <b>Previous classes and other teaching assignments at Rice</b>
 - Abstract Algebra (Math 306) - Spring 2016
 - Undergraduate Research (Math 499) - Spring 2016
-- Algebraic Topology - Spring 2015
+- Graduate Algebraic Topology - Spring 2015
 - Graph Theory and Combinatorics - Fall 2014
 - Graph Theory and Combinatorics - Fall 2013
 - Undergraduate Research Seminar - Spring 2015
