@@ -39,18 +39,18 @@ I am an Associate Professor in the <a href='https://math.vcu.edu/'>Department of
 Prior to arriving at VCU, I was a Krener Assistant Professor of Mathematics at the [University of California, Davis](https://www.math.ucdavis.edu) from 2016-2019. For two of those years, I also held a joint appointment as a postdoc in the Department of Microbiology and Molecular Genetics, collaborating with the [Topological Molecular Biology lab](http://arsuaga-vazquez-lab.faculty.ucdavis.edu/). From 2013-2016, I was an RTG Lovett Instructor of Mathematics at [Rice University](https://math.rice.edu/), in Houston, Texas. I worked in low-dimensional topology. I received my Ph.D. in 2013 at [The University of Texas](https://www.ma.utexas.edu) under the direction of [Cameron Gordon](https://en.wikipedia.org/wiki/Cameron_Gordon_(mathematician)).
 
 
-<b>Miscellany</b>
+<b>Miscellany:</b>
 
 - My <a href="https://en.wikipedia.org/wiki/Erdos_number">Erdos number</a> is 4. 
 
-- Through my advisor, <a href="https://en.wikipedia.org/wiki/Cameron_Gordon_(mathematician)">Cameron Gordon</a>, I can trace my mathematical lineage to <a href="https://en.wikipedia.org/wiki/Christopher_Zeeman">Zeeman</a>,
+- Through my Ph.D. advisor, <a href="https://en.wikipedia.org/wiki/Cameron_Gordon_(mathematician)">Cameron Gordon</a>, I can trace my mathematical lineage to <a href="https://en.wikipedia.org/wiki/Christopher_Zeeman">Zeeman</a>,
     <a href="https://en.wikipedia.org/wiki/Solomon_Lefschetz">Lefshetz</a>,
     <a href="https://en.wikipedia.org/wiki/Carl_Gustav_Jacob_Jacobi">Jacobi</a>,
     <a href="https://en.wikipedia.org/wiki/Nicolaus_Copernicus">Copernicus</a>,
     <a href="https://en.wikipedia.org/wiki/Regiomontanus">Regiomontanus</a>,
     <a href="https://en.wikipedia.org/wiki/Gemistus_Pletho">Gemistus Pletho</a>, 
     <a href="https://en.wikipedia.org/wiki/Nasir_al-Din_al-Tusi">Nasir al-Din al-Tusi</a>, and
-    <a href="https://en.wikipedia.org/wiki/Sharaf_al-Din_al-Tusi">Sharaf al-Din al-Tusi</a> (c. 1135~!) to name a few.</p>
+    <a href="https://en.wikipedia.org/wiki/Sharaf_al-Din_al-Tusi">Sharaf al-Din al-Tusi</a> (c. 1135~!) to name a few.
 
 You can check your own Erdos number and mathematical lineage at <a href="https://mathscinet.ams.org/mathscinet/freeTools.html?version=2">MathSciNet</a>.
 
