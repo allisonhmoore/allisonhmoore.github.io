@@ -7,20 +7,30 @@ nav: true
 nav_order: 6
 ---
 
-<b>Conferences I have organized</b>:
+<b>Upcoming Conferences I am co-organizing</b>:
 
-- <a href='https://geometryvcu.github.io/rgm2024/'>Richmond Geometry Meeting 2024</a><br/>
+- <a href='https://www.crmath.ca/en/activities/#/type/activity/id/4014'>Knots, Groups and Manifolds</a>: A conference in honor of Cameron Gordon.
+<br/> Centre de recherches mathématiques (CRM), University of Montreal, August 2025
+<br/>Supported by CRM, NSF, FCT and Simons Foundation.
+
+- <a href='https://geometryvcu.github.io/rgmmain/'>Richmond Geometry Meeting V 2024</a><br/>
+  VCU, September 2025<br/> -- Coming Soon!
+  
+
+<b>Conferences I have co-organized</b>:
+
+- <a href='https://geometryvcu.github.io/rgm2024/'>Richmond Geometry Meeting IV 2024</a><br/>
   VCU, August 2024<br/>
   supported by NSF grant <a href='https://www.nsf.gov/awardsearch/showAward?AWD_ID=2349810'>DMS-2349810</a>
   
-- <a href='https://geometryvcu.github.io/rgm2023/'>Richmond Geometry Meeting 2023</a><br/>
+- <a href='https://geometryvcu.github.io/rgm2023/'>Richmond Geometry Meeting III 2023</a><br/>
   VCU, June 2023<br/>
   supported by NSF grant <a href='https://www.nsf.gov/awardsearch/showAward?AWD_ID=2240741'>DMS-2240741</a>
 
-- <a href='https://geometryvcu.github.io/rgm2022/'>Richmond Geometry Festival 2022</a><br/>
+- <a href='https://geometryvcu.github.io/rgm2022/'>Richmond Geometry Festival II 2022</a><br/>
   May 2022, virtually
     
-- <a href='https://geometryvcu.github.io/rgm2021/'>Richmond Geometry Festival 2021</a><br/> 
+- <a href='https://geometryvcu.github.io/rgm2021/'>Richmond Geometry Festival I 2021</a><br/> 
 June 2021, virtually  
   
 - <a href="http://jointmathematicsmeetings.org/meetings/national/jmm2021/2247_program_ss28.html#title">AMS Special Session on Developments in Spatial Graphs</a> at the Joint Meetings.
