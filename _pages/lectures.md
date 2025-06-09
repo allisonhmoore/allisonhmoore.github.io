@@ -12,6 +12,11 @@ nav_order: 5
 <a href= "https://www.youtube.com/playlist?list=PL1oREv7xaaknZHxESRhMP24GeL9-xABFi">Linear Algebra Playlist on YouTube</a>
 
 <b>Videos of some of my research presentations at conferences</b>     
+
+
+<a href="https://scgp.stonybrook.edu/video_portal/video.php?id=7062">Series valued invariants and plumbed 3-manifolds </a> in the <a href="https://scgp.stonybrook.edu/archives/43124">Workshop Gauge Theory and Floer Homology in Low Dimensional Topology</a> at the Simons Center for Geometry and Physics in 2025.
+
+<a href="https://icerm.brown.edu/video_archive/4133">Series valued invariants and plumbed 3-manifolds </a> in the <a href="https://icerm.brown.edu/program/topical_workshop/tw-25-ld34#section-1">Links in Dimensions 3 and 4 Workshop</a> at ICERM in 2025.
   
 <a href="https://www.birs.ca/events/2024/5-day-workshops/24w5291/videos/watch/202408081030-Moore.html">Tricks with tangles </a> in the `What's your trick' workshop at the Banff International Research Station in 2024.
        
