@@ -29,7 +29,6 @@ social: true # includes social icons at the bottom of the page
 - quantum invariants of knots and three-manifolds
 - Heegaard Floer homology
 - Khovanov homology
-- AI and mathematical pedagogy
 
 My work has been supported by the [Jeffress Trust Award](https://hria.org/tmf/jeffress/) in Interdisciplinary Research and the National Science Foundation, [DMS–2204148](https://nsf.gov/awardsearch/showAward?AWD_ID=2204148&HistoricalAwards=false). 
 
