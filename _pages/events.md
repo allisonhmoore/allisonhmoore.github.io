@@ -13,8 +13,9 @@ nav_order: 6
 <br/> Centre de recherches mathématiques (CRM), University of Montreal, August 2025
 <br/>Supported by CRM, NSF, FCT and Simons Foundation.
 
-- <a href='https://geometryvcu.github.io/rgmmain/'>Richmond Geometry Meeting V 2024</a><br/>
-  VCU, September 2025<br/> -- Coming Soon!
+- <a href='https://geometryvcu.github.io/rgm2025/'>Richmond Geometry Meeting V 2024</a><br/>
+   VCU, September 2025<br/>
+  supported by NSF grant <a href='https://www.nsf.gov/awardsearch/showAward?AWD_ID=2528113'>DMS-2528113</a>
   
 
 <b>Conferences I have co-organized</b>:
