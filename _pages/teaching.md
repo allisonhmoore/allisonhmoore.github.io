@@ -27,7 +27,7 @@ I am also heading the Undergraduate Research committee! Even if you want to work
 
 - Directed Research, Math 697, Fall 2021 – Fall 2022
 - Graduate Abstract Algebra II, Math 602, Spring 2022
-- Graduate Abstract Algebra I, Math 502, Fall 2021
+- Graduate Abstract Algebra I, Math 502, Fall 2021, Fall 2025
 - Independent Study, Math 492, Summer 2021
 - Mathematical Exposition, Math 490, Spring 2023 and Fall 2023
 - Excursions in Geometry, Math 411, Fall 2023
@@ -36,6 +36,7 @@ I am also heading the Undergraduate Research committee! Even if you want to work
 - Linear Algebra, Math 310: Spring 2022, Fall 2019, Fall 2019, Fall 2020, Spring 2021, Spring 2024
 - Multivariate (Vector) Calculus, Math 307: Spring 2021 and Spring 2024
 - Calculus, Math 200, Spring 2020 and Fall 2024
+- Math: The Language of AI, Math 170, Fall 2025
 
 <b>Previous classes I taught at UC Davis</b>
 - Linear Algebra (Mat 22A) - Fall 2018
