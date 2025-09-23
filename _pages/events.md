@@ -7,19 +7,16 @@ nav: true
 nav_order: 6
 ---
 
-<b>Upcoming Conferences I am co-organizing</b>:
+<b>Conferences I have co-organized</b>:
 
 - <a href='https://www.crmath.ca/en/activities/#/type/activity/id/4014'>Knots, Groups and Manifolds</a>: A conference in honor of Cameron Gordon.
 <br/> Centre de recherches mathématiques (CRM), University of Montreal, August 2025
 <br/>Supported by CRM, NSF, FCT and Simons Foundation.
 
-- <a href='https://geometryvcu.github.io/rgm2025/'>Richmond Geometry Meeting V 2024</a><br/>
+- <a href='https://geometryvcu.github.io/rgm2025/'>Richmond Geometry Meeting V 2025</a><br/>
    VCU, September 2025<br/>
   supported by NSF grant <a href='https://www.nsf.gov/awardsearch/showAward?AWD_ID=2528113'>DMS-2528113</a>
   
-
-<b>Conferences I have co-organized</b>:
-
 - <a href='https://geometryvcu.github.io/rgm2024/'>Richmond Geometry Meeting IV 2024</a><br/>
   VCU, August 2024<br/>
   supported by NSF grant <a href='https://www.nsf.gov/awardsearch/showAward?AWD_ID=2349810'>DMS-2349810</a>
