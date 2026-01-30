@@ -31,7 +31,7 @@ Enrolled students can also access lecture notes, practice exams and other materi
 - Excursions in Geometry, Math 411, Fall 2023
 - General Topology, Math 409, Fall 2022
 - Intro to Abstract Algebra, Math 401, Fall 2020 and Fall 2024
-- Linear Algebra, Math 310: Spring 2022, Fall 2019, Fall 2019, Fall 2020, Spring 2021, Spring 2024, Spring 2025
+- Linear Algebra, Math 310: Fall 2019, Fall 2020, Spring 2021, Spring 2022, Spring 2025
 - Multivariate (Vector) Calculus, Math 307: Spring 2021 and Spring 2024
 - Calculus, Math 200, Spring 2020 and Fall 2024
 - Math: The Language of AI, Math 170, Fall 2025
