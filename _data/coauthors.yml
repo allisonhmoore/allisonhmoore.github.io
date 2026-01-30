@@ -1,34 +1,51 @@
-"adams":
-  - firstname: ["Edwin", "E.", "E. P.", "Edwin Plimpton"]
-    url: https://en.wikipedia.org/wiki/Edwin_Plimpton_Adams
+"ibrahim":
+  - firstname: ["Rayan", "Ray"]
+    url: https://raymaths.github.io/
 
-"podolsky":
-  - firstname: ["Boris", "B.", "B. Y.", "Boris Yakovlevich"]
-    url: https://en.wikipedia.org/wiki/Boris_Podolsky
+"tarasca":
+  - firstname: ["Nicola"]
+    url: https://nicolatarasca.github.io/
 
-"rosen":
-  - firstname: ["Nathan", "N."]
-    url: https://en.wikipedia.org/wiki/Nathan_Rosen
+"lidman":
+  - firstname: ["Tye"]
+    url: https://sites.google.com/ncsu.edu/tlid/home
 
-"bach":
-  - firstname: ["Johann Sebastian", "J. S."]
-    url: https://en.wikipedia.org/wiki/Johann_Sebastian_Bach
+"taylor":
+  - firstname: ["Scott"]
+    url: https://personal.colby.edu/personal/s/sataylor/home.php
 
-  - firstname: ["Carl Philipp Emanuel", "C. P. E."]
-    url: https://en.wikipedia.org/wiki/Carl_Philipp_Emanuel_Bach
+"baker":
+  - firstname: ["Ken", "Kenneth", "Kenneth L."]
+    url: https://www.math.miami.edu/~kenken/
+    
+"o'donnol":
+  - firstname: ["Danielle"]
+    url: https://marymount.edu/staff-members/danielle-odonnol/
 
-"przibram":
-  - firstname: ["Karl"]
-    url: https://link.springer.com/article/10.1007/s00016-019-00242-z
+"watson":
+  - firstname: ["Liam"]
+    url: https://personal.math.ubc.ca/~liam/
 
-"schrodinger":
-  - firstname: ["Erwin"]
-    url: https://en.wikipedia.org/wiki/Erwin_Schr%C3%B6dinger
+"liu":
+  - firstname: ["Beibei"]
+    url: https://sites.google.com/view/beibei-liu/
+    
+"vazquez":
+  - firstname: ["Mariel"]
+    url: https://biology.ucdavis.edu/people/mariel-vazquez
+    
+"gorsky":
+  - firstname: ["Eugene", "Evgeny", "Evgenii"]
+    url: https://www.math.ucdavis.edu/~egorskiy/
 
-"lorentz":
-  - firstname: ["Hendrik Antoon"]
-    url: https://en.wikipedia.org/wiki/Hendrik_Lorentz
-
-"planck":
-  - firstname: ["Max"]
-    url: https://en.wikipedia.org/wiki/Max_Planck
+"jabuka":
+  - firstname: ["Stanislav", "Slaven"]
+    url: https://sites.google.com/view/stanislavjabuka/home
+        
+"starkston":
+  - firstname: ["Laura"]
+    url: https://www.math.ucdavis.edu/~lstarkston/
+    
+"zibrowius":
+  - firstname: ["Claudius"]
+    url: https://cbz20.raspberryip.com/
