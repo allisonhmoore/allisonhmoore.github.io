@@ -9,7 +9,9 @@ nav_order: 4
 
 <b>Currently</b>:
 
-In Spring 2026, I am on sabbatical from teaching. In Fall 2026, I will teach Math 409: General Topology and Math 170: The Language of Artificial Intelligence. 
+In Spring 2026, I am on sabbatical from teaching. 
+
+In Fall 2026, I will teach Math 409: General Topology and Math 170: The Language of Artificial Intelligence. 
 
 For linear algebra students, I have a series of linear algebra tutorials online: 
 <a href= "https://www.youtube.com/playlist?list=PL1oREv7xaaknZHxESRhMP24GeL9-xABFi">Linear Algebra on YouTube</a>. 
