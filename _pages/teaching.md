@@ -9,10 +9,7 @@ nav_order: 4
 
 <b>Currently</b>:
 
-In Spring 2025, I am teaching:
-
-- Linear Algebra, Math 300, Spring 2025
-- Advanced Linear Algebra, Math 610, Spring 2025
+In Spring 2026, I am on sabbatical from teaching. In Fall 2026, I will teach Math 409: General Topology and Math 170: The Language of Artificial Intelligence. 
 
 For linear algebra students, I have a series of linear algebra tutorials online: 
 <a href= "https://www.youtube.com/playlist?list=PL1oREv7xaaknZHxESRhMP24GeL9-xABFi">Linear Algebra on YouTube</a>. 
@@ -21,11 +18,10 @@ Enrolled students can also access lecture notes, practice exams and other materi
 
 <b>Prospective student researchers:</b> VCU undergraduates or graduate students curious about a research project, summer project, or interested in doing a reading course, do please get in touch with me by email (moorea14 at VCU dot edu). I'm often looking for student collaborators and would love to hear from you.
 
-I am also heading the Undergraduate Research committee! Even if you want to work with a different professor or on an unrelated project, undergraduates are welcome to get in touch with me for advice, help with applications, or information about conferences and workshops where you can present your work. Stop by my office HH 4145, or drop me an email.
-
 <b>Other classes I've taught at VCU</b>
 
 - Directed Research, Math 697, Fall 2021 – Fall 2022
+- Graduate Advanced Linear Algebra, Math 610, Spring 2025
 - Graduate Abstract Algebra II, Math 602, Spring 2022
 - Graduate Abstract Algebra I, Math 502, Fall 2021, Fall 2025
 - Independent Study, Math 492, Summer 2021
@@ -33,7 +29,7 @@ I am also heading the Undergraduate Research committee! Even if you want to work
 - Excursions in Geometry, Math 411, Fall 2023
 - General Topology, Math 409, Fall 2022
 - Intro to Abstract Algebra, Math 401, Fall 2020 and Fall 2024
-- Linear Algebra, Math 310: Spring 2022, Fall 2019, Fall 2019, Fall 2020, Spring 2021, Spring 2024
+- Linear Algebra, Math 310: Spring 2022, Fall 2019, Fall 2019, Fall 2020, Spring 2021, Spring 2024, Spring 2025
 - Multivariate (Vector) Calculus, Math 307: Spring 2021 and Spring 2024
 - Calculus, Math 200, Spring 2020 and Fall 2024
 - Math: The Language of AI, Math 170, Fall 2025
