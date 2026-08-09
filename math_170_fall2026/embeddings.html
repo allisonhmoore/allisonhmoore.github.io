@@ -1,0 +1,830 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>One-hot can't say "alike" — words as vectors · MATH 170</title>
+
+<!-- ================================================================
+     DESIGN-SYSTEM v2 TOKEN BLOCK — copied verbatim into every file.
+     A global tweak stays a find-replace across the set.
+     Copied UNCHANGED from the exemplar (week-13-softmax.html).
+     ================================================================ -->
+<style>
+/* hidden must always win over any author display rule */
+[hidden]{display:none !important}
+
+:root{
+  /* color — light */
+  --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+  --gold-soft:rgba(218,165,32,.12);
+  --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  /* type */
+  --font-body: ui-serif, Georgia, "Times New Roman", serif;
+  --font-ui:   system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+  --text-xl:1.75rem; --text-lg:1.25rem; --text-base:1rem; --text-sm:.875rem; --text-xs:.75rem;
+  --leading-prose:1.6; --leading-ui:1.3;
+  /* spacing */
+  --space-1:4px; --space-2:8px; --space-3:16px; --space-4:24px; --space-5:32px; --space-6:48px;
+  /* motion */
+  --ease:cubic-bezier(0.16,1,0.3,1); --dur:200ms;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+    --gold-soft:rgba(227,179,65,.16);
+    --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+  --gold-soft:rgba(227,179,65,.16);
+  --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+}
+@media (prefers-reduced-motion: reduce){ :root{ --dur:0ms; } }
+@media print{
+  :root, :root[data-theme="dark"]{
+    --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+    --gold-soft:rgba(218,165,32,.12);
+    --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  }
+  .theme-btn{display:none}
+  .stage{break-inside:avoid}
+}
+
+/* ================= base skin (design-system §3–§4) ================= */
+*{box-sizing:border-box}
+html{color-scheme:light dark}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--font-body); font-size:var(--text-base); line-height:var(--leading-prose);
+  -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:820px; margin:0 auto; padding:var(--space-5) var(--space-4) var(--space-6);}
+.topbar{display:flex; align-items:baseline; justify-content:space-between; gap:var(--space-3);
+  border-bottom:1px solid var(--gray-line); padding-bottom:var(--space-2); margin-bottom:var(--space-4);}
+.eyebrow{font-family:var(--font-ui); font-size:var(--text-xs); letter-spacing:.08em; text-transform:uppercase; color:var(--gray-text);}
+h1{font-family:var(--font-body); font-weight:600; font-size:var(--text-xl); line-height:1.2; margin:.2em 0 .1em;}
+h2{font-family:var(--font-ui); font-weight:600; font-size:var(--text-lg); line-height:1.3; margin:var(--space-5) 0 var(--space-2);}
+p{margin:0 0 var(--space-3);}
+.prose{max-width:66ch;}
+.muted{color:var(--gray-text);}
+.mono,code{font-family:var(--font-mono); font-variant-numeric:tabular-nums;}
+a{color:inherit;}
+:focus-visible{outline:2px solid var(--ink); outline-offset:2px; box-shadow:0 0 0 5px var(--gold-soft);}
+
+.theme-btn{font-family:var(--font-ui); font-size:var(--text-xs); background:none;
+  border:1px solid var(--gray-line); color:var(--gray-text); padding:6px 10px; cursor:pointer; border-radius:2px;}
+.theme-btn:hover{background:var(--gray-fill);}
+
+/* spec header */
+details.spec{border:1px solid var(--gray-line); border-radius:2px; margin:0 0 var(--space-4); background:var(--gray-fill);}
+details.spec>summary{font-family:var(--font-ui); font-size:var(--text-sm); cursor:pointer;
+  padding:var(--space-2) var(--space-3); list-style:none; color:var(--gray-text);}
+details.spec>summary::-webkit-details-marker{display:none}
+details.spec>summary::before{content:"▸ "; color:var(--gold);}
+details.spec[open]>summary::before{content:"▾ ";}
+.spec-body{padding:0 var(--space-3) var(--space-3); font-family:var(--font-ui); font-size:var(--text-sm); line-height:1.5;}
+.spec-body dt{font-weight:600; margin-top:var(--space-2);}
+.spec-body dd{margin:0; color:var(--gray-text);}
+
+/* stage */
+.stage{margin:var(--space-4) 0; text-align:center;}
+svg{max-width:100%; height:auto; font-family:var(--font-ui);}
+figcaption{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); margin-top:var(--space-2);}
+
+/* controls */
+.controls{border-top:1px solid var(--gray-line); padding-top:var(--space-3); margin-top:var(--space-4);
+  display:grid; grid-template-columns:1fr 1fr; gap:var(--space-3) var(--space-4);}
+.controls .full{grid-column:1/-1;}
+@media(max-width:560px){ .controls{grid-template-columns:1fr;} }
+.ctl label{display:flex; justify-content:space-between; align-items:baseline;
+  font-family:var(--font-ui); font-size:var(--text-sm); line-height:var(--leading-ui);}
+.ctl .val{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm); color:var(--ink);}
+.ctl .val.gold{color:var(--gold); font-weight:600;}
+.ctl .note{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); margin-top:4px;}
+
+/* range slider — filled track works in ALL engines (design-system v2 fix):
+   wireSlider() paints the webkit track with a two-stop gradient on input. */
+input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:18px;
+  background:transparent; margin:6px 0 0; cursor:pointer;}
+input[type=range]::-webkit-slider-runnable-track{height:2px; border-radius:1px;
+  background:var(--track, var(--gray-line));}
+input[type=range]::-moz-range-track{height:2px; background:var(--gray-line);}
+input[type=range]::-moz-range-progress{height:2px; background:var(--gold);}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; appearance:none;
+  width:18px; height:18px; margin-top:-8px; border-radius:50%; background:var(--gold); border:1px solid var(--ink);}
+input[type=range]::-moz-range-thumb{width:18px; height:18px; border-radius:50%; background:var(--gold); border:1px solid var(--ink);}
+
+/* buttons + segmented + stepper */
+.btn{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:1px solid var(--ink); padding:8px 14px; cursor:pointer; border-radius:2px;}
+.btn:hover{background:var(--gray-fill);}
+.btn.primary{background:var(--gold); border-color:var(--gold); color:#111111;}
+.btn[disabled]{border-color:var(--gray-line); color:var(--gray-line); cursor:default; background:var(--paper);}
+.seg{display:inline-flex; border:1px solid var(--ink); border-radius:2px; overflow:hidden;}
+.seg button{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:0; border-left:1px solid var(--ink); padding:7px 12px; cursor:pointer;}
+.seg button:first-child{border-left:0;}
+.seg button[aria-pressed="true"]{background:var(--gold); color:#111111;}
+.stepper{display:inline-flex; align-items:center; gap:var(--space-2); font-family:var(--font-ui); font-size:var(--text-sm);}
+.stepper .count{font-family:var(--font-mono); font-variant-numeric:tabular-nums; color:var(--gray-text);}
+
+.foot{display:flex; align-items:center; gap:var(--space-3); margin-top:var(--space-5);
+  border-top:1px solid var(--gray-line); padding-top:var(--space-3); flex-wrap:wrap;}
+.foot .btn{margin-right:auto;}
+.hint{font-family:var(--font-ui); font-size:var(--text-sm); color:var(--gray-text);}
+
+/* math reveal */
+.mathbox{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm);
+  background:var(--gray-fill); border-left:2px solid var(--gold); padding:var(--space-3);
+  margin:var(--space-3) 0; overflow-x:auto; white-space:pre; line-height:1.7; text-align:left;}
+.attach{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text);
+  border-top:1px dotted var(--gray-line); margin-top:var(--space-6); padding-top:var(--space-3);}
+.tag{display:inline-block; font-family:var(--font-ui); font-size:var(--text-xs);
+  border:1px solid var(--gray-line); border-radius:999px; padding:1px 8px; color:var(--gray-text); margin-left:6px;}
+.callout{font-family:var(--font-ui); font-size:var(--text-sm); border:1px solid var(--gray-line);
+  border-left:2px solid var(--gold); padding:var(--space-2) var(--space-3); margin:var(--space-3) 0; background:var(--paper);}
+</style>
+
+<!-- ============ bespoke styles for THIS file only (additive; base skin untouched) ============ -->
+<style>
+/* the world toggle is the spine — the spec argues for it sitting ABOVE the stage */
+.worldbar{display:flex; justify-content:center; margin:var(--space-4) 0 var(--space-3);}
+.worldbar .seg button{font-size:var(--text-base); padding:10px 20px;}
+
+/* word chips (shared selector for both worlds) */
+.chips{display:flex; flex-wrap:wrap; gap:var(--space-2); justify-content:center; margin:0 0 var(--space-1);}
+.chip{font-family:var(--font-ui); font-size:var(--text-sm); border:1px solid var(--ink);
+  background:var(--paper); color:var(--ink); border-radius:999px; padding:5px 14px; cursor:pointer; line-height:var(--leading-ui);}
+.chip:hover{background:var(--gray-fill);}
+.chip[aria-pressed="true"]{background:var(--gold); border-color:var(--gold); color:#111111; font-weight:600;}
+.chip sup{font-size:.7em; color:var(--gray-text);}
+.chip[aria-pressed="true"] sup{color:#111111;}
+.chipnote{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); margin-bottom:var(--space-3);}
+
+/* one-hot identity table (DOM, not SVG — it IS a table) */
+table.onehot{border-collapse:collapse; margin:0 auto; font-family:var(--font-mono);
+  font-variant-numeric:tabular-nums; font-size:var(--text-sm);}
+table.onehot th{font-family:var(--font-ui); font-weight:400; color:var(--gray-text);
+  font-size:var(--text-xs); padding:4px 8px;}
+table.onehot tbody th{text-align:right; font-size:var(--text-sm); color:var(--ink); white-space:nowrap;}
+table.onehot td{border:1px solid var(--gray-line); min-width:36px; padding:5px 2px; text-align:center; color:var(--gray-text);}
+table.onehot td.one{color:var(--ink); font-weight:700;}
+table.onehot tr.sel td{background:var(--gold-soft);}
+table.onehot tr.sel th{font-weight:700;}
+.ohwrap{overflow-x:auto;}
+
+/* the distance beat */
+.distrow{display:flex; align-items:center; justify-content:center; gap:var(--space-4);
+  flex-wrap:wrap; margin-top:var(--space-3);}
+.distrow .mathbox{margin:0;}
+.bigd{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:2.6rem;
+  font-weight:700; color:var(--gold); line-height:1;}
+.bigd-label{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); max-width:15em;}
+
+/* tally strip */
+.tally{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm);
+  color:var(--ink); border:1px dashed var(--gray-line); border-radius:2px;
+  padding:var(--space-2) var(--space-3); margin:var(--space-3) auto 0; max-width:640px; text-align:left;}
+.tally .sfx{font-family:var(--font-ui); color:var(--gray-text);}
+
+/* embedding plane */
+#plane{touch-action:none; -webkit-user-select:none; user-select:none;}
+#plane g.word{cursor:grab;}
+#plane g.word:active{cursor:grabbing;}
+#plane g.word:hover .dot{stroke:var(--gold); stroke-width:2.5;}
+.cosread{font-family:var(--font-ui); font-size:var(--text-sm); color:var(--gray-text); margin-top:var(--space-2);}
+.cosread b{font-family:var(--font-mono); font-variant-numeric:tabular-nums;
+  font-size:var(--text-lg); color:var(--gold); font-weight:700;}
+.snapnote{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); min-height:1.2em;}
+</style>
+
+<!-- theme boot: apply stored choice before first paint (no flash) — verbatim from the exemplar -->
+<script>
+try{var t=localStorage.getItem("m170-theme");if(t)document.documentElement.dataset.theme=t;}catch(e){}
+</script>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="eyebrow">MATH 170 · From words to numbers · One-Hot &amp; Embeddings</div>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Color theme">◑ auto</button>
+  </div>
+
+  <h1 data-edit="title">One-hot can&rsquo;t say &ldquo;alike&rdquo; <span class="tag">embeddings · cosine</span></h1>
+  <p class="prose muted" data-edit="intro">You are the AI. Before you can compute with words you have to turn
+  them into numbers. Here are the two classic ways — one where every word is a stranger to
+  every other word, and one where the map itself knows that <strong>cats</strong> and
+  <strong>dogs</strong> go together.</p>
+
+  <div data-slot="notes-top"></div>
+
+
+  <!-- ============ THE SPINE: one-hot world ↔ embedding world ============ -->
+  <div class="worldbar">
+    <div class="seg" role="group" aria-label="Representation world">
+      <button type="button" id="worldOnehot" aria-pressed="true">one-hot world</button>
+      <button type="button" id="worldEmbed" aria-pressed="false">embedding world</button>
+    </div>
+  </div>
+
+  <div class="stage">
+    <!-- shared word picker: pick any two -->
+    <div class="chips" id="chips" role="group" aria-label="Pick any two words"></div>
+    <div class="chipnote" id="chipNote"></div>
+
+    <!-- ================= ONE-HOT WORLD ================= -->
+    <figure id="panelOnehot" style="margin:0">
+      <div class="ohwrap" id="ohTable"></div>
+      <div class="distrow" id="ohDist" aria-live="polite"></div>
+      <div class="tally" id="ohTally"></div>
+      <div class="callout" id="ohPunch" hidden>
+        <strong>In one-hot land, cats is exactly as far from dogs as from rose.</strong>
+        Identity, not meaning — every word&rsquo;s ID card differs from every other&rsquo;s
+        in exactly two slots, so every pair ties.
+      </div>
+      <div id="ohSentence" hidden>
+        <h2 style="font-size:var(--text-base); margin-top:var(--space-4)">&ldquo;I like cats and dogs&rdquo; — the worksheet sentence, encoded</h2>
+        <div class="ohwrap" id="ohSentTable"></div>
+        <figcaption>Five words → five one-hot rows in ℝ⁵ — the sentence is just a stack of
+        ID cards. Check any two different words: still exactly 2 apart, &ldquo;cats&rdquo;
+        and &ldquo;dogs&rdquo; included. The rows store <em>order</em>; they store no
+        <em>meaning</em>.</figcaption>
+      </div>
+      <figcaption>Each word owns one slot: a 1 in its own column, 0 everywhere else — an
+      identity matrix. (The worksheet&rsquo;s own version is the 3-word table
+      {cats,&nbsp;dogs,&nbsp;flowers} in ℝ³ — same picture, smaller.) Tap two chips to
+      measure a pair.</figcaption>
+    </figure>
+
+    <!-- ================= EMBEDDING WORLD ================= -->
+    <figure id="panelEmbed" hidden style="margin:0">
+      <svg id="plane" viewBox="0 0 640 540" role="img"
+           aria-label="Two-dimensional embedding plane with six draggable words; animals cluster on the left, flowers on the right"></svg>
+      <div class="cosread" id="cosRead" aria-live="polite"></div>
+      <svg id="dial" viewBox="0 0 640 70" aria-hidden="true"></svg>
+      <div class="snapnote" id="snapNote"></div>
+      <div class="callout" data-edit="provenance"><strong>Where do these coordinates come from?</strong>
+      Not from a model. <strong>They are illustrative — we chose them by hand, so that related
+      words sit near each other</strong> and the arithmetic below comes out at readable numbers.
+      A real model is <em>given</em> nothing but text and <em>learns</em> its coordinates by
+      being wrong over and over and nudging them; that is the next activity. What is honest here
+      is everything downstream: once a word has a pair of numbers, the dot product, the lengths
+      and the cosine are computed exactly as they would be on real ones.</div>
+      <figcaption data-edit="cap-plane">Drag any word to a new spot — <strong>you be the training:</strong>
+      dragging IS the stand-in for training. Real training nudges these positions from
+      data; here your hand does it, and every similarity reacts live.</figcaption>
+    </figure>
+  </div>
+
+  <div class="controls">
+    <!-- one-hot world controls -->
+    <div class="full" id="ctlOnehot" style="display:flex; gap:var(--space-3); flex-wrap:wrap; align-items:center;">
+      <button class="btn" id="sentBtn" type="button" aria-pressed="false">&ldquo;I like cats and dogs&rdquo; — encode the sentence ▸</button>
+      <span class="hint" data-edit="hint-sentence">the worksheet&rsquo;s 5-word sentence → 5 one-hot rows</span>
+    </div>
+
+    <div class="full" id="ctlMath" hidden>
+      <button class="btn" id="mathToggle" type="button" aria-expanded="false">Show the math ▸</button>
+      <div id="mathReveal" hidden>
+        <div class="mathbox" id="mathbox" aria-live="polite"></div>
+        <p class="muted prose" style="font-family:var(--font-ui); font-size:var(--text-sm)" data-edit="math-note">
+          u·v and the lengths ‖u‖, ‖v‖ are exactly the dot product and vector
+          length you already know. Dividing the dot product by both lengths cancels how <em>long</em> the
+          arrows are, so the only thing left is <em>direction</em>:
+          cos&nbsp;θ&nbsp;=&nbsp;−1 opposite · 0 unrelated (a right angle) · +1 same
+          direction. That is why two words can be far apart on the map yet still point the
+          same way — cosine reads the angle, not the distance.</p>
+      </div>
+    </div>
+  </div>
+
+  <div data-slot="notes-bottom"></div>
+
+  <div class="foot">
+    <button class="btn" id="reset" type="button">Reset</button>
+    <span class="hint" data-edit="hint-try">Try: check three pairs in one-hot world, then flip worlds and drag
+    <strong>lion</strong> into the flower patch — watch cos(lion,&nbsp;cats) fall.</span>
+  </div>
+
+</div>
+
+<script type="application/json" id="m170-config">
+{
+  "_v": 1,
+  "words": ["cats", "dogs", "lion", "rose", "tulip", "daisy"],
+  "supplements": ["lion", "tulip", "daisy"],
+  "positions": {
+    "cats":  [-1.8, 1.5],
+    "dogs":  [-1.2, 1.9],
+    "lion":  [-2.4, 1.4],
+    "rose":  [ 1.7, 1.7],
+    "tulip": [ 1.1, 1.8],
+    "daisy": [ 2.1, 1.3]
+  },
+  "sentence": ["I", "like", "cats", "and", "dogs"],
+  "openPair": ["cats", "dogs"],
+  "chipNote": "pick any two · cats, dogs and rose (standing in for the worksheet's \u201cflowers\u201d) are worksheet words; \u2020 lion, tulip, daisy are supplements — three words can't show clusters, six can",
+  "_meta": {
+    "words": {"label": "The vocabulary on the chip row", "kind": "list"},
+    "supplements": {"label": "Which words carry the † supplement mark", "kind": "list"},
+    "positions": {"label": "The map coordinates", "kind": "table", "columns": ["x", "y"],
+      "regen": "scatter-clustered",
+      "help": "HAND-PLACED BY US, not learned — chosen so animals cluster left, flowers cluster right, and the two groups sit about 90° apart so cross-group cosines land near 0. The page says this to the student in plain words beside the map. If you change them, the pinned cos(cats, dogs) = 0.951 no longer holds."},
+    "sentence": {"label": "The one-hot sentence", "kind": "list"},
+    "openPair": {"label": "Which two words are selected at load", "kind": "list"},
+    "chipNote": {"label": "The line under the word chips", "kind": "text"}
+  }
+}
+</script>
+
+<script>
+(function(){
+"use strict";
+var CFG = JSON.parse(document.getElementById("m170-config").textContent);
+function isArr(v){ return Object.prototype.toString.call(v)==="[object Array]"; }
+/* ==================================================================
+   PINNED STARTING LAYOUT (reconstructed, flagged in the spec header):
+     animals cluster LEFT, flowers RIGHT, ~90° apart so cross-cluster
+     cosines sit near 0 while within-cluster cosines sit near 1.
+       cats  = (−1.8, 1.5)     rose  = (1.7, 1.7)
+       dogs  = (−1.2, 1.9)     tulip = (1.1, 1.8)
+       lion  = (−2.4, 1.4)     daisy = (2.1, 1.3)
+   Pinned checks (verified numerically at build time):
+     cos(cats,dogs)  =  0.951   (θ ≈ 18°)
+     cos(cats,rose)  = −0.091   (θ ≈ 95° — "nearly sideways")
+   ROUND 2 (professor, 2026-07-27): the "worksheet example u·v·w·x" setting and the
+   "recommender: you liked cats + dogs" button were removed. The word map is now the
+   only setting, and a paragraph beside the map says plainly that these six coordinates
+   were placed by hand for teaching. The cosine calculation is untouched.
+   One-hot: every pair of identity rows differs in exactly 2 slots →
+     L1 distance 2, every single pair (shown L1, binary-vector continuity —
+     never √2).
+   ================================================================== */
+
+var WORDS = (isArr(CFG.words)&&CFG.words.length>1) ? CFG.words.map(String)
+          : ["cats","dogs","lion","rose","tulip","daisy"];
+var SUPPS = {};
+(isArr(CFG.supplements)?CFG.supplements:[]).forEach(function(w){ SUPPS[w]=1; });
+var PIN   = {};
+WORDS.forEach(function(w,i){
+  var p = (CFG.positions||{})[w];
+  PIN[w] = isArr(p) ? [+p[0]||0, +p[1]||0] : [i-2, 1];
+});
+var SENT  = isArr(CFG.sentence)&&CFG.sentence.length ? CFG.sentence.map(String)
+          : ["I","like","cats","and","dogs"];        /* worksheet sentence, ℝ⁵ */
+var TOTAL_PAIRS = WORDS.length*(WORDS.length-1)/2;
+var OPEN  = (isArr(CFG.openPair)?CFG.openPair:[]).filter(function(w){ return PIN[w]; });
+if(OPEN.length!==2) OPEN = WORDS.slice(0,2);
+var CHIPNOTE = String(CFG.chipNote||"pick any two");
+
+function copyPos(src){ var o={}; for(var k in src) o[k]=[src[k][0],src[k][1]]; return o; }
+
+var state = {
+  world:"onehot",              /* "onehot" | "embed"  — the spine */
+  sel:OPEN.slice(),            /* word pair, oldest first (initial teaching state) */
+  pos:copyPos(PIN),            /* live (draggable) positions */
+  tally:[],                    /* keys "cats|dogs" in check order */
+  sentence:false
+};
+
+/* ---------- theme: auto → light → dark (exemplar pattern, verbatim) ---------- */
+var root = document.documentElement, themeBtn = document.getElementById("themeBtn");
+function themeLabel(){
+  var m = root.dataset.theme || "auto";
+  themeBtn.textContent = m==="dark" ? "● dark" : m==="light" ? "○ light" : "◑ auto";
+}
+themeBtn.addEventListener("click", function(){
+  var cur = root.dataset.theme || "auto";
+  var next = cur==="auto" ? "light" : cur==="light" ? "dark" : "auto";
+  if(next==="auto"){ delete root.dataset.theme; try{localStorage.removeItem("m170-theme");}catch(e){} }
+  else { root.dataset.theme = next; try{localStorage.setItem("m170-theme", next);}catch(e){} }
+  themeLabel(); render();
+});
+if(window.matchMedia){ window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function(){ render(); }); }
+themeLabel();
+
+/* ---------- shared helpers (exemplar pattern; no sliders in this file) ---------- */
+function css(v){ return getComputedStyle(document.body).getPropertyValue(v).trim(); }
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+function txt(x,y,s,color,anchor,size,family,weight){
+  return '<text x="'+x+'" y="'+y+'" fill="'+color+'" text-anchor="'+(anchor||"start")+
+    '" font-size="'+(size||12)+'" font-family="'+(family||"var(--font-ui)")+'"'+
+    (weight?' font-weight="'+weight+'"':'')+
+    (family==="var(--font-mono)"?' style="font-variant-numeric:tabular-nums"':'')+'>'+esc(s)+'</text>';
+}
+function ln(x1,y1,x2,y2,color,w,dash){
+  return '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+color+
+    '" stroke-width="'+(w||1)+'"'+(dash?' stroke-dasharray="'+dash+'"':'')+'/>';
+}
+/* minus sign for display (U+2212, never a hyphen in student-facing numbers) */
+function num(x,d){ return x.toFixed(d).replace(/-/g,"−"); }
+
+/* ---------- math ---------- */
+function dot(a,b){ return a[0]*b[0]+a[1]*b[1]; }
+function norm(a){ return Math.hypot(a[0],a[1]); }
+function cosSim(a,b){
+  var na=norm(a), nb=norm(b);
+  if(na<1e-9 || nb<1e-9) return null;      /* zero vector: no direction — guarded */
+  return dot(a,b)/(na*nb);
+}
+
+/* the word map is the only setting now (professor, 2026-07-27) */
+function vecs(){ return state.pos; }
+function keys(){ return WORDS; }
+function selection(){ return state.sel; }
+
+/* ==================================================================
+   CHIPS — pick any two, in both worlds
+   ================================================================== */
+var chipsEl = document.getElementById("chips"), chipNote = document.getElementById("chipNote");
+
+function renderChips(){
+  var sel = state.sel, h = "";
+  WORDS.forEach(function(id){
+    var on = sel.indexOf(id)>=0;
+    h += '<button type="button" class="chip" data-id="'+id+'" aria-pressed="'+on+'">'+
+         esc(id) + (SUPPS[id] ? "<sup>†</sup>" : "") + '</button>';
+  });
+  chipsEl.innerHTML = h;
+  chipsEl.setAttribute("aria-label", "Pick any two words");
+  chipNote.textContent = CHIPNOTE;
+}
+
+chipsEl.addEventListener("click", function(e){
+  var b = e.target.closest("button[data-id]");
+  if(!b) return;
+  var id = b.getAttribute("data-id");
+  var sel = state.sel;
+  var i = sel.indexOf(id);
+  if(i>=0) sel.splice(i,1);
+  else { sel.push(id); if(sel.length>2) sel.shift(); }
+  if(state.world==="onehot" && sel.length===2) addTally(sel);
+  render();
+  var again = chipsEl.querySelector('[data-id="'+id+'"]');
+  if(again) again.focus({preventScroll:true});
+});
+
+/* ==================================================================
+   ONE-HOT WORLD — DOM identity table · L1 counter · tally · punchline
+   ================================================================== */
+var ohTable=document.getElementById("ohTable"), ohDist=document.getElementById("ohDist"),
+    ohTallyEl=document.getElementById("ohTally"), ohPunch=document.getElementById("ohPunch"),
+    ohSent=document.getElementById("ohSentence"), ohSentTable=document.getElementById("ohSentTable");
+
+function pairKey(sel){ return sel.slice().sort().join("|"); }
+function addTally(sel){
+  var k = pairKey(sel);
+  if(state.tally.indexOf(k)<0) state.tally.push(k);
+}
+
+function identityTable(labels, selSet, supFlag){
+  var h = '<table class="onehot"><thead><tr><th scope="col"></th>';
+  labels.forEach(function(w){ h += '<th scope="col">'+esc(w)+'</th>'; });
+  h += '</tr></thead><tbody>';
+  labels.forEach(function(w,i){
+    var on = selSet && selSet.indexOf(w)>=0;
+    h += '<tr'+(on?' class="sel"':'')+'><th scope="row">'+esc(w)+
+         (supFlag&&SUPPS[w]?'<sup style="color:var(--gray-text)">†</sup>':'')+'</th>';
+    labels.forEach(function(_,j){
+      h += '<td'+(i===j?' class="one"':'')+'>'+(i===j?1:0)+'</td>';
+    });
+    h += '</tr>';
+  });
+  return h+'</tbody></table>';
+}
+
+var countTimers=[];
+function animateLanding(el){
+  countTimers.forEach(clearTimeout); countTimers=[];
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if(reduce){ el.textContent="2"; return; }
+  el.textContent="0";
+  countTimers.push(setTimeout(function(){ el.textContent="1"; },170));
+  countTimers.push(setTimeout(function(){ el.textContent="2"; },340));
+}
+
+var lastPair=null;
+function renderOnehot(){
+  ohTable.innerHTML = identityTable(WORDS, state.sel, true);
+
+  /* distance beat — L1 (city-block), never √2 */
+  if(state.sel.length===2){
+    var a=state.sel[0], b=state.sel[1], ia=WORDS.indexOf(a), ib=WORDS.indexOf(b);
+    var terms=[], vals=[], i;
+    for(i=0;i<WORDS.length;i++){
+      var va=(i===ia?1:0), vb=(i===ib?1:0);
+      terms.push("|"+va+"−"+vb+"|"); vals.push(Math.abs(va-vb));
+    }
+    ohDist.innerHTML =
+      '<div class="mathbox">d₁('+esc(a)+', '+esc(b)+')'+
+      ' = '+terms.join(" + ")+'\n'+
+      Array(("d₁("+a+", "+b+")").length+1).join(" ")+
+      ' = '+vals.join(" + ")+'</div>'+
+      '<div><div class="bigd" id="bigd">2</div>'+
+      '<div class="bigd-label">= L1 distance — count the mismatches, the city-block distance from the binary-vector unit. It lands on 2. It always lands on 2.</div></div>';
+    var k = pairKey(state.sel);
+    if(k!==lastPair){ animateLanding(document.getElementById("bigd")); lastPair=k; }
+  } else {
+    ohDist.innerHTML = '<div class="bigd-label" style="max-width:none">tap two word chips to measure a pair</div>';
+    lastPair=null;
+  }
+
+  /* tally strip */
+  if(state.tally.length===0){
+    ohTallyEl.innerHTML = '<span class="sfx">tally — the strip fills as you check pairs: </span>'+
+                          '<span class="sfx">none yet</span>';
+  } else {
+    var parts = state.tally.map(function(k){ var p=k.split("|"); return esc(p[0])+"↔"+esc(p[1])+" 2"; });
+    var sfx = state.tally.length>=TOTAL_PAIRS
+      ? " — all 15 pairs tie at 2"
+      : (state.tally.length>=2 ? " — every pair ties" : "");
+    ohTallyEl.innerHTML = '<span class="sfx">tally ('+state.tally.length+' of '+TOTAL_PAIRS+' pairs): </span>'+
+                          parts.join(" · ") + '<span class="sfx">'+sfx+'</span>';
+  }
+  ohPunch.hidden = state.tally.length < 2;
+
+  /* sentence mini-mode */
+  ohSent.hidden = !state.sentence;
+  if(state.sentence && !ohSentTable.innerHTML)
+    ohSentTable.innerHTML = identityTable(SENT, null, false);
+}
+
+var sentBtn=document.getElementById("sentBtn");
+sentBtn.addEventListener("click", function(){
+  state.sentence = !state.sentence;
+  sentBtn.setAttribute("aria-pressed", String(state.sentence));
+  sentBtn.innerHTML = "“I like cats and dogs” — encode the sentence " + (state.sentence?"▾":"▸");
+  render();
+});
+
+/* ==================================================================
+   EMBEDDING WORLD — SVG plane · arrows · gold angle arc · dial · drag
+   ================================================================== */
+var plane=document.getElementById("plane"), dialEl=document.getElementById("dial"),
+    cosRead=document.getElementById("cosRead"), snapEl=document.getElementById("snapNote");
+
+/* world ↔ pixel: x ∈ [−3.5, 3.5], y ∈ [−2.6, 3.2], 88 px per unit */
+var S=88, CX=320, Y0=295.6;                    /* Y0 = pixel row of y=0 */
+function X(u){ return CX + S*u; }
+function Y(v){ return Y0 - S*v; }
+function toWorld(px,py){ return [(px-CX)/S, (Y0-py)/S]; }
+
+var snapTimer=null;
+function snapNote(msg){
+  snapEl.textContent = msg;
+  if(snapTimer) clearTimeout(snapTimer);
+  snapTimer = setTimeout(function(){ snapEl.textContent=""; }, 2600);
+}
+function clampPos(p){
+  var x=Math.max(-3.4,Math.min(3.4,p[0])), y=Math.max(-2.5,Math.min(3.05,p[1]));
+  var n=Math.hypot(x,y);
+  if(n<0.15){                                /* origin guard: a zero vector has no direction */
+    if(n<1e-9){ x=0.15; y=0; } else { x=x/n*0.15; y=y/n*0.15; }
+    snapNote("snapped away from the origin — a zero vector has no direction, so cos θ would be undefined");
+  }
+  return [x,y];
+}
+
+function arrowSvg(x1,y1,x2,y2,color,w,dash){
+  var dx=x2-x1, dy=y2-y1, L=Math.hypot(dx,dy);
+  if(L<2) return "";
+  var ux=dx/L, uy=dy/L, ah=10, aw=4.5, bx=x2-ux*ah, by=y2-uy*ah;
+  return ln(x1,y1,bx,by,color,w||2,dash)+
+    '<polygon points="'+x2.toFixed(1)+','+y2.toFixed(1)+' '+(bx-uy*aw).toFixed(1)+','+(by+ux*aw).toFixed(1)+
+    ' '+(bx+uy*aw).toFixed(1)+','+(by-ux*aw).toFixed(1)+'" fill="'+color+'"/>';
+}
+
+/* gold wedge + arc between two math-angles (radians), short way around */
+function wedgeSvg(a1,a2,r,fill,stroke){
+  var d=a2-a1; while(d>Math.PI) d-=2*Math.PI; while(d<-Math.PI) d+=2*Math.PI;
+  var cx=X(0), cy=Y(0), n=24, pts=[], i, t;
+  for(i=0;i<=n;i++){ t=a1+d*i/n; pts.push((cx+r*Math.cos(t)).toFixed(1)+","+(cy-r*Math.sin(t)).toFixed(1)); }
+  var tm=a1+d/2;
+  return { svg:'<polygon points="'+cx+','+cy+' '+pts.join(" ")+'" fill="'+fill+'"/>'+
+               '<polyline points="'+pts.join(" ")+'" fill="none" stroke="'+stroke+'" stroke-width="1.5"/>',
+           lx:cx+(r+17)*Math.cos(tm), ly:cy-(r+17)*Math.sin(tm) };
+}
+
+function renderEmbed(){
+  var ink=css("--ink"), gold=css("--gold"), gray=css("--gray-text"),
+      line=css("--gray-line"), paper=css("--paper"), soft=css("--gold-soft");
+  var V=vecs(), sel=selection();
+  var out="", i, k;
+
+  /* grid + axes */
+  for(i=-3;i<=3;i++){
+    if(i!==0){
+      out += ln(X(i),Y(3.2),X(i),Y(-2.6),line,1);
+      out += ln(X(-3.5),Y(i>3?3:i),X(3.5),Y(i),line,1);
+    }
+  }
+  out += ln(X(-3.5),Y(0),X(3.5),Y(0),ink,1);          /* x-axis */
+  out += ln(X(0),Y(3.2),X(0),Y(-2.6),ink,1);          /* y-axis */
+  for(i=-3;i<=3;i++){
+    if(i===0) continue;
+    out += txt(X(i),Y(0)+16,String(i).replace("-","−"),gray,"middle",10);
+    out += txt(X(0)-7,Y(i)+4,String(i).replace("-","−"),gray,"end",10);
+  }
+  out += txt(X(3.5)-4,Y(0)+30,"embedding dimension 1",gray,"end",11);
+  out += txt(X(0)+8,Y(3.2)+12,"embedding dimension 2",gray,"start",11);
+  out += txt(X(0)-7,Y(0)+16,"0",gray,"end",10);
+
+  /* selected pair: gold arrows + gold angle arc + θ label */
+  var pairDone = sel.length===2, cosVal=null, theta=null;
+  if(pairDone){
+    var A=V[sel[0]], B=V[sel[1]];
+    cosVal = cosSim(A,B);
+    if(cosVal!==null){
+      theta = Math.acos(Math.max(-1,Math.min(1,cosVal)))*180/Math.PI;
+      var wg = wedgeSvg(Math.atan2(A[1],A[0]), Math.atan2(B[1],B[0]), 42, soft, gold);
+      out += wg.svg;
+      out += txt(wg.lx,wg.ly+4,"θ ≈ "+Math.round(theta)+"°",ink,"middle",12,"var(--font-mono)");
+      out += arrowSvg(X(0),Y(0),X(A[0]),Y(A[1]),gold,2.5);
+      out += arrowSvg(X(0),Y(0),X(B[0]),Y(B[1]),gold,2.5);
+    }
+  }
+
+  /* word / landmark marks (never color alone: selection also = arrows + bold label) */
+  keys().forEach(function(id){
+    var p=V[id], px=X(p[0]), py=Y(p[1]);
+    var on = sel.indexOf(id)>=0;
+    var edge = px>560;                          /* labels near the right edge flip anchor */
+    var lx = edge? px-12 : px+11, anch = edge? "end" : "start";
+    var g = '<g class="word" id="m-'+id+'" tabindex="0" role="button" aria-label="'+esc(id)+
+            ' — embedding ('+num(p[0],1)+', '+num(p[1],1)+
+            '). Arrow keys move it; hold Shift for big steps.">';
+    g += '<circle cx="'+px+'" cy="'+py+'" r="16" fill="transparent"/>';   /* ≥24px touch target */
+    g += '<circle class="dot" cx="'+px+'" cy="'+py+'" r="7" fill="'+(on?gold:paper)+
+         '" stroke="'+ink+'" stroke-width="1.5"/>';
+    g += txt(lx,py-10,id,ink,anch,14,"var(--font-ui)",on?"700":"400");
+    if(on) g += txt(lx,py+4,"("+num(p[0],1)+", "+num(p[1],1)+")",gray,anch,10,"var(--font-mono)");
+    out += g+'</g>';
+  });
+
+  plane.innerHTML = out;
+
+  /* cos readout + dial (the pair's similarity is THE number on this screen) */
+  if(pairDone && cosVal!==null){
+    cosRead.innerHTML = 'cos θ = <b>'+num(cosVal,3)+'</b> · θ ≈ '+
+      Math.round(theta)+'° — '+esc(sel[0])+' ↔ '+esc(sel[1]);
+  } else {
+    cosRead.innerHTML = 'pick two words to compare directions';
+  }
+  renderDial(pairDone?cosVal:null, ink, gold, gray, line);
+
+  /* math reveal — cos θ = u·v / (‖u‖‖v‖), cell by cell, live numbers */
+  var mb=document.getElementById("mathbox");
+  if(pairDone && cosVal!==null){
+    var a=V[sel[0]], b=V[sel[1]];
+    var p1=a[0]*b[0], p2=a[1]*b[1], dv=p1+p2, na=norm(a), nb=norm(b);
+    var L=[];
+    L.push("u = "+sel[0]+" = ("+num(a[0],2)+", "+num(a[1],2)+")     v = "+sel[1]+" = ("+num(b[0],2)+", "+num(b[1],2)+")");
+    L.push("");
+    L.push("u·v   = ("+num(a[0],2)+")("+num(b[0],2)+") + ("+num(a[1],2)+")("+num(b[1],2)+")   ← dot product");
+    L.push("      = "+num(p1,2)+" + "+num(p2,2)+"  =  "+num(dv,2));
+    L.push("‖u‖  = √(("+num(a[0],2)+")² + ("+num(a[1],2)+")²) = √"+num(a[0]*a[0]+a[1]*a[1],2)+" = "+num(na,3));
+    L.push("‖v‖  = √(("+num(b[0],2)+")² + ("+num(b[1],2)+")²) = √"+num(b[0]*b[0]+b[1]*b[1],2)+" = "+num(nb,3));
+    L.push("");
+    L.push("cos θ = u·v / (‖u‖ × ‖v‖)");
+    L.push("      = "+num(dv,2)+" / ("+num(na,3)+" × "+num(nb,3)+")");
+    L.push("      = "+num(dv,2)+" / "+num(na*nb,3));
+    L.push("      = "+num(cosVal,3));
+    mb.textContent = L.join("\n");
+  } else {
+    mb.textContent = "pick two words and the arithmetic appears here";
+  }
+}
+
+function renderDial(c, ink, gold, gray, line){
+  var y=38, x0=90, x1=550;
+  function M(v){ return x0+(v+1)/2*(x1-x0); }
+  var out = ln(x0,y,x1,y,line,2);
+  [-1,-0.5,0,0.5,1].forEach(function(v){
+    out += ln(M(v),y-5,M(v),y+5,ink,1);
+    out += txt(M(v),y+20,(v===0?"0":num(v,1)),gray,"middle",10,"var(--font-mono)");
+  });
+  out += txt(M(-1),y-14,"opposite",gray,"middle",11);
+  out += txt(M(0),y-14,"unrelated",gray,"middle",11);
+  out += txt(M(1),y-14,"same direction",gray,"middle",11);
+  if(c!==null && c!==undefined){
+    var mx=M(Math.max(-1,Math.min(1,c)));
+    out += '<circle cx="'+mx+'" cy="'+y+'" r="8" fill="'+gold+'" stroke="'+ink+'" stroke-width="1"/>';
+  }
+  dialEl.innerHTML = out;
+}
+
+/* ---------- dragging: pointer ("you be the training") ---------- */
+var dragId=null, dragOff=[0,0];
+function planePoint(e){
+  var r=plane.getBoundingClientRect();
+  return [ (e.clientX-r.left)*640/r.width, (e.clientY-r.top)*540/r.height ];
+}
+plane.addEventListener("pointerdown", function(e){
+  var pp=planePoint(e), best=null, bd=24;
+  WORDS.forEach(function(id){
+    var p=state.pos[id], d=Math.hypot(X(p[0])-pp[0], Y(p[1])-pp[1]);
+    if(d<bd){ bd=d; best=id; }
+  });
+  if(!best) return;
+  dragId=best;
+  var w=toWorld(pp[0],pp[1]);
+  dragOff=[state.pos[best][0]-w[0], state.pos[best][1]-w[1]];
+  plane.setPointerCapture(e.pointerId);
+  e.preventDefault();
+});
+plane.addEventListener("pointermove", function(e){
+  if(!dragId) return;
+  var pp=planePoint(e), w=toWorld(pp[0],pp[1]);
+  state.pos[dragId]=clampPos([w[0]+dragOff[0], w[1]+dragOff[1]]);
+  renderEmbed();
+});
+function endDrag(){ dragId=null; }
+plane.addEventListener("pointerup", endDrag);
+plane.addEventListener("pointercancel", endDrag);
+
+/* ---------- dragging: keyboard (arrow = 0.1, Shift+arrow = 1.0) ---------- */
+plane.addEventListener("keydown", function(e){
+  var g=e.target.closest ? e.target.closest("g.word") : null;
+  if(!g) return;
+  var id=g.id.slice(2), step=e.shiftKey?1.0:0.1, dx=0, dy=0;
+  if(e.key==="ArrowLeft") dx=-step; else if(e.key==="ArrowRight") dx=step;
+  else if(e.key==="ArrowUp") dy=step; else if(e.key==="ArrowDown") dy=-step;
+  else return;
+  e.preventDefault();
+  var p=state.pos[id];
+  state.pos[id]=clampPos([p[0]+dx, p[1]+dy]);
+  renderEmbed();
+  var ng=document.getElementById("m-"+id);
+  if(ng) ng.focus({preventScroll:true});
+});
+
+/* ==================================================================
+   MODE PLUMBING · BEATS · RESET
+   ================================================================== */
+var worldOnehot=document.getElementById("worldOnehot"), worldEmbed=document.getElementById("worldEmbed");
+
+function setWorld(w){ state.world=w; render(); }
+worldOnehot.addEventListener("click", function(){ setWorld("onehot"); });
+worldEmbed.addEventListener("click", function(){ setWorld("embed"); });
+
+var mt=document.getElementById("mathToggle"), mr=document.getElementById("mathReveal");
+mt.addEventListener("click", function(){
+  var open = mr.hidden; mr.hidden = !open;
+  mt.setAttribute("aria-expanded", String(open));
+  mt.textContent = open ? "Hide the math ▾" : "Show the math ▸";
+});
+
+/* Reset → the initial teaching state (one-hot world, cats+dogs, empty tally,
+   pinned layout). Dragging changed DATA, so a two-press confirm guards it. */
+var resetBtn=document.getElementById("reset"), resetArmed=false, resetTimer=null;
+function posChanged(){
+  return WORDS.some(function(w){
+    return state.pos[w][0]!==PIN[w][0] || state.pos[w][1]!==PIN[w][1];
+  });
+}
+function doReset(){
+  state.world="onehot";
+  state.sel=OPEN.slice();
+  state.pos=copyPos(PIN); state.tally=[];
+  state.sentence=false;
+  lastPair=null;
+  sentBtn.setAttribute("aria-pressed","false");
+  sentBtn.innerHTML="“I like cats and dogs” — encode the sentence ▸";
+  mr.hidden=true; mt.setAttribute("aria-expanded","false"); mt.textContent="Show the math ▸";
+  snapEl.textContent="";
+  render();
+}
+resetBtn.addEventListener("click", function(){
+  if(posChanged() && !resetArmed){
+    resetArmed=true; resetBtn.textContent="Really reset?";
+    resetTimer=setTimeout(function(){ resetArmed=false; resetBtn.textContent="Reset"; },2000);
+    return;
+  }
+  if(resetTimer) clearTimeout(resetTimer);
+  resetArmed=false; resetBtn.textContent="Reset";
+  doReset();
+});
+
+/* ---------- top-level render ---------- */
+function render(){
+  var oneh = state.world==="onehot";
+  worldOnehot.setAttribute("aria-pressed", String(oneh));
+  worldEmbed.setAttribute("aria-pressed", String(!oneh));
+
+  document.getElementById("panelOnehot").hidden = !oneh;
+  document.getElementById("panelEmbed").hidden  =  oneh;
+  document.getElementById("ctlOnehot").hidden   = !oneh;
+  document.getElementById("ctlMath").hidden     =  oneh;
+
+  renderChips();
+  if(oneh) renderOnehot(); else renderEmbed();
+}
+
+render();   /* initial teaching state: one-hot world · cats+dogs selected · tally empty */
+})();
+</script>
+</body>
+</html>

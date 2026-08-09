@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Which Node Matters Most? · MATH 170</title>
+<style>
+:root{
+  --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+  --gold-soft:rgba(218,165,32,.12);
+  --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  --font-body: ui-serif, Georgia, "Times New Roman", serif;
+  --font-ui:   system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+  --text-xl:1.75rem; --text-lg:1.25rem; --text-base:1rem; --text-sm:.875rem; --text-xs:.75rem;
+  --leading-prose:1.6; --leading-ui:1.3;
+  --space-1:4px; --space-2:8px; --space-3:16px; --space-4:24px; --space-5:32px; --space-6:48px;
+  --ease:cubic-bezier(0.16,1,0.3,1); --dur:200ms;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+    --gold-soft:rgba(227,179,65,.16);
+    --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+  --gold-soft:rgba(227,179,65,.16);
+  --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+}
+@media (prefers-reduced-motion: reduce){ :root{ --dur:0ms; } }
+@media print{
+  :root, :root[data-theme="dark"]{
+    --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+    --gold-soft:rgba(218,165,32,.12);
+    --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  }
+  .theme-btn{display:none}
+  .stage{break-inside:avoid}
+}
+*{box-sizing:border-box}
+html{color-scheme:light dark}
+body{margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--font-body); font-size:var(--text-base); line-height:var(--leading-prose);
+  -webkit-text-size-adjust:100%;}
+.wrap{max-width:820px; margin:0 auto; padding:var(--space-5) var(--space-4) var(--space-6);}
+.topbar{display:flex; align-items:baseline; justify-content:space-between; gap:var(--space-3);
+  border-bottom:1px solid var(--gray-line); padding-bottom:var(--space-2); margin-bottom:var(--space-4);}
+.eyebrow{font-family:var(--font-ui); font-size:var(--text-xs); letter-spacing:.08em; text-transform:uppercase; color:var(--gray-text);}
+h1{font-family:var(--font-body); font-weight:600; font-size:var(--text-xl); line-height:1.2; margin:.2em 0 .1em;}
+p{margin:0 0 var(--space-3);}
+.prose{max-width:66ch;}
+.muted{color:var(--gray-text);}
+.mono,code{font-family:var(--font-mono); font-variant-numeric:tabular-nums;}
+a{color:inherit;}
+:focus-visible{outline:2px solid var(--ink); outline-offset:2px; box-shadow:0 0 0 5px var(--gold-soft);}
+.theme-btn{font-family:var(--font-ui); font-size:var(--text-xs); background:none;
+  border:1px solid var(--gray-line); color:var(--gray-text); padding:6px 10px; cursor:pointer; border-radius:2px;}
+.theme-btn:hover{background:var(--gray-fill);}
+details.spec{border:1px solid var(--gray-line); border-radius:2px; margin:0 0 var(--space-4); background:var(--gray-fill);}
+details.spec>summary{font-family:var(--font-ui); font-size:var(--text-sm); cursor:pointer;
+  padding:var(--space-2) var(--space-3); list-style:none; color:var(--gray-text);}
+details.spec>summary::-webkit-details-marker{display:none}
+details.spec>summary::before{content:"▸ "; color:var(--gold);}
+details.spec[open]>summary::before{content:"▾ ";}
+.spec-body{padding:0 var(--space-3) var(--space-3); font-family:var(--font-ui); font-size:var(--text-sm); line-height:1.5;}
+.spec-body dt{font-weight:600; margin-top:var(--space-2);}
+.spec-body dd{margin:0; color:var(--gray-text);}
+.stage{margin:var(--space-4) 0;}
+svg{max-width:100%; height:auto; font-family:var(--font-ui); display:block; margin:0 auto;
+  border:1px solid var(--gray-line); border-radius:2px;}
+.controls{border-top:1px solid var(--gray-line); padding-top:var(--space-3); margin-top:var(--space-4);}
+.btn{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:1px solid var(--ink); padding:8px 14px; cursor:pointer; border-radius:2px;}
+.btn:hover{background:var(--gray-fill);}
+.btn[disabled]{border-color:var(--gray-line); color:var(--gray-line); cursor:default;}
+.seg{display:inline-flex; border:1px solid var(--ink); border-radius:2px; overflow:hidden; flex-wrap:wrap;}
+.seg button{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:0; border-left:1px solid var(--ink); padding:7px 12px; cursor:pointer;}
+.seg button:first-child{border-left:0;}
+.seg button[aria-pressed="true"]{background:var(--gold); color:#111111;}
+.foot{display:flex; align-items:center; gap:var(--space-3); margin-top:var(--space-5);
+  border-top:1px solid var(--gray-line); padding-top:var(--space-3); flex-wrap:wrap;}
+.foot .btn{margin-right:auto;}
+.hint{font-family:var(--font-ui); font-size:var(--text-sm); color:var(--gray-text);}
+.mathbox{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm);
+  background:var(--gray-fill); border-left:2px solid var(--gold); padding:var(--space-3);
+  margin:var(--space-3) 0; overflow-x:auto; white-space:pre; line-height:1.7;}
+.attach{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text);
+  border-top:1px dotted var(--gray-line); margin-top:var(--space-6); padding-top:var(--space-3);}
+.tag{display:inline-block; font-family:var(--font-ui); font-size:var(--text-xs);
+  border:1px solid var(--gray-line); border-radius:999px; padding:1px 8px; color:var(--gray-text); margin-left:6px;}
+.callout{font-family:var(--font-ui); font-size:var(--text-sm); border:1px solid var(--gray-line);
+  border-left:2px solid var(--gold); padding:var(--space-2) var(--space-3); margin:var(--space-3) 0;}
+.chips{display:flex; gap:var(--space-2); flex-wrap:wrap; margin:var(--space-2) 0;}
+.chips button{font-family:var(--font-ui); font-size:var(--text-xs); border:1px solid var(--gray-line);
+  background:var(--paper); color:var(--ink); border-radius:999px; padding:3px 10px; cursor:pointer;}
+.chips button[aria-pressed="true"]{border-color:var(--gold); background:var(--gold-soft);}
+.gstats{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-xs);
+  color:var(--gray-text); margin:var(--space-2) 0;}
+table.cmp{font-family:var(--font-ui); font-size:var(--text-sm); border-collapse:collapse; margin:var(--space-2) 0;}
+table.cmp td,table.cmp th{border:1px solid var(--gray-line); padding:4px 10px; font-family:var(--font-mono);}
+table.cmp th{font-family:var(--font-ui); background:var(--gray-fill);}
+td.win{color:var(--gold); font-weight:700;}
+</style>
+<script>
+try{var t=localStorage.getItem("m170-theme");if(t)document.documentElement.dataset.theme=t;}catch(e){}
+</script>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="eyebrow">MATH 170 · Centrality · Clustering-Coefficient worksheets · Two Networks</div>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Color theme">◑ auto</button>
+  </div>
+
+  <h1 data-edit="title">Which node matters most? <span class="tag">centrality</span></h1>
+  <p class="prose muted" data-edit="intro">"Most important" has several competing definitions — degree, eccentricity,
+  closeness, clustering coefficient — and they don't agree. Tap a vertex and make each measure
+  <em>show its work</em>.</p>
+
+  <div data-slot="notes-top"></div>
+
+
+  <!-- PINNED (python-verified), and true for the DEFAULT config island below:
+       Notes example = P6 path a? labels: v1..v6 with a=v2, b=v6 → ecc(a)=4, ecc(b)=5, rad 3, diam 5,
+         center {v3,v4}, periphery {v1,v6}.
+       cc example: hub v with neighbors n1..n5, ring edges n1n2,n2n3,n3n4,n4n5 → 9 edges in N[v], 15 possible → 3/5.
+       Village: A-x1..x5, A-b1, x1-x2, clique B,b1,b2,b3 (all 6 edges).
+         deg A 6 > deg B 3 · closeness A 0.750 > B 0.450 · cc A 7/21 (1/3) < cc B 6/6 (1).
+       Fungal edges: 3-1,3-4,3-8,1-2,4-5,8-9,2-12,5-6,5-10,6-11,10-11,7-11,13-11,11-14,
+         20-14,20-15,20-19,16-17,17-18,16-18.
+         BFS(3): wk1 {1,4,8} wk2 {2,5,9} wk3 {6,10,12} wk4 {11}; ≥5 or unreachable = unobserved.
+         BFS(20): wk1 {14,15,19} wk2 {11} wk3 {6,7,10,13} wk4 {5}. 16,17,18 isolated triangle.
+         Matches the worksheet dye table exactly. -->
+
+  <div class="stage">
+    <div class="chips" id="graphs"></div>
+    <div class="seg" role="group" aria-label="Measure" id="measures">
+      <button type="button" data-m="degree" aria-pressed="true">degree</button>
+      <button type="button" data-m="ecc" aria-pressed="false">eccentricity</button>
+      <button type="button" data-m="close" aria-pressed="false">closeness</button>
+      <button type="button" data-m="cc" aria-pressed="false">clustering coeff</button>
+    </div>
+    <div class="gstats" id="gstats"></div>
+    <svg id="svg" viewBox="0 0 680 400" aria-label="Network"></svg>
+    <div class="callout" id="story"></div>
+    <div>
+      <button class="btn" id="pinBtn" type="button" disabled>Pin selected vertex to compare</button>
+      <button class="btn" id="clearPins" type="button">Clear pins</button>
+    </div>
+    <div id="cmp"></div>
+    <div class="mathbox" id="mathbox" aria-live="polite">Tap a vertex.</div>
+  </div>
+
+  <div data-slot="notes-bottom"></div>
+
+  <div class="foot">
+    <button class="btn" id="reset" type="button">Reset</button>
+    <span class="hint" data-edit="hint-try">Try: pin Village A and Village B, then flip through all four measures.</span>
+  </div>
+
+</div>
+
+<script type="application/json" id="m170-config">
+{
+  "_v": 1,
+  "start": {"graph": "Village network", "measure": "degree"},
+  "maxPins": 2,
+  "decimals": 3,
+  "layout": {"nodeRadius": 13, "furthestRingRadius": 20},
+  "graphs": {
+    "Village network": {
+      "story": "Aid Distribution: one Community Support Kit, Village A or Village B? Speed and direct access favor one answer; local resiliency favors the other.",
+      "names": ["A", "x1", "x2", "x3", "x4", "x5", "B", "b1", "b2", "b3"],
+      "pos": [[190,200],[70,90],[70,200],[70,310],[190,60],[190,340],[520,200],[390,200],[600,110],[600,290]],
+      "edges": [[0,1],[0,2],[0,3],[0,4],[0,5],[0,7],[1,2],[6,7],[6,8],[6,9],[7,8],[7,9],[8,9]]
+    },
+    "Notes example (a & b)": {
+      "story": "From the instructor's notes: eccentricity uses the SHORTEST path to a furthest vertex — check ecc(a)=4 and ecc(b)=5 here, radius 3, diameter 5.",
+      "names": ["b", "a", "v3", "v4", "v5", "v6"],
+      "pos": [[70,200],[180,200],[290,200],[400,200],[510,200],[620,200]],
+      "edges": [[0,1],[1,2],[2,3],[3,4],[4,5]]
+    },
+    "C₅ (circle intuition fails)": {
+      "story": "With circles, diameter = 2 × radius. For graphs? Here every vertex has eccentricity 2, so radius = diameter = 2.",
+      "names": ["p", "q", "r", "s", "t"],
+      "pos": {"ring": {"n": 5, "cx": 340, "cy": 200, "r": 140, "rot": -90}},
+      "edges": [[0,1],[1,2],[2,3],[3,4],[4,0]]
+    },
+    "Star K₁,₄": {
+      "story": "The hub touches everything (radius 1); the leaves are each other's far side (diameter 2). Degree and closeness both crown the hub — no disagreement in a star.",
+      "names": ["hub", "l1", "l2", "l3", "l4"],
+      "pos": [[340,200],[190,90],[490,90],[190,310],[490,310]],
+      "edges": [[0,1],[0,2],[0,3],[0,4]]
+    },
+    "cc example (9 of 15)": {
+      "story": "The worked clustering-coefficient example: v's closed neighbourhood has 6 vertices, so 15 possible edges; 9 are present → cc(v) = 3/5.",
+      "names": ["v", "n1", "n2", "n3", "n4", "n5"],
+      "pos": [[340,210],[340,60],[490,140],[470,320],[210,320],[190,140]],
+      "edges": [[0,1],[0,2],[0,3],[0,4],[0,5],[1,2],[2,3],[3,4],[4,5]]
+    },
+    "Fungal forest (20 trees)": {
+      "story": "Invasive fungus spreads through root connections. The dye table (both releases 4.1.2025, observed weekly) pins these edges. Which tree do the biologists treat? Trees 16–18 are their own island.",
+      "names": ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20"],
+      "pos": [[150,120],[240,80],[60,200],[150,200],[240,200],[330,150],[420,80],[150,285],[240,310],[330,250],
+              [420,200],[330,55],[420,310],[510,200],[640,90],[560,330],[620,330],[590,375],[640,200],[580,140]],
+      "edges": [[2,0],[2,3],[2,7],[0,1],[3,4],[7,8],[1,11],[4,5],[4,9],[5,10],[9,10],[6,10],[12,10],[10,13],
+                [19,13],[19,14],[19,18],[15,16],[16,17],[15,17]]
+    }
+  },
+  "compare": {
+    "header": "measure",
+    "rows": ["degree", "eccentricity", "closeness", "clustering coeff"],
+    "lowerIsBetter": [1],
+    "hint": "Gold = the better value for that measure (for eccentricity, lower is better). Notice they don't all pick the same vertex."
+  },
+  "strings": {
+    "tapPrompt": "Tap a vertex.",
+    "graphStats": "radius {rad} · diameter {diam} · center {{center}} · periphery {{peri}}",
+    "componentNote": "   (computed on the large component)",
+    "degree": ["degree({v}) = number of incident edges = {deg}"],
+    "eccentricity": ["ecc({v}) = longest of the SHORTEST paths out = {ecc}",
+                     "(each vertex is labeled with its shortest distance from {v};",
+                     " the furthest one is ringed)"],
+    "closeness": ["C({v}) = (|G|−1) / Σ d(u,{v})",
+                  "     = ({n}−1) / {sum}  =  {clo}",
+                  "(sum of all the little distance labels)"],
+    "clustering": ["cc({v}) = edges among N[{v}] / possible",
+                   "      = {among} / {poss}  =  {cc}",
+                   "possible = k(k−1)/2 with k = {k} vertices in N[{v}]",
+                   "(solid ink = present, dashed gray = missing)"]
+  },
+  "_meta": {
+    "start": {"label": "Graph and measure the page opens on", "kind": "choice",
+      "options": ["degree", "ecc", "close", "cc"],
+      "help": "\"graph\" must be one of the keys under Graphs; \"measure\" is one of degree, ecc, close, cc. Reset returns here."},
+    "maxPins": {"label": "How many vertices the compare tray holds", "kind": "number",
+      "help": "Pinning past this many drops the oldest. The gold \"better value\" mark is a two-way comparison, so it only appears while exactly two vertices are pinned."},
+    "decimals": {"label": "Decimal places for closeness and clustering coefficient", "kind": "number"},
+    "layout": {"label": "Vertex circle sizes in SVG units",
+      "help": "nodeRadius is every vertex; furthestRingRadius is the extra ring drawn around the furthest vertex in eccentricity mode."},
+    "graphs": {"label": "The networks in the picker", "kind": "table", "regen": "graph-edges",
+      "help": "One entry per chip, in the order shown. names lists the vertex labels; pos gives an [x, y] per vertex inside the 680×400 canvas (or {\"ring\": {n, cx, cy, r, rot}} to lay them out evenly on a circle); edges are index pairs into names. Edges pointing outside the name list are ignored. All pinned numbers in the comment above the stage describe THESE defaults."},
+    "compare": {"label": "The two-vertex comparison table",
+      "help": "rows names the four measure rows in their fixed order (degree, eccentricity, closeness, clustering coefficient); lowerIsBetter lists the row numbers, counting from 0, where the smaller value wins."},
+    "strings": {"label": "The wording of the readouts", "kind": "text",
+      "help": "Words in {braces} are filled in by the page: {v} vertex name, {deg} {ecc} the measure, {n} vertices reached, {sum} distance sum, {clo} {cc} the value, {among} {poss} {k} the clustering counts, {rad} {diam} {center} {peri} the graph-level chips. The doubled braces in graphStats print literal { } around the vertex lists."}
+  }
+}
+</script>
+
+<script>
+(function(){
+"use strict";
+var root=document.documentElement, themeBtn=document.getElementById("themeBtn");
+function themeLabel(){var m=root.dataset.theme||"auto";
+  themeBtn.textContent=m==="dark"?"● dark":m==="light"?"○ light":"◑ auto";}
+themeBtn.addEventListener("click",function(){
+  var cur=root.dataset.theme||"auto",next=cur==="auto"?"light":cur==="light"?"dark":"auto";
+  if(next==="auto"){delete root.dataset.theme;try{localStorage.removeItem("m170-theme");}catch(e){}}
+  else{root.dataset.theme=next;try{localStorage.setItem("m170-theme",next);}catch(e){}}
+  themeLabel(); draw();});
+themeLabel();
+
+function P(n,cx,cy,r,rot){var a=[];for(var i=0;i<n;i++){var t=(rot||-90)+i*360/n;
+  a.push([cx+r*Math.cos(t*Math.PI/180),cy+r*Math.sin(t*Math.PI/180)]);}return a;}
+
+/* ---------- everything tunable comes from the config island ---------- */
+var CFG = JSON.parse(document.getElementById("m170-config").textContent);
+function str(v, dflt){ return (typeof v === "string") ? v : dflt; }
+function fmt(tpl, vals){
+  return String(tpl).replace(/\{(\w+)\}/g, function(whole, k){
+    return (vals && vals[k] != null) ? String(vals[k]) : whole;
+  });
+}
+function lineList(v, dflt){
+  if(Array.isArray(v) && v.length) return v.map(String);
+  if(typeof v === "string") return [v];
+  return dflt;
+}
+
+var START = CFG.start || {};
+var LAY = CFG.layout || {};
+var NODE_R = +LAY.nodeRadius || 13, RING_R = +LAY.furthestRingRadius || 20;
+var MAXPINS = Math.max(1, Math.floor(+CFG.maxPins) || 2);
+var DECN = Math.floor(+CFG.decimals); if(!isFinite(DECN)) DECN = 3;
+var DECP = Math.pow(10, Math.min(10, Math.max(0, DECN)));
+
+var STR = CFG.strings || {};
+var TAP_PROMPT   = str(STR.tapPrompt, "Tap a vertex.");
+var GSTATS_TPL   = str(STR.graphStats, "radius {rad} · diameter {diam} · center {{center}} · periphery {{peri}}");
+var COMPONENT_NOTE = str(STR.componentNote, "   (computed on the large component)");
+var TPL = {
+  degree: lineList(STR.degree, ["degree({v}) = number of incident edges = {deg}"]),
+  ecc:    lineList(STR.eccentricity, ["ecc({v}) = longest of the SHORTEST paths out = {ecc}"]),
+  close:  lineList(STR.closeness, ["C({v}) = ({n}−1) / {sum}  =  {clo}"]),
+  cc:     lineList(STR.clustering, ["cc({v}) = {among} / {poss}  =  {cc}"])
+};
+
+var CMP = CFG.compare || {};
+var CMP_HEADER = str(CMP.header, "measure");
+var CMP_ROWS = (Array.isArray(CMP.rows) && CMP.rows.length ? CMP.rows.map(String)
+                : ["degree","eccentricity","closeness","clustering coeff"]).slice(0,4);
+var CMP_LOWER = (CMP.lowerIsBetter || []).map(Number);
+var CMP_HINT = str(CMP.hint, "Gold = the better value for that measure (for eccentricity, lower is better). Notice they don't all pick the same vertex.");
+
+function resolvePos(spec, n){
+  if(Array.isArray(spec)) return spec;
+  if(spec && spec.ring){
+    var R = spec.ring;
+    var count = Math.max(1, Math.floor(+R.n) || n || 1);
+    var rot = (R.rot != null && isFinite(+R.rot)) ? +R.rot : undefined;
+    return P(count, +R.cx || 0, +R.cy || 0, +R.r || 0, rot);
+  }
+  return [];
+}
+function normGraph(G){
+  G = G || {};
+  var names = (G.names || []).map(function(x){ return String(x); });
+  var raw = resolvePos(G.pos, names.length);
+  var pos = names.map(function(_, i){
+    var p = raw[i];
+    return (p && p.length >= 2 && isFinite(+p[0]) && isFinite(+p[1])) ? [+p[0], +p[1]] : [0, 0];
+  });
+  var edges = (G.edges || []).filter(function(e){
+    if(!e || e.length < 2) return false;
+    var a = +e[0], b = +e[1];
+    return isFinite(a) && isFinite(b) && a === Math.floor(a) && b === Math.floor(b) &&
+           a >= 0 && b >= 0 && a < names.length && b < names.length && a !== b;
+  }).map(function(e){ return [+e[0], +e[1]]; });
+  return { story: str(G.story, ""), names: names, pos: pos, edges: edges };
+}
+var GRAPHS = {};
+Object.keys(CFG.graphs || {}).forEach(function(k){
+  var G = normGraph(CFG.graphs[k]);
+  if(G.names.length) GRAPHS[k] = G;
+});
+if(!Object.keys(GRAPHS).length)
+  GRAPHS["(no graph)"] = normGraph({names:["v"], pos:[[340,200]], edges:[]});
+
+var MEASURES = ["degree","ecc","close","cc"];
+var START_GRAPH = GRAPHS[START.graph] ? String(START.graph) : Object.keys(GRAPHS)[0];
+var START_MEASURE = MEASURES.indexOf(String(START.measure)) >= 0 ? String(START.measure) : "degree";
+
+var cur=START_GRAPH, measure=START_MEASURE, sel=null, pins=[];
+
+function g(){ return GRAPHS[cur]; }
+function adj(){
+  var a=g().names.map(function(){return [];});
+  g().edges.forEach(function(e){ a[e[0]].push(e[1]); a[e[1]].push(e[0]); });
+  return a;
+}
+function bfs(s){
+  var A=adj(), d={}; d[s]=0; var q=[s];
+  while(q.length){ var u=q.shift();
+    A[u].forEach(function(v){ if(!(v in d)){ d[v]=d[u]+1; q.push(v); } }); }
+  return d;
+}
+function comp(s){ return Object.keys(bfs(s)).map(Number); }
+function mainComponent(){
+  var best=null;
+  for(var i=0;i<g().names.length;i++){
+    var c=comp(i); if(!best||c.length>best.length) best=c;
+  }
+  return best||[];
+}
+function measures(i){
+  var A=adj(), N=g().names.length;
+  var d=bfs(i), inComp=Object.keys(d).map(Number);
+  var ecc=Math.max.apply(null,inComp.map(function(v){return d[v];}));
+  var sum=0; inComp.forEach(function(v){ if(v!==i) sum+=d[v]; });
+  var clo=(inComp.length-1)/(sum||1);
+  var nb=A[i].slice(); var closed=nb.concat([i]);
+  var k=closed.length, poss=k*(k-1)/2, among=0;
+  for(var a=0;a<closed.length;a++)for(var b=a+1;b<closed.length;b++)
+    if(A[closed[a]].indexOf(closed[b])>=0) among++;
+  return {deg:A[i].length, ecc:ecc, cloSum:sum, cloN:inComp.length, clo:clo,
+          ccAmong:among, ccPoss:poss, cc:poss?among/poss:0, dists:d, nb:nb};
+}
+
+function css(v){ return getComputedStyle(document.body).getPropertyValue(v).trim(); }
+var svg=document.getElementById("svg");
+function draw(){
+  var ink=css("--ink"), gold=css("--gold"), gray=css("--gray-text"),
+      line=css("--gray-line"), soft=css("--gold-soft");
+  var G=g(), out="", m = sel!==null? measures(sel):null;
+  var A=adj();
+  // graph-level chips on main component
+  var mc=mainComponent(), eccs={};
+  mc.forEach(function(v){ var d=bfs(v); eccs[v]=Math.max.apply(null,mc.map(function(u){return d[u]!==undefined?d[u]:0;})); });
+  var rad=mc.length?Math.min.apply(null,mc.map(function(v){return eccs[v];})):0;
+  var diam=mc.length?Math.max.apply(null,mc.map(function(v){return eccs[v];})):0;
+  var center=mc.filter(function(v){return eccs[v]===rad;}).map(function(v){return G.names[v];});
+  var peri=mc.filter(function(v){return eccs[v]===diam;}).map(function(v){return G.names[v];});
+  document.getElementById("gstats").textContent=
+    fmt(GSTATS_TPL,{rad:rad,diam:diam,center:center.join(","),peri:peri.join(",")})+
+    (mc.length<G.names.length?COMPONENT_NOTE:"");
+
+  // edges
+  G.edges.forEach(function(e){
+    var a=G.pos[e[0]], b=G.pos[e[1]], col=line, w=1.5, dash="";
+    if(m && measure==="ecc"){
+      // BFS tree edge: parent-child in distance
+      var du=m.dists[e[0]], dv=m.dists[e[1]];
+      if(du!==undefined&&dv!==undefined&&Math.abs(du-dv)===1){ col=gold; w=2; }
+    }
+    if(m && measure==="cc"){
+      var inN0=m.nb.concat([sel]);
+      if(inN0.indexOf(e[0])>=0 && inN0.indexOf(e[1])>=0){ col=ink; w=2; }
+    }
+    if(m && measure==="degree" && (e[0]===sel||e[1]===sel)){ col=gold; w=2.5; }
+    out+='<line x1="'+a[0]+'" y1="'+a[1]+'" x2="'+b[0]+'" y2="'+b[1]+'" stroke="'+col+'" stroke-width="'+w+'"'+dash+'/>';
+  });
+  // cc missing edges (dashed) among neighbourhood
+  if(m && measure==="cc"){
+    var closed=m.nb.concat([sel]);
+    for(var a2=0;a2<closed.length;a2++)for(var b2=a2+1;b2<closed.length;b2++){
+      if(A[closed[a2]].indexOf(closed[b2])<0){
+        var pa=G.pos[closed[a2]], pb=G.pos[closed[b2]];
+        out+='<line x1="'+pa[0]+'" y1="'+pa[1]+'" x2="'+pb[0]+'" y2="'+pb[1]+'" stroke="'+gray+'" stroke-width="1" stroke-dasharray="3 4"/>';
+      }
+    }
+  }
+  // vertices
+  G.names.forEach(function(nm,i){
+    var p=G.pos[i], isSel=i===sel, pinned=pins.indexOf(i)>=0;
+    var fill=css("--paper");
+    if(m && measure==="cc" && (m.nb.indexOf(i)>=0||isSel)) fill=soft;
+    var r=NODE_R;
+    if(m && measure==="ecc" && m.dists[i]!==undefined && m.dists[i]===Math.max.apply(null,Object.keys(m.dists).map(function(k){return m.dists[k];})) && i!==sel)
+      out+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="'+RING_R+'" fill="none" stroke="'+gold+'" stroke-width="2"/>';
+    out+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="'+r+'" fill="'+(isSel?css("--gold"):fill)+'" stroke="'+ink+'" stroke-width="'+(pinned?3:1.5)+'" data-v="'+i+'" tabindex="0" role="button" aria-label="'+nm+'"/>';
+    out+='<text x="'+p[0]+'" y="'+(p[1]+4)+'" font-size="10" fill="'+(isSel?'#111':ink)+'" text-anchor="middle" pointer-events="none">'+nm+'</text>';
+    if(m && (measure==="ecc"||measure==="close") && m.dists[i]!==undefined && i!==sel)
+      out+='<text x="'+(p[0]+16)+'" y="'+(p[1]-12)+'" font-size="10" fill="'+gray+'" font-family="var(--font-mono)">'+m.dists[i]+'</text>';
+  });
+  svg.innerHTML=out;
+  svg.querySelectorAll("[data-v]").forEach(function(el){
+    var i=+el.getAttribute("data-v");
+    function act(){ sel=i; document.getElementById("pinBtn").disabled=false; draw(); }
+    el.addEventListener("click",act);
+    el.addEventListener("keydown",function(ev){ if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();act();} });
+  });
+  mathbox(m); cmpTable();
+  document.getElementById("story").textContent=G.story;
+}
+function fr(x){ return (Math.round(x*DECP)/DECP).toString(); }
+function mathbox(m){
+  var box=document.getElementById("mathbox");
+  if(!m){ box.textContent=TAP_PROMPT; return; }
+  var nm=g().names[sel];
+  var vals={ v:nm, deg:m.deg, ecc:m.ecc, n:m.cloN, sum:m.cloSum, clo:fr(m.clo),
+             among:m.ccAmong, poss:m.ccPoss, cc:fr(m.cc), k:m.nb.length+1 };
+  var L=TPL[measure] || TPL.degree;
+  box.textContent=L.map(function(line){ return fmt(line, vals); }).join("\n");
+}
+function cmpTable(){
+  var host=document.getElementById("cmp");
+  if(pins.length<1){ host.innerHTML=""; return; }
+  var rows=CMP_ROWS;
+  var vals=pins.map(function(i){ var m=measures(i);
+    return [m.deg, m.ecc, +fr(m.clo), +fr(m.cc)]; });
+  var html='<table class="cmp"><tr><th>'+CMP_HEADER+'</th>';
+  pins.forEach(function(i){ html+="<th>"+g().names[i]+"</th>"; });
+  html+="</tr>";
+  rows.forEach(function(r,ri){
+    html+="<tr><th>"+r+"</th>";
+    var best=null;
+    if(pins.length===2){
+      var a=vals[0][ri], b=vals[1][ri];
+      // lower is better on the rows named in compare.lowerIsBetter (eccentricity); higher elsewhere
+      best = (CMP_LOWER.indexOf(ri)>=0) ? (a<b?0:b<a?1:-1) : (a>b?0:b>a?1:-1);
+    }
+    vals.forEach(function(v,ci){
+      html+='<td class="'+(best===ci?"win":"")+'">'+v[ri]+"</td>";
+    });
+    html+="</tr>";
+  });
+  html+="</table>";
+  if(pins.length===2)
+    html+='<div class="hint">'+CMP_HINT+'</div>';
+  host.innerHTML=html;
+}
+document.getElementById("pinBtn").addEventListener("click",function(){
+  if(sel===null) return;
+  if(pins.indexOf(sel)<0){ pins.push(sel); while(pins.length>MAXPINS) pins.shift(); }
+  draw();
+});
+document.getElementById("clearPins").addEventListener("click",function(){ pins=[]; draw(); });
+
+var gh=document.getElementById("graphs");
+Object.keys(GRAPHS).forEach(function(name){
+  var b=document.createElement("button"); b.type="button"; b.textContent=name;
+  b.setAttribute("aria-pressed",String(name===cur));
+  b.addEventListener("click",function(){
+    cur=name; sel=null; pins=[]; document.getElementById("pinBtn").disabled=true;
+    gh.querySelectorAll("button").forEach(function(x){x.setAttribute("aria-pressed",String(x.textContent===name));});
+    draw();
+  });
+  gh.appendChild(b);
+});
+document.getElementById("measures").querySelectorAll("button").forEach(function(b){
+  b.addEventListener("click",function(){
+    measure=b.getAttribute("data-m");
+    document.getElementById("measures").querySelectorAll("button").forEach(function(x){
+      x.setAttribute("aria-pressed",String(x===b));});
+    draw();
+  });
+});
+document.getElementById("reset").addEventListener("click",function(){
+  cur=START_GRAPH; measure=START_MEASURE; sel=null; pins=[];
+  document.getElementById("pinBtn").disabled=true;
+  gh.querySelectorAll("button").forEach(function(x){x.setAttribute("aria-pressed",String(x.textContent===cur));});
+  document.getElementById("measures").querySelectorAll("button").forEach(function(x){
+    x.setAttribute("aria-pressed",String(x.getAttribute("data-m")===START_MEASURE));});
+  draw();
+});
+document.getElementById("measures").querySelectorAll("button").forEach(function(x){
+  x.setAttribute("aria-pressed",String(x.getAttribute("data-m")===measure));});
+draw();
+})();
+</script>
+</body>
+</html>

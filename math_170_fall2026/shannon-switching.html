@@ -1,0 +1,1108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Short and Cut — the switching game · MATH 170</title>
+
+<!-- SHIPPED GAME VALUES, verified by exhaustive game-tree solve in Python
+     (tools/verify_shannon.py, re-run against THIS file's island).  The ten boards
+     are ordered by a MEASURED difficulty index D = log2(positions in the play tree)
+     + log2(1 / chance a random student converts a won board); the verifier fails if
+     the shipped order is not strictly increasing in D.
+        #   board                             n   m   value                D
+        1   the causeway                      5   5   Cut either way     6.56
+        2   the ring road                     6   6   Cut either way     8.49
+        3   the cartwheel                     5   8   Short either way  11.67
+        4   the cartwheel, one spoke stretched 6  9   mover wins        14.22
+        5   the prism                         6   9   mover wins        15.00
+        6   the octahedron                    6  12   Short either way  17.73
+        7   the four roads                   10  12   Cut either way    21.03
+        8   the cube                          8  12   Cut either way    22.14
+        9   the cube, one brace               8  13   mover wins        22.49
+       10   the cube, two braces              8  14   Short either way  23.00
+     Boards 8, 9 and 10 are the SAME eight vertices; each adds one brace to the one
+     before. Cut-always → mover-matters → Short-always, one edge at a time.
+     Every board is drawn WITHOUT edge crossings — the verifier checks the geometry. -->
+
+<!-- ================================================================
+     DESIGN-SYSTEM v2 TOKEN BLOCK — copied verbatim into every file.
+     A global tweak stays a find-replace across the set.
+     ================================================================ -->
+<style>
+/* hidden must always win over any author display rule */
+[hidden]{display:none !important}
+
+:root{
+  /* color — light */
+  --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+  --gold-soft:rgba(218,165,32,.12);
+  --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  /* type */
+  --font-body: ui-serif, Georgia, "Times New Roman", serif;
+  --font-ui:   system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+  --text-xl:1.75rem; --text-lg:1.25rem; --text-base:1rem; --text-sm:.875rem; --text-xs:.75rem;
+  --leading-prose:1.6; --leading-ui:1.3;
+  /* spacing */
+  --space-1:4px; --space-2:8px; --space-3:16px; --space-4:24px; --space-5:32px; --space-6:48px;
+  /* motion */
+  --ease:cubic-bezier(0.16,1,0.3,1); --dur:200ms;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+    --gold-soft:rgba(227,179,65,.16);
+    --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+  --gold-soft:rgba(227,179,65,.16);
+  --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+}
+@media (prefers-reduced-motion: reduce){ :root{ --dur:0ms; } }
+@media print{
+  :root, :root[data-theme="dark"]{
+    --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+    --gold-soft:rgba(218,165,32,.12);
+    --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  }
+  .theme-btn{display:none}
+  .stage{break-inside:avoid}
+}
+
+/* ================= base skin (design-system §3–§4) ================= */
+*{box-sizing:border-box}
+html{color-scheme:light dark}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--font-body); font-size:var(--text-base); line-height:var(--leading-prose);
+  -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:820px; margin:0 auto; padding:var(--space-5) var(--space-4) var(--space-6);}
+.topbar{display:flex; align-items:baseline; justify-content:space-between; gap:var(--space-3);
+  border-bottom:1px solid var(--gray-line); padding-bottom:var(--space-2); margin-bottom:var(--space-4);}
+.eyebrow{font-family:var(--font-ui); font-size:var(--text-xs); letter-spacing:.08em; text-transform:uppercase; color:var(--gray-text);}
+h1{font-family:var(--font-body); font-weight:600; font-size:var(--text-xl); line-height:1.2; margin:.2em 0 .1em;}
+h2{font-family:var(--font-ui); font-weight:600; font-size:var(--text-lg); line-height:1.3; margin:var(--space-5) 0 var(--space-2);}
+p{margin:0 0 var(--space-3);}
+.prose{max-width:66ch;}
+.muted{color:var(--gray-text);}
+.mono,code{font-family:var(--font-mono); font-variant-numeric:tabular-nums;}
+a{color:inherit;}
+:focus-visible{outline:2px solid var(--ink); outline-offset:2px; box-shadow:0 0 0 5px var(--gold-soft);}
+
+.theme-btn{font-family:var(--font-ui); font-size:var(--text-xs); background:none;
+  border:1px solid var(--gray-line); color:var(--gray-text); padding:6px 10px; cursor:pointer; border-radius:2px;}
+.theme-btn:hover{background:var(--gray-fill);}
+
+/* spec header */
+details.spec{border:1px solid var(--gray-line); border-radius:2px; margin:0 0 var(--space-4); background:var(--gray-fill);}
+details.spec>summary{font-family:var(--font-ui); font-size:var(--text-sm); cursor:pointer;
+  padding:var(--space-2) var(--space-3); list-style:none; color:var(--gray-text);}
+details.spec>summary::-webkit-details-marker{display:none}
+details.spec>summary::before{content:"▸ "; color:var(--gold);}
+details.spec[open]>summary::before{content:"▾ ";}
+.spec-body{padding:0 var(--space-3) var(--space-3); font-family:var(--font-ui); font-size:var(--text-sm); line-height:1.5;}
+.spec-body dt{font-weight:600; margin-top:var(--space-2);}
+.spec-body dd{margin:0; color:var(--gray-text);}
+
+/* stage */
+.stage{margin:var(--space-4) 0; text-align:center;}
+svg{max-width:100%; height:auto; font-family:var(--font-ui);}
+figcaption{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); margin-top:var(--space-2);}
+
+/* controls */
+.controls{border-top:1px solid var(--gray-line); padding-top:var(--space-3); margin-top:var(--space-4);
+  display:grid; grid-template-columns:1fr 1fr; gap:var(--space-3) var(--space-4);}
+.controls .full{grid-column:1/-1;}
+@media(max-width:560px){ .controls{grid-template-columns:1fr;} }
+.ctl label{display:flex; justify-content:space-between; align-items:baseline;
+  font-family:var(--font-ui); font-size:var(--text-sm); line-height:var(--leading-ui);}
+.ctl .val{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm); color:var(--ink);}
+.ctl .val.gold{color:var(--gold); font-weight:600;}
+.ctl .note{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); margin-top:4px;}
+
+/* range slider — filled track works in ALL engines (design-system v2 fix) */
+input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:18px;
+  background:transparent; margin:6px 0 0; cursor:pointer;}
+input[type=range]::-webkit-slider-runnable-track{height:2px; border-radius:1px;
+  background:var(--track, var(--gray-line));}
+input[type=range]::-moz-range-track{height:2px; background:var(--gray-line);}
+input[type=range]::-moz-range-progress{height:2px; background:var(--gold);}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; appearance:none;
+  width:18px; height:18px; margin-top:-8px; border-radius:50%; background:var(--gold); border:1px solid var(--ink);}
+input[type=range]::-moz-range-thumb{width:18px; height:18px; border-radius:50%; background:var(--gold); border:1px solid var(--ink);}
+
+/* buttons + segmented + stepper */
+.btn{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:1px solid var(--ink); padding:8px 14px; cursor:pointer; border-radius:2px;}
+.btn:hover{background:var(--gray-fill);}
+.btn.primary{background:var(--gold); border-color:var(--gold); color:#111111;}
+.btn[disabled]{border-color:var(--gray-line); color:var(--gray-line); cursor:default; background:var(--paper);}
+.seg{display:inline-flex; border:1px solid var(--ink); border-radius:2px; overflow:hidden;}
+.seg button{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:0; border-left:1px solid var(--ink); padding:7px 12px; cursor:pointer;}
+.seg button:first-child{border-left:0;}
+.seg button[aria-pressed="true"]{background:var(--gold); color:#111111;}
+.stepper{display:inline-flex; align-items:center; gap:var(--space-2); font-family:var(--font-ui); font-size:var(--text-sm);}
+.stepper .count{font-family:var(--font-mono); font-variant-numeric:tabular-nums; color:var(--gray-text);}
+
+.foot{display:flex; align-items:center; gap:var(--space-3); margin-top:var(--space-5);
+  border-top:1px solid var(--gray-line); padding-top:var(--space-3); flex-wrap:wrap;}
+.foot .btn{margin-right:auto;}
+.hint{font-family:var(--font-ui); font-size:var(--text-sm); color:var(--gray-text);}
+
+/* math reveal */
+.mathbox{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm);
+  background:var(--gray-fill); border-left:2px solid var(--gold); padding:var(--space-3);
+  margin:var(--space-3) 0; overflow-x:auto; white-space:pre; line-height:1.7; text-align:left;}
+.attach{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text);
+  border-top:1px dotted var(--gray-line); margin-top:var(--space-6); padding-top:var(--space-3);}
+.tag{display:inline-block; font-family:var(--font-ui); font-size:var(--text-xs);
+  border:1px solid var(--gray-line); border-radius:999px; padding:1px 8px; color:var(--gray-text); margin-left:6px;}
+.callout{font-family:var(--font-ui); font-size:var(--text-sm); border:1px solid var(--gray-line);
+  border-left:2px solid var(--gold); padding:var(--space-2) var(--space-3); margin:var(--space-3) 0; background:var(--paper);}
+</style>
+
+<!-- theme boot: apply stored choice before first paint (no flash) -->
+<script>
+try{var t=localStorage.getItem("m170-theme");if(t)document.documentElement.dataset.theme=t;}catch(e){}
+</script>
+
+<!-- ============ bespoke styles for this manipulative only ============ -->
+<style>
+.setup{display:flex; flex-wrap:wrap; gap:var(--space-3) var(--space-4); align-items:flex-start;
+  border:1px solid var(--gray-line); border-radius:2px; padding:var(--space-3);
+  margin:0 0 var(--space-3); text-align:left;}
+.setup .field{display:flex; flex-direction:column; gap:6px;}
+.setup .flabel{font-family:var(--font-ui); font-size:var(--text-xs); letter-spacing:.08em;
+  text-transform:uppercase; color:var(--gray-text);}
+/* the difficulty slider IS the board picker (professor, 2026-08-03) */
+.setup .boardpick{flex:1 1 300px; min-width:240px; gap:2px;}
+.setup .boardpick label>span:first-child{font-size:var(--text-xs); letter-spacing:.08em;
+  text-transform:uppercase; color:var(--gray-text);}
+.setup .boardpick input[type=range]{margin-top:2px;}
+.scale{display:flex; justify-content:space-between; font-family:var(--font-ui);
+  font-size:var(--text-xs); color:var(--gray-text); letter-spacing:.06em; text-transform:uppercase;}
+.setup .boardpick .note{font-family:var(--font-ui); font-size:var(--text-sm);
+  color:var(--ink); font-weight:600; margin-top:2px;}
+.setup .boardpick .note .cue{color:var(--gray-text); font-weight:400;}
+
+/* the turn strip — who is to move, and what that side is trying to do */
+.turnstrip{display:flex; flex-wrap:wrap; align-items:center; gap:var(--space-2) var(--space-3);
+  font-family:var(--font-ui); font-size:var(--text-sm); text-align:left;
+  border-left:2px solid var(--gold); background:var(--gold-soft);
+  padding:var(--space-2) var(--space-3); margin:0 0 var(--space-3); min-height:2.6em;}
+.turnstrip .who{font-weight:600;}
+.turnstrip .job{color:var(--gray-text);}
+.turnstrip.over{border-left-style:double; border-left-width:5px;}
+
+.legend{display:flex; justify-content:center; gap:var(--space-4); flex-wrap:wrap;
+  font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text);
+  margin-top:var(--space-2);}
+.legend span{display:inline-flex; align-items:center; gap:6px;}
+.legend svg{width:40px; height:14px; overflow:visible;}
+
+.verdict{font-family:var(--font-ui); font-size:var(--text-sm); text-align:left;
+  margin:var(--space-3) 0 0; padding:var(--space-2) var(--space-3); min-height:1.6em;}
+.verdict .sym{font-family:var(--font-mono); font-weight:700; margin-right:6px;}
+.verdict.won{border-left:2px solid var(--gold); background:var(--gold-soft);}
+.verdict.lost{border-left:2px dashed var(--ink);}
+
+.tally{display:flex; align-items:center; gap:var(--space-2); flex-wrap:wrap;
+  font-family:var(--font-ui); font-size:var(--text-sm); color:var(--gray-text);}
+.tally .score{font-family:var(--font-mono); font-variant-numeric:tabular-nums;
+  font-weight:600; color:var(--ink);}
+.movelog{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-xs);
+  color:var(--gray-text); text-align:left; margin:var(--space-2) 0 0; line-height:1.8;
+  overflow-x:auto; white-space:pre-wrap;}
+svg .egrab{cursor:pointer;}
+svg .egrab.locked{cursor:default;}
+@media print{ .setup{border-color:#CCCCCC;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="eyebrow">MATH 170 · Graphs · Connectivity as a game</div>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Color theme">◑ auto</button>
+  </div>
+
+  <h1 data-edit="title">Short and Cut <span class="tag">Shannon switching game</span></h1>
+  <p class="prose muted" data-edit="intro">Two vertices are marked <strong>A</strong> and
+  <strong>B</strong>. One player, <strong>Short</strong>, claims edges and is trying to build a
+  claimed road from A to B. The other, <strong>Cut</strong>, deletes edges and is trying to leave A
+  and B with no road between them at all. Pick a side; the computer takes the other one and plays
+  perfectly. Nobody can force a draw — every game ends with one of you finished.</p>
+
+  <div data-slot="notes-top"></div>
+
+
+  <div class="setup">
+    <div class="field ctl boardpick">
+      <label for="boardSlider"><span>board</span>
+        <span class="val gold" id="boardSliderv">1 / 10</span></label>
+      <input type="range" id="boardSlider" min="1" max="10" step="1" value="1">
+      <div class="scale" aria-hidden="true"><span>easy</span><span>difficult</span></div>
+      <div class="note" id="boardName"></div>
+    </div>
+    <div class="field">
+      <span class="flabel" id="lblSide">you play</span>
+      <div class="seg" role="group" aria-labelledby="lblSide" id="sideSeg">
+        <button type="button" data-s="short" aria-pressed="true">Short</button>
+        <button type="button" data-s="cut" aria-pressed="false">Cut</button>
+      </div>
+    </div>
+    <div class="field">
+      <span class="flabel" id="lblMover">first move</span>
+      <div class="seg" role="group" aria-labelledby="lblMover" id="moverSeg">
+        <button type="button" data-m="you" aria-pressed="true">yours</button>
+        <button type="button" data-m="computer" aria-pressed="false">the computer's</button>
+      </div>
+    </div>
+    <div class="field">
+      <span class="flabel">&nbsp;</span>
+      <button class="btn primary" id="newGame" type="button">New game</button>
+    </div>
+  </div>
+
+  <p class="prose muted" id="boardBlurb" style="font-family:var(--font-ui); font-size:var(--text-sm);"></p>
+
+  <div class="turnstrip" id="turnstrip" aria-live="polite"></div>
+
+  <figure class="stage" style="margin-left:0;margin-right:0;">
+    <svg id="board" viewBox="0 0 640 420" role="application"
+         aria-label="Switching game board. Choose an edge to claim or to delete."></svg>
+    <div class="legend" id="legend"></div>
+    <figcaption id="caption" data-edit="caption">Click an edge to play it. Keyboard: Tab to an edge, then Enter or Space. Short claims an edge that is still in the graph; Cut deletes an edge nobody has claimed.</figcaption>
+  </figure>
+
+  <p class="verdict" id="verdict" aria-live="polite"></p>
+
+  <div class="controls">
+    <div class="full" style="display:flex; gap:var(--space-3); flex-wrap:wrap; align-items:center;">
+      <button class="btn" id="hintToggle" type="button" aria-expanded="false">Why did the computer do that? ▸</button>
+      <button class="btn" id="valueToggle" type="button" aria-expanded="false">What does the theory say? ▸</button>
+      <span class="tally">record this session: <span class="score" id="score">0 – 0</span> <span id="tallyNote">wins – losses</span></span>
+    </div>
+
+    <div class="full">
+      <div id="hintReveal" hidden>
+        <div class="mathbox" id="hintbox"></div>
+        <p class="muted prose" style="font-family:var(--font-ui); font-size:var(--text-sm)" data-edit="hint-note">
+          Two numbers describe every position. <em>Short's cheapest road</em> is the smallest number of
+          fresh edges Short would still have to claim to finish a route — when it hits zero, Short has
+          won. <em>Cut's thinnest cut</em> is the smallest number of deletable edges that would separate
+          A from B — when it hits zero, Cut has won. The highlighted edges on the board are one such road
+          and one such cut. The computer is not following either number; it searches the whole game to the
+          end. The numbers are here so you can see what it is looking at.</p>
+      </div>
+      <div id="valueReveal" hidden>
+        <div class="mathbox" id="valuebox"></div>
+        <p class="muted prose" style="font-family:var(--font-ui); font-size:var(--text-sm)" data-edit="value-note">
+          Every board sits in exactly one of three classes: Short wins whoever starts, Cut wins whoever
+          starts, or whoever moves first wins. There is never a draw. Boards 8, 9 and 10 are the same
+          eight vertices — 12 edges, then 13, then 14 — and they land in all three classes in turn. One
+          brace at a time is the whole difference. The slider is ordered by how hard the board is to
+          play, not by how big it looks: board 7 is the widest of the ten and three of them are harder.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="movelog" id="movelog" aria-live="polite"></div>
+
+  <div data-slot="notes-bottom"></div>
+
+  <div class="foot">
+    <button class="btn" id="reset" type="button">Reset</button>
+    <span class="hint" id="footHint" data-edit="hint-try">Try: slide to board 2, the ring road, and play it as Short moving first. You have two complete routes from A to B and you will still lose. Then slide to board 3 — fewer vertices, more edges, and now Short wins even moving second.</span>
+  </div>
+
+</div>
+
+<script type="application/json" id="m170-config">
+{
+  "_v": 1,
+  "startBoard": 0,
+  "defaultSide": "short",
+  "defaultMover": "you",
+  "thinkMs": 500,
+  "boards": [
+    {
+      "id": "causeway", "name": "1 · the causeway", "difficulty": "very easy",
+      "blurb": "One causeway out of A. Past the fork the road splits and rejoins at B.",
+      "verts": [["A", 90, 215], ["C", 240, 215], ["D", 410, 105], ["E", 410, 325], ["B", 560, 215]],
+      "terminals": [0, 4],
+      "edges": [[0, 1], [1, 2], [2, 4], [1, 3], [3, 4]],
+      "value": {"shortFirst": "Cut", "cutFirst": "Cut"},
+      "lesson": "The fork past C is decoration. A–C is a bridge — remove it and A is stranded — so Cut takes it and nothing on the far side can help. One bridge anywhere on every route settles a board."
+    },
+    {
+      "id": "ringroad", "name": "2 · the ring road", "difficulty": "easy",
+      "blurb": "A six-sided ring. A and B sit opposite each other, so there are two whole ways round.",
+      "verts": [["A", 320, 45], ["C", 463, 128], ["D", 463, 293], ["B", 320, 375], ["E", 177, 293],
+                ["F", 177, 128]],
+      "terminals": [0, 3],
+      "edges": [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 0]],
+      "value": {"shortFirst": "Cut", "cutFirst": "Cut"},
+      "lesson": "Two complete routes and Cut still wins: whichever way round Short starts building, Cut answers on the other side of the ring. Counting separate routes is the wrong count — Short needs two edge-disjoint trees, and a ring has nothing like enough edges for that."
+    },
+    {
+      "id": "cartwheel", "name": "3 · the cartwheel", "difficulty": "easy",
+      "blurb": "A four-sided rim with a hub joined to every corner. A and B are opposite corners.",
+      "verts": [["A", 150, 215], ["C", 320, 60], ["B", 490, 215], ["D", 320, 370], ["H", 320, 190]],
+      "terminals": [0, 2],
+      "edges": [[0, 1], [1, 2], [2, 3], [3, 0], [4, 0], [4, 1], [4, 2], [4, 3]],
+      "value": {"shortFirst": "Short", "cutFirst": "Short"},
+      "lesson": "Eight edges over five vertices split into two edge-disjoint trees — H–A, A–C, C–B, B–D is one, and H–C, H–B, H–D, D–A is the other — and each tree already joins A to B. Cut destroys one, Short answers in its twin, which is why Short wins here even moving second."
+    },
+    {
+      "id": "cartwheel-stretched", "name": "4 · the cartwheel, one spoke stretched", "difficulty": "moderate",
+      "blurb": "The same wheel, but the spoke down to D now runs through G — one spoke, two edges.",
+      "verts": [["A", 150, 215], ["C", 320, 60], ["B", 490, 215], ["D", 320, 370], ["H", 320, 190],
+                ["G", 320, 280]],
+      "terminals": [0, 2],
+      "edges": [[0, 1], [1, 2], [2, 3], [3, 0], [4, 0], [4, 1], [4, 2], [4, 5], [5, 3]],
+      "value": {"shortFirst": "Short", "cutFirst": "Cut"},
+      "lesson": "One extra vertex, one extra edge, and Short's outright win is gone. The stretched spoke costs Short two claims where Cut still spends only one deletion, so the pairing breaks and the board falls to whoever moves first."
+    },
+    {
+      "id": "prism", "name": "5 · the prism", "difficulty": "moderate",
+      "blurb": "Two triangles joined by three rungs. A is a corner of the outer triangle; B is a corner of the inner one, and they are not joined directly.",
+      "verts": [["A", 320, 45], ["C", 320, 175], ["D", 70, 385], ["B", 215, 320], ["E", 570, 385],
+                ["F", 425, 320]],
+      "terminals": [0, 3],
+      "edges": [[0, 2], [2, 4], [4, 0], [1, 3], [3, 5], [5, 1], [0, 1], [2, 3], [4, 5]],
+      "value": {"shortFirst": "Short", "cutFirst": "Cut"},
+      "lesson": "Nine edges, six vertices, and still the first move decides it. The prism is 3-regular: no vertex has a spare edge to give away, so neither side can afford a wasted move."
+    },
+    {
+      "id": "octahedron", "name": "6 · the octahedron", "difficulty": "hard",
+      "blurb": "A triangle inside a triangle, every vertex joined to all but one other. A and B are the pair that misses each other.",
+      "verts": [["A", 320, 33], ["C", 480, 310], ["D", 160, 310], ["B", 320, 268], ["E", 277, 193],
+                ["F", 363, 193]],
+      "terminals": [0, 3],
+      "edges": [[0, 1], [1, 2], [2, 0], [3, 4], [4, 5], [5, 3], [0, 4], [0, 5], [1, 3], [1, 5],
+                [2, 3], [2, 4]],
+      "value": {"shortFirst": "Short", "cutFirst": "Short"},
+      "lesson": "Twelve edges over six vertices is finally enough: they split into two edge-disjoint trees that each reach both A and B, so Short wins even moving second — and A and B are not even joined to each other."
+    },
+    {
+      "id": "fourroads", "name": "7 · the four roads", "difficulty": "hard",
+      "blurb": "Four separate roads from A to B, two blocks long, then three, three and four.",
+      "verts": [["A", 60, 215], ["B", 580, 215], ["C", 320, 60], ["D", 230, 140], ["E", 410, 140],
+                ["F", 230, 290], ["G", 410, 290], ["H", 190, 375], ["I", 320, 375], ["J", 450, 375]],
+      "terminals": [0, 1],
+      "edges": [[0, 2], [2, 1], [0, 3], [3, 4], [4, 1], [0, 5], [5, 6], [6, 1], [0, 7], [7, 8],
+                [8, 9], [9, 1]],
+      "value": {"shortFirst": "Cut", "cutFirst": "Cut"},
+      "lesson": "Four whole roads and Short still loses. Count what each side spends: Cut breaks a road with one deletion, Short has to buy every block of it. Ten vertices is the widest board here and it is not the hardest — width is not depth."
+    },
+    {
+      "id": "cube", "name": "8 · the cube", "difficulty": "harder",
+      "blurb": "A cube seen from outside: an outer square, an inner square, four uprights. A and B are as far apart as the cube allows.",
+      "verts": [["A", 75, 70], ["C", 565, 70], ["D", 565, 360], ["E", 75, 360], ["F", 205, 155],
+                ["G", 435, 155], ["B", 435, 275], ["H", 205, 275]],
+      "terminals": [0, 6],
+      "edges": [[0, 1], [1, 2], [2, 3], [3, 0], [4, 5], [5, 6], [6, 7], [7, 4], [0, 4], [1, 5],
+                [2, 6], [3, 7]],
+      "value": {"shortFirst": "Cut", "cutFirst": "Cut"},
+      "lesson": "Three separate routes from A to B and the board is still Cut's. The cube is 3-regular: twelve edges over eight vertices cannot carry two trees, so every road Short opens has an answer."
+    },
+    {
+      "id": "cube-brace1", "name": "9 · the cube, one brace", "difficulty": "harder",
+      "blurb": "The same cube with one face braced: A now reaches G directly.",
+      "verts": [["A", 75, 70], ["C", 565, 70], ["D", 565, 360], ["E", 75, 360], ["F", 205, 155],
+                ["G", 435, 155], ["B", 435, 275], ["H", 205, 275]],
+      "terminals": [0, 6],
+      "edges": [[0, 1], [1, 2], [2, 3], [3, 0], [4, 5], [5, 6], [6, 7], [7, 4], [0, 4], [1, 5],
+                [2, 6], [3, 7], [0, 5]],
+      "value": {"shortFirst": "Short", "cutFirst": "Cut"},
+      "lesson": "One diagonal across one face and the cube stops belonging to Cut. Thirteen edges is not yet enough for Short to win outright, but it is enough that the first move decides the board."
+    },
+    {
+      "id": "cube-brace2", "name": "10 · the cube, two braces", "difficulty": "hardest",
+      "blurb": "The same cube again, braced on two opposite faces. Fourteen edges over eight vertices.",
+      "verts": [["A", 75, 70], ["C", 565, 70], ["D", 565, 360], ["E", 75, 360], ["F", 205, 155],
+                ["G", 435, 155], ["B", 435, 275], ["H", 205, 275]],
+      "terminals": [0, 6],
+      "edges": [[0, 1], [1, 2], [2, 3], [3, 0], [4, 5], [5, 6], [6, 7], [7, 4], [0, 4], [1, 5],
+                [2, 6], [3, 7], [0, 5], [2, 7]],
+      "value": {"shortFirst": "Short", "cutFirst": "Short"},
+      "lesson": "Two braces, fourteen edges, and the eight vertices finally carry two edge-disjoint trees that both reach A and B — Cut destroys one, Short answers in its twin. Boards 8, 9 and 10 are the same cube: one brace at a time moves it out of Cut's column, through the first-move boards, and into Short's."
+    }
+  ],
+  "messages": {
+    "turnYouShort": "Your move as Short — claim an edge that is still in the graph.",
+    "turnYouCut": "Your move as Cut — delete an edge that nobody has claimed.",
+    "turnComputer": "The computer is thinking…",
+    "wonShort": "You did it — A and B are joined by a road you own.",
+    "wonCut": "You did it — A and B have no road left between them.",
+    "lostShort": "The computer got its road through this time. Nothing wasted — look at where it answered you.",
+    "lostCut": "The computer's road is finished. Try the same board again and defend the thin place earlier.",
+    "illegalClaimed": "That edge is already claimed — a claimed edge cannot be claimed again, and Cut is not allowed to delete it.",
+    "illegalDeleted": "That edge is gone. Deleted edges never come back.",
+    "notYourTurn": "Not your turn yet — the computer is still moving.",
+    "gameOver": "This game is over. Press New game for another.",
+    "valueShort": "Short wins this board with perfect play, whoever moves first.",
+    "valueCut": "Cut wins this board with perfect play, whoever moves first.",
+    "valueMover": "Whoever moves FIRST wins this board with perfect play.",
+    "valueHidden": "Play the board first — the answer is more interesting once you have an opinion."
+  },
+  "_meta": {
+    "startBoard": {"label": "Board selected at load", "kind": "number",
+      "help": "Zero-based index into boards. It is also where the difficulty slider starts and where Reset returns."},
+    "defaultSide": {"label": "Side the student starts on", "kind": "choice",
+      "options": ["short", "cut"]},
+    "defaultMover": {"label": "Who moves first at load", "kind": "choice",
+      "options": ["you", "computer"]},
+    "thinkMs": {"label": "Pause before the computer moves, in milliseconds", "kind": "number",
+      "help": "Set to 0 for an instant reply. The page already uses 0 automatically for anyone who has asked their system to reduce motion."},
+    "boards": {"label": "The boards, easiest first — the slider walks this list", "kind": "table",
+      "regen": "graph-edges",
+      "help": "verts are [label, x, y] inside a 640x420 box; terminals are two zero-based indices into verts; edges are pairs of zero-based vertex indices. difficulty is the one-word cue shown beside the slider. value.shortFirst is who wins with perfect play when SHORT has the first move, value.cutFirst when CUT has the first move; each must be \"Short\" or \"Cut\", and both are DISPLAY ONLY — the computer plays by solving the game tree, so a wrong value here misleads the student but never makes the computer blunder. THE ORDER IS THE DIFFICULTY ORDER: the slider runs from board 1 to board 10, so the list must stay sorted easiest-first. Vertices are cheap, edges are not — the solver visits up to 3^edges positions, so keep every board at 14 edges or fewer (the page itself drops a board above 14) and expect the hardest ones to feel slower. Re-run tools/verify_shannon.py after any edit: it recomputes every value from this island, checks that no two edges cross in the drawing, and fails if the shipped order is not strictly increasing in measured difficulty."},
+    "messages": {"label": "Wording for turns, verdicts and refusals", "kind": "text"}
+  }
+}
+</script>
+
+<script>
+(function(){
+"use strict";
+
+/* Professor, 2026-07-27: "Playable vs computer: the graph-theory Shannon Switching Game
+   and the Cliquer game." Rules per https://en.wikipedia.org/wiki/Shannon_switching_game —
+   Cut deletes a non-coloured edge; Short colours any edge still in the graph; Cut wins on
+   disconnection, Short wins on a coloured A-B path.
+
+   The opponent is an exact solver, not a heuristic: shortWins() searches the whole game
+   tree from the current position with memoisation on (claimed, deleted, side to move).
+   At the shipped sizes (<= 9 edges) that is at most 3^9 positions per side to move, which
+   is instant, and it means the computer can never give away a board it should win. The
+   same routine is mirrored in tools/verify_shannon.py and swept adversarially. */
+
+var CFG = JSON.parse(document.getElementById("m170-config").textContent);
+
+/* ---------- theme: auto → light → dark (design-system v2) ---------- */
+var root = document.documentElement, themeBtn = document.getElementById("themeBtn");
+function themeLabel(){
+  var m = root.dataset.theme || "auto";
+  themeBtn.textContent = m==="dark" ? "● dark" : m==="light" ? "○ light" : "◑ auto";
+}
+themeBtn.addEventListener("click", function(){
+  var cur = root.dataset.theme || "auto";
+  var next = cur==="auto" ? "light" : cur==="light" ? "dark" : "auto";
+  if(next==="auto"){ delete root.dataset.theme; try{localStorage.removeItem("m170-theme");}catch(e){} }
+  else { root.dataset.theme = next; try{localStorage.setItem("m170-theme", next);}catch(e){} }
+  themeLabel(); render();
+});
+if(window.matchMedia){ window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function(){ render(); }); }
+themeLabel();
+
+function css(v){ return getComputedStyle(document.body).getPropertyValue(v).trim(); }
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+function isArr(v){ return Object.prototype.toString.call(v)==="[object Array]"; }
+function reducedMotion(){
+  return !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+}
+
+var MSG = CFG.messages || {};
+function msg(k, dflt){ return MSG[k]!=null ? String(MSG[k]) : dflt; }
+
+/* ---------- boards, defensively read from the island ---------- */
+function readBoards(raw){
+  var out = [];
+  (isArr(raw) ? raw : []).forEach(function(b, bi){
+    if(!b || !isArr(b.verts) || !isArr(b.edges) || !isArr(b.terminals)) return;
+    var verts = b.verts.map(function(v, i){
+      var lab = (isArr(v) && v[0]!=null) ? String(v[0]) : String.fromCharCode(65+i);
+      var x = isArr(v) ? +v[1] : 320, y = isArr(v) ? +v[2] : 210;
+      return { label: lab,
+               x: Math.max(28, Math.min(612, isFinite(x)?x:320)),
+               y: Math.max(28, Math.min(392, isFinite(y)?y:210)) };
+    });
+    if(verts.length < 2) return;
+    var n = verts.length;
+    var edges = [];
+    b.edges.forEach(function(e){
+      if(!isArr(e)) return;
+      var a = Math.round(+e[0]), c = Math.round(+e[1]);
+      if(!(a>=0 && a<n && c>=0 && c<n) || a===c) return;
+      var lo = Math.min(a,c), hi = Math.max(a,c);
+      for(var k=0;k<edges.length;k++) if(edges[k][0]===lo && edges[k][1]===hi) return;
+      edges.push([lo, hi]);
+    });
+    if(!edges.length || edges.length > 14) return;
+    var ta = Math.round(+b.terminals[0]), tb = Math.round(+b.terminals[1]);
+    if(!(ta>=0 && ta<n && tb>=0 && tb<n) || ta===tb) return;
+    out.push({
+      id: b.id!=null ? String(b.id) : ("board"+bi),
+      name: b.name!=null ? String(b.name) : ("board "+(bi+1)),
+      blurb: b.blurb!=null ? String(b.blurb) : "",
+      lesson: b.lesson!=null ? String(b.lesson) : "",
+      difficulty: b.difficulty!=null ? String(b.difficulty) : "",
+      verts: verts, edges: edges, ta: ta, tb: tb,
+      value: b.value || {}
+    });
+  });
+  return out;
+}
+var BOARDS = readBoards(CFG.boards);
+if(!BOARDS.length){
+  BOARDS = [{ id:"fallback", name:"a single road", blurb:"", lesson:"", difficulty:"",
+    verts:[{label:"A",x:150,y:210},{label:"B",x:490,y:210},{label:"C",x:320,y:210}],
+    edges:[[0,2],[1,2]], ta:0, tb:1, value:{} }];
+}
+
+/* ---------- per-board solver state ---------- */
+var B = null;                  /* the live board */
+var M = 0, FULL = 0, EA = [], EB = [], SHIFT = 1;
+var memo = [null, null];       /* memo[turn]: turn 0 = Short to move, 1 = Cut to move */
+
+function loadBoard(idx){
+  B = BOARDS[Math.max(0, Math.min(BOARDS.length-1, idx))];
+  M = B.edges.length;
+  FULL = (1<<M) - 1;
+  SHIFT = 1<<M;
+  EA = B.edges.map(function(e){ return e[0]; });
+  EB = B.edges.map(function(e){ return e[1]; });
+  memo = [{}, {}];
+}
+
+/* connectivity of the two terminals using only the edges in `mask` */
+function connected(mask, a, b){
+  var reach = 1<<a, changed = true, i, u, v, bu, bv;
+  while(changed){
+    changed = false;
+    for(i=0;i<M;i++){
+      if(!((mask>>i)&1)) continue;
+      u = EA[i]; v = EB[i]; bu = 1<<u; bv = 1<<v;
+      if((reach&bu) && !(reach&bv)){ reach |= bv; changed = true; }
+      else if((reach&bv) && !(reach&bu)){ reach |= bu; changed = true; }
+    }
+  }
+  return !!(reach & (1<<b));
+}
+
+/* Does SHORT win from this position, with `turn` (0 = Short, 1 = Cut) to move? */
+function shortWins(claimed, deleted, turn){
+  if(connected(claimed, B.ta, B.tb)) return true;
+  var alive = FULL & ~deleted;
+  if(!connected(alive, B.ta, B.tb)) return false;
+  var table = memo[turn], key = claimed*SHIFT + deleted, hit = table[key];
+  if(hit !== undefined) return hit;
+  var avail = alive & ~claimed, i, res;
+  if(turn===0){
+    res = false;
+    for(i=0;i<M;i++){
+      if(!((avail>>i)&1)) continue;
+      if(shortWins(claimed | (1<<i), deleted, 1)){ res = true; break; }
+    }
+  } else {
+    res = true;
+    for(i=0;i<M;i++){
+      if(!((avail>>i)&1)) continue;
+      if(!shortWins(claimed, deleted | (1<<i), 0)){ res = false; break; }
+    }
+  }
+  table[key] = res;
+  return res;
+}
+
+function legalMoves(claimed, deleted){
+  var avail = (FULL & ~deleted) & ~claimed, out = [];
+  for(var i=0;i<M;i++) if((avail>>i)&1) out.push(i);
+  return out;
+}
+function applyMove(claimed, deleted, i, role){    /* role 0 = Short, 1 = Cut */
+  return role===0 ? [claimed | (1<<i), deleted] : [claimed, deleted | (1<<i)];
+}
+/* how many of the side-to-move's replies are winning replies — the resistance measure */
+function winningReplyCount(claimed, deleted, turn){
+  if(connected(claimed, B.ta, B.tb)) return 0;
+  if(!connected(FULL & ~deleted, B.ta, B.tb)) return 0;
+  var mv = legalMoves(claimed, deleted), c = 0;
+  for(var k=0;k<mv.length;k++){
+    var st = applyMove(claimed, deleted, mv[k], turn);
+    var sw = shortWins(st[0], st[1], 1-turn);
+    if(turn===0 ? sw : !sw) c++;
+  }
+  return c;
+}
+/* The computer's move. Winning move if one exists (lowest index, so it is reproducible);
+   otherwise the reply that leaves the human the FEWEST winning answers. No randomness. */
+function computerMove(claimed, deleted, role){
+  var mv = legalMoves(claimed, deleted);
+  if(!mv.length) return -1;
+  var k, st, sw, good;
+  for(k=0;k<mv.length;k++){
+    st = applyMove(claimed, deleted, mv[k], role);
+    sw = shortWins(st[0], st[1], 1-role);
+    good = role===0 ? sw : !sw;
+    if(good) return mv[k];
+  }
+  var best = mv[0], bestCount = Infinity;
+  for(k=0;k<mv.length;k++){
+    st = applyMove(claimed, deleted, mv[k], role);
+    var c = winningReplyCount(st[0], st[1], 1-role);
+    if(c < bestCount){ bestCount = c; best = mv[k]; }
+  }
+  return best;
+}
+
+/* ---------- the two position numbers, for the hint ----------
+   cheapest road: fewest UNCLAIMED edges Short must still take to finish a route
+   (claimed edges cost 0, live unclaimed edges cost 1, deleted edges are impassable).
+   thinnest cut: fewest DELETABLE edges whose removal separates A from B (a cut that
+   contains a claimed edge is useless to Cut, so it scores as unavailable). */
+function cheapestRoad(claimed, deleted){
+  var n = B.verts.length, INF = 1e9;
+  var dist = [], prev = [], done = [], i, k;
+  for(i=0;i<n;i++){ dist.push(INF); prev.push(-1); done.push(false); }
+  dist[B.ta] = 0;
+  for(k=0;k<n;k++){
+    var u = -1, bd = INF;
+    for(i=0;i<n;i++) if(!done[i] && dist[i] < bd){ bd = dist[i]; u = i; }
+    if(u < 0) break;
+    done[u] = true;
+    for(i=0;i<M;i++){
+      if((deleted>>i)&1) continue;
+      var a = EA[i], b = EB[i], w = ((claimed>>i)&1) ? 0 : 1, v = -1;
+      if(a===u) v = b; else if(b===u) v = a; else continue;
+      if(dist[u] + w < dist[v]){ dist[v] = dist[u] + w; prev[v] = i; }
+    }
+  }
+  if(dist[B.tb] >= INF) return { cost: -1, edges: [] };
+  var path = [], at = B.tb;
+  while(at !== B.ta && prev[at] >= 0){
+    var e = prev[at];
+    path.push(e);
+    at = (EA[e]===at) ? EB[e] : EA[e];
+  }
+  return { cost: dist[B.tb], edges: path };
+}
+function thinnestCut(claimed, deleted){
+  var n = B.verts.length, best = -1, bestEdges = [], total = 1<<n, s, i;
+  for(s=0;s<total;s++){
+    if(!((s>>B.ta)&1)) continue;
+    if((s>>B.tb)&1) continue;
+    var cross = [], blocked = false;
+    for(i=0;i<M;i++){
+      if((deleted>>i)&1) continue;
+      var inA = (s>>EA[i])&1, inB = (s>>EB[i])&1;
+      if(inA === inB) continue;
+      if((claimed>>i)&1){ blocked = true; break; }
+      cross.push(i);
+    }
+    if(blocked) continue;
+    if(best < 0 || cross.length < best){ best = cross.length; bestEdges = cross; }
+  }
+  return { cost: best, edges: bestEdges };
+}
+
+/* ---------- game state ---------- */
+var G = null;
+var wins = 0, losses = 0;
+
+function newGame(keepRecord){
+  if(!keepRecord){ wins = 0; losses = 0; }
+  G = { claimed:0, deleted:0, over:false, winner:null, log:[], busy:false };
+  G.turn = (UI.mover === "you") ? (UI.side === "short" ? 0 : 1)
+                                : (UI.side === "short" ? 1 : 0);
+  verdict("", "");
+  hideValue();
+  render();
+  if(!isYourTurn()) scheduleComputer();
+}
+var UI = {
+  boardIdx: 0,
+  side: (String(CFG.defaultSide)==="cut") ? "cut" : "short",
+  mover: (String(CFG.defaultMover)==="computer") ? "computer" : "you"
+};
+function myRole(){ return UI.side === "short" ? 0 : 1; }
+function computerRole(){ return 1 - myRole(); }
+function isYourTurn(){ return !G.over && G.turn === myRole(); }
+
+/* terminal test — returns "Short", "Cut" or null */
+function outcome(claimed, deleted){
+  if(connected(claimed, B.ta, B.tb)) return "Short";
+  if(!connected(FULL & ~deleted, B.ta, B.tb)) return "Cut";
+  return null;
+}
+
+function edgeName(i){
+  return B.verts[EA[i]].label + "–" + B.verts[EB[i]].label;
+}
+
+function play(i, role){
+  var st = applyMove(G.claimed, G.deleted, i, role);
+  G.claimed = st[0]; G.deleted = st[1];
+  G.log.push((role===0 ? "claim " : "cut   ") + edgeName(i) +
+             "   (" + (role===myRole() ? "you" : "computer") + ")");
+  var o = outcome(G.claimed, G.deleted);
+  if(o){
+    G.over = true; G.winner = o;
+    var youWon = (o === "Short") === (myRole() === 0);
+    if(youWon) wins++; else losses++;
+    verdict(youWon ? "won" : "lost",
+      youWon ? (o==="Short" ? msg("wonShort","You did it.") : msg("wonCut","You did it."))
+             : (o==="Short" ? msg("lostShort","The computer got there.")
+                            : msg("lostCut","The computer got there.")),
+      B.lesson);
+    showValue();
+  } else {
+    G.turn = 1 - G.turn;
+  }
+  render();
+  if(!G.over && !isYourTurn()) scheduleComputer();
+}
+
+function scheduleComputer(){
+  if(G.over || G.busy) return;
+  G.busy = true;
+  var mine = G;   /* the slider can start a new game mid-think; that reply is stale */
+  var wait = reducedMotion() ? 0 : Math.max(0, Math.min(3000, +CFG.thinkMs || 0));
+  setTimeout(function(){
+    if(G !== mine) return;
+    G.busy = false;
+    if(G.over) return;
+    var role = computerRole();
+    var i = computerMove(G.claimed, G.deleted, role);
+    if(i < 0) return;
+    play(i, role);
+  }, wait);
+}
+
+/* ---------- rendering ---------- */
+var svg = document.getElementById("board");
+var hintOn = false;
+
+function edgeMid(i){
+  var a = B.verts[EA[i]], b = B.verts[EB[i]];
+  return { x:(a.x+b.x)/2, y:(a.y+b.y)/2 };
+}
+function edgeState(i){
+  if((G.claimed>>i)&1) return "claimed";
+  if((G.deleted>>i)&1) return "deleted";
+  return "open";
+}
+
+function render(){
+  var ink=css("--ink"), gold=css("--gold"), gray=css("--gray-text"), paper=css("--paper");
+  var focusKey = document.activeElement && document.activeElement.getAttribute
+      ? document.activeElement.getAttribute("data-k") : null;
+  var out = "", i;
+
+  /* hint bands sit underneath everything */
+  if(hintOn && !G.over){
+    var road = cheapestRoad(G.claimed, G.deleted);
+    var cut  = thinnestCut(G.claimed, G.deleted);
+    road.edges.forEach(function(e){
+      var a=B.verts[EA[e]], b=B.verts[EB[e]];
+      out += '<line x1="'+a.x+'" y1="'+a.y+'" x2="'+b.x+'" y2="'+b.y+
+             '" stroke="'+gold+'" stroke-opacity="0.30" stroke-width="18" stroke-linecap="round"/>';
+    });
+    cut.edges.forEach(function(e){
+      var m = edgeMid(e);
+      out += '<circle cx="'+m.x+'" cy="'+m.y+'" r="15" fill="none" stroke="'+ink+
+             '" stroke-width="2" stroke-dasharray="3 3" opacity="0.75"/>';
+    });
+  }
+
+  for(i=0;i<M;i++){
+    var a = B.verts[EA[i]], b = B.verts[EB[i]], st = edgeState(i), m = edgeMid(i);
+    var playable = !G.over && isYourTurn() && st === "open";
+    var label = edgeName(i) + " — " +
+      (st==="claimed" ? "claimed by Short" : st==="deleted" ? "deleted by Cut" : "still open") +
+      (playable ? ". Press Enter to play it." : "");
+    out += '<g class="egrab'+(playable?"":" locked")+'" data-k="e'+i+'" tabindex="0" role="button" aria-label="'+esc(label)+'">';
+    out += '<line x1="'+a.x+'" y1="'+a.y+'" x2="'+b.x+'" y2="'+b.y+
+           '" stroke="rgba(0,0,0,0)" stroke-width="22"/>';
+    if(st === "claimed"){
+      out += '<line x1="'+a.x+'" y1="'+a.y+'" x2="'+b.x+'" y2="'+b.y+
+             '" stroke="'+gold+'" stroke-width="8" stroke-linecap="round"/>';
+      out += '<line x1="'+a.x+'" y1="'+a.y+'" x2="'+b.x+'" y2="'+b.y+
+             '" stroke="'+ink+'" stroke-width="1" stroke-linecap="round" opacity="0.55"/>';
+    } else if(st === "deleted"){
+      out += '<line x1="'+a.x+'" y1="'+a.y+'" x2="'+b.x+'" y2="'+b.y+
+             '" stroke="'+gray+'" stroke-width="1.6" stroke-dasharray="6 6" opacity="0.7"/>';
+      out += '<path d="M '+(m.x-9)+' '+(m.y-9)+' L '+(m.x+9)+' '+(m.y+9)+
+             ' M '+(m.x+9)+' '+(m.y-9)+' L '+(m.x-9)+' '+(m.y+9)+
+             '" stroke="'+ink+'" stroke-width="2.6" stroke-linecap="round" fill="none"/>';
+    } else {
+      out += '<line x1="'+a.x+'" y1="'+a.y+'" x2="'+b.x+'" y2="'+b.y+
+             '" stroke="'+ink+'" stroke-width="2"/>';
+    }
+    out += '</g>';
+  }
+
+  B.verts.forEach(function(v, vi){
+    var isTerm = (vi === B.ta || vi === B.tb);
+    if(isTerm){
+      out += '<rect x="'+(v.x-19)+'" y="'+(v.y-19)+'" width="38" height="38" rx="3" fill="'+paper+
+             '" stroke="'+ink+'" stroke-width="2.5"/>';
+      out += '<rect x="'+(v.x-13)+'" y="'+(v.y-13)+'" width="26" height="26" rx="2" fill="none" stroke="'+ink+
+             '" stroke-width="1.2"/>';
+      out += '<text x="'+v.x+'" y="'+(v.y+5)+'" text-anchor="middle" font-size="15" font-weight="700" fill="'+
+             ink+'">'+esc(v.label)+'</text>';
+    } else {
+      out += '<circle cx="'+v.x+'" cy="'+v.y+'" r="13" fill="'+paper+'" stroke="'+ink+'" stroke-width="1.5"/>';
+      out += '<text x="'+v.x+'" y="'+(v.y+4)+'" text-anchor="middle" font-size="12" fill="'+
+             gray+'">'+esc(v.label)+'</text>';
+    }
+  });
+
+  svg.innerHTML = out;
+  if(focusKey){
+    var el = svg.querySelector('[data-k="'+focusKey+'"]'); if(el) el.focus();
+  }
+  renderLegend(ink, gold, gray);
+  renderTurn();
+  renderHintBox();
+  document.getElementById("score").textContent = wins + " – " + losses;
+  document.getElementById("movelog").textContent =
+    G.log.length ? G.log.join("\n") : "";
+}
+
+function renderLegend(ink, gold, gray){
+  document.getElementById("legend").innerHTML =
+    '<span><svg aria-hidden="true" viewBox="0 0 40 14"><line x1="2" y1="7" x2="38" y2="7" stroke="'+ink+'" stroke-width="2"/></svg> still open</span>'+
+    '<span><svg aria-hidden="true" viewBox="0 0 40 14"><line x1="2" y1="7" x2="38" y2="7" stroke="'+gold+'" stroke-width="8" stroke-linecap="round"/></svg> claimed by Short</span>'+
+    '<span><svg aria-hidden="true" viewBox="0 0 40 14"><line x1="2" y1="7" x2="38" y2="7" stroke="'+gray+'" stroke-width="1.6" stroke-dasharray="6 6"/>'+
+      '<path d="M 13 2 L 27 12 M 27 2 L 13 12" stroke="'+ink+'" stroke-width="2.2" fill="none"/></svg> deleted by Cut</span>'+
+    '<span><svg aria-hidden="true" viewBox="0 0 40 14"><rect x="13" y="1" width="12" height="12" rx="2" fill="none" stroke="'+ink+'" stroke-width="2"/></svg> A and B</span>';
+}
+
+function renderTurn(){
+  var strip = document.getElementById("turnstrip");
+  strip.className = "turnstrip" + (G.over ? " over" : "");
+  if(G.over){
+    strip.innerHTML = '<span class="who">'+esc(G.winner)+' wins.</span>'+
+      '<span class="job">'+(G.winner==="Short"
+        ? "A and B are joined by claimed edges."
+        : "A and B have no road left between them.")+'</span>';
+    return;
+  }
+  var yourTurn = isYourTurn();
+  var side = yourTurn ? UI.side : (computerRole()===0 ? "short" : "cut");
+  var who = yourTurn ? "Your turn" : "The computer's turn";
+  var job = side === "short"
+    ? "Short — claim an edge; a claimed edge is yours forever and cannot be deleted."
+    : "Cut — delete an edge that nobody has claimed; it never comes back.";
+  strip.innerHTML = '<span class="who">'+esc(who)+' · '+(side==="short"?"Short":"Cut")+'</span>'+
+                    '<span class="job">'+esc(job)+'</span>';
+}
+
+function renderHintBox(){
+  if(!hintOn) return;
+  var road = cheapestRoad(G.claimed, G.deleted);
+  var cut  = thinnestCut(G.claimed, G.deleted);
+  var L = [];
+  L.push("position");
+  L.push("");
+  L.push("Short's cheapest road   " + (road.cost < 0 ? "none left" :
+      road.cost + " more edge" + (road.cost===1?"":"s") + " to claim" +
+      (road.edges.length ? "   [" + road.edges.map(edgeName).join(", ") + "]" : "   [already done]")));
+  L.push("Cut's thinnest cut      " + (cut.cost < 0 ? "none left — every cut runs through a claimed edge" :
+      cut.cost + " edge" + (cut.cost===1?"":"s") + " to delete" +
+      (cut.edges.length ? "   [" + cut.edges.map(edgeName).join(", ") + "]" : "   [already done]")));
+  L.push("");
+  var role = computerRole();
+  var who = role===0 ? "The computer is Short" : "The computer is Cut";
+  L.push(who + ", so it is working on the " + (role===0 ? "road" : "cut") + " above.");
+  L.push("");
+  L.push("The gold band on the board is that road; the dashed rings mark that cut.");
+  document.getElementById("hintbox").textContent = L.join("\n");
+}
+
+function verdict(kind, text, lesson){
+  var el = document.getElementById("verdict");
+  el.className = "verdict" + (kind ? " "+kind : "");
+  el.textContent = "";
+  if(!text) return;
+  var s = document.createElement("span");
+  s.className = "sym"; s.textContent = kind==="won" ? "✓" : "·";
+  el.appendChild(s);
+  el.appendChild(document.createTextNode(text));
+  if(lesson){
+    el.appendChild(document.createElement("br"));
+    var em = document.createElement("em");
+    em.textContent = lesson;
+    el.appendChild(em);
+  }
+}
+
+/* ---------- the verified game value ---------- */
+function valueSentence(){
+  var v = B.value || {}, sf = String(v.shortFirst||""), cf = String(v.cutFirst||"");
+  if(sf==="Short" && cf==="Short") return msg("valueShort","Short wins either way.");
+  if(sf==="Cut"   && cf==="Cut")   return msg("valueCut","Cut wins either way.");
+  if(sf==="Short" && cf==="Cut")   return msg("valueMover","Whoever moves first wins.");
+  return "";
+}
+function showValue(){
+  var L = [];
+  L.push(B.name);
+  L.push("");
+  L.push(B.verts.length + " vertices · " + M + " edges · terminals " +
+         B.verts[B.ta].label + " and " + B.verts[B.tb].label);
+  L.push("");
+  var s = valueSentence();
+  L.push(s || msg("valueHidden","Play the board first."));
+  document.getElementById("valuebox").textContent = L.join("\n");
+}
+function hideValue(){
+  var L = [];
+  L.push(B.name);
+  L.push("");
+  L.push(B.verts.length + " vertices · " + M + " edges · terminals " +
+         B.verts[B.ta].label + " and " + B.verts[B.tb].label);
+  L.push("");
+  L.push(msg("valueHidden","Play the board first — the answer is more interesting once you have an opinion."));
+  document.getElementById("valuebox").textContent = L.join("\n");
+}
+
+/* ---------- input ---------- */
+function keyOf(el){
+  while(el && el!==svg){
+    if(el.getAttribute && el.getAttribute("data-k")) return el.getAttribute("data-k");
+    el = el.parentNode;
+  }
+  return null;
+}
+function attempt(i){
+  if(G.over){ verdict("", msg("gameOver","This game is over.")); return; }
+  if(!isYourTurn()){ verdict("", msg("notYourTurn","Not your turn yet.")); return; }
+  var st = edgeState(i);
+  if(st === "claimed"){ verdict("", msg("illegalClaimed","That edge is already claimed.")); return; }
+  if(st === "deleted"){ verdict("", msg("illegalDeleted","That edge is gone.")); return; }
+  verdict("", "");
+  play(i, myRole());
+}
+svg.addEventListener("click", function(ev){
+  var k = keyOf(ev.target);
+  if(k && k[0]==="e") attempt(+k.slice(1));
+});
+svg.addEventListener("keydown", function(ev){
+  if(ev.key!=="Enter" && ev.key!==" ") return;
+  var k = keyOf(ev.target);
+  if(k && k[0]==="e"){ ev.preventDefault(); attempt(+k.slice(1)); }
+});
+
+/* ---------- setup controls ----------
+   The board picker IS the difficulty slider (professor, 2026-08-03: "Add a slider bar
+   on the page ranging from easy to difficult"). CFG.boards is stored easiest-first —
+   tools/verify_shannon.py fails the build if that order is not the measured order — so
+   sliding right is literally walking up the difficulty ladder. It replaces the old
+   <select>: one control, one piece of state, and nothing that can disagree with it. */
+var boardSlider = document.getElementById("boardSlider");
+var boardOut = document.getElementById("boardSliderv");
+var boardNameEl = document.getElementById("boardName");
+boardSlider.max = String(BOARDS.length);
+boardSlider.setAttribute("aria-label", "Board, easiest to hardest");
+
+function paintSlider(){
+  var lo = +boardSlider.min, hi = +boardSlider.max;
+  var p = hi > lo ? (boardSlider.value - lo) / (hi - lo) * 100 : 0;
+  boardSlider.style.setProperty("--track",
+    "linear-gradient(to right, var(--gold) "+p+"%, var(--gray-line) "+p+"%)");
+  var b = BOARDS[Math.max(0, Math.min(BOARDS.length-1, boardSlider.value - 1))];
+  boardOut.textContent = boardSlider.value + " / " + BOARDS.length;
+  boardNameEl.textContent = "";
+  boardNameEl.appendChild(document.createTextNode(b.name));
+  if(b.difficulty){
+    var cue = document.createElement("span");
+    cue.className = "cue";
+    cue.textContent = " — " + b.difficulty;
+    boardNameEl.appendChild(cue);
+  }
+  boardSlider.setAttribute("aria-valuetext",
+    boardSlider.value + " of " + BOARDS.length + ", " + b.name +
+    (b.difficulty ? ", " + b.difficulty : ""));
+}
+
+function setBoard(i, keepRecord){
+  UI.boardIdx = Math.max(0, Math.min(BOARDS.length-1, i));
+  boardSlider.value = String(UI.boardIdx + 1);
+  paintSlider();
+  loadBoard(UI.boardIdx);
+  document.getElementById("boardBlurb").textContent = B.blurb;
+  newGame(keepRecord);
+}
+/* "input" so the picture follows the thumb while it is dragged, and so a keyboard
+   arrow lands a board immediately. Loading a board is cheap; the solve is lazy. */
+boardSlider.addEventListener("input", function(){
+  var i = Math.round(+boardSlider.value) - 1;
+  if(i === UI.boardIdx){ paintSlider(); return; }
+  setBoard(i, true);
+});
+
+function segSet(id, attr, val){
+  var seg = document.getElementById(id);
+  Array.prototype.forEach.call(seg.querySelectorAll("button"), function(x){
+    x.setAttribute("aria-pressed", String(x.dataset[attr]===String(val)));
+  });
+}
+document.getElementById("sideSeg").addEventListener("click", function(ev){
+  var b = ev.target.closest ? ev.target.closest("button") : null; if(!b) return;
+  UI.side = b.dataset.s === "cut" ? "cut" : "short";
+  segSet("sideSeg","s",UI.side);
+  newGame(true);
+});
+document.getElementById("moverSeg").addEventListener("click", function(ev){
+  var b = ev.target.closest ? ev.target.closest("button") : null; if(!b) return;
+  UI.mover = b.dataset.m === "computer" ? "computer" : "you";
+  segSet("moverSeg","m",UI.mover);
+  newGame(true);
+});
+document.getElementById("newGame").addEventListener("click", function(){ newGame(true); });
+
+var ht = document.getElementById("hintToggle"), hr = document.getElementById("hintReveal");
+ht.addEventListener("click", function(){
+  hintOn = hr.hidden;
+  hr.hidden = !hintOn;
+  ht.setAttribute("aria-expanded", String(hintOn));
+  ht.textContent = hintOn ? "Hide the reasoning ▾" : "Why did the computer do that? ▸";
+  render();
+});
+var vt = document.getElementById("valueToggle"), vr = document.getElementById("valueReveal");
+vt.addEventListener("click", function(){
+  var open = vr.hidden;
+  vr.hidden = !open;
+  vt.setAttribute("aria-expanded", String(open));
+  vt.textContent = open ? "Hide the theory ▾" : "What does the theory say? ▸";
+});
+
+/* Reset: back to the opening board, opening side, and a clean record.
+   Two-press confirm once anything has been played (design-system §4). */
+var resetBtn = document.getElementById("reset"), resetTimer = null, resetArmed = false;
+resetBtn.addEventListener("click", function(){
+  var dirty = (wins + losses > 0) || (G && G.log.length > 0);
+  if(dirty && !resetArmed){
+    resetArmed = true; resetBtn.textContent = "Really reset?";
+    resetTimer = setTimeout(function(){ resetArmed=false; resetBtn.textContent="Reset"; }, 2000);
+    return;
+  }
+  if(resetTimer) clearTimeout(resetTimer);
+  resetArmed = false; resetBtn.textContent = "Reset";
+  UI.side = (String(CFG.defaultSide)==="cut") ? "cut" : "short";
+  UI.mover = (String(CFG.defaultMover)==="computer") ? "computer" : "you";
+  segSet("sideSeg","s",UI.side);
+  segSet("moverSeg","m",UI.mover);
+  hintOn = false; hr.hidden = true;
+  ht.setAttribute("aria-expanded","false"); ht.textContent = "Why did the computer do that? ▸";
+  vr.hidden = true; vt.setAttribute("aria-expanded","false");
+  vt.textContent = "What does the theory say? ▸";
+  wins = 0; losses = 0;
+  setBoard(Math.round(+CFG.startBoard) || 0, false);
+});
+
+segSet("sideSeg","s",UI.side);
+segSet("moverSeg","m",UI.mover);
+setBoard(Math.round(+CFG.startBoard) || 0, false);
+})();
+</script>
+</body>
+</html>

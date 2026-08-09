@@ -1,0 +1,608 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Three rulers on one grid · MATH 170</title>
+
+<!-- HAND-CHECKED EXAMPLE, pinned for the DEFAULT config island:
+     A = (1, 2)  →  B = (4, 6)
+       |Δx| = |4 − 1| = 3      |Δy| = |6 − 2| = 4
+       L1  = 3 + 4                  = 7
+       L2  = √(3² + 4²) = √(9 + 16) = √25 = 5
+       L∞  = the larger of 3 and 4  = 4
+     Circle mode, radius 3: the L1 "circle" is the diamond through (±3, 0) and (0, ±3);
+     the L2 circle is the round one; the L∞ circle is the square with corners (±3, ±3). -->
+
+<!-- ================================================================
+     DESIGN-SYSTEM v2 TOKEN BLOCK — copied verbatim into every file.
+     A global tweak stays a find-replace across the set.
+     ================================================================ -->
+<style>
+/* hidden must always win — author display rules on these classes would otherwise beat the attribute */
+[hidden]{display:none !important}
+
+:root{
+  /* color — light */
+  --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+  --gold-soft:rgba(218,165,32,.12);
+  --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  /* type */
+  --font-body: ui-serif, Georgia, "Times New Roman", serif;
+  --font-ui:   system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+  --text-xl:1.75rem; --text-lg:1.25rem; --text-base:1rem; --text-sm:.875rem; --text-xs:.75rem;
+  --leading-prose:1.6; --leading-ui:1.3;
+  /* spacing */
+  --space-1:4px; --space-2:8px; --space-3:16px; --space-4:24px; --space-5:32px; --space-6:48px;
+  /* motion */
+  --ease:cubic-bezier(0.16,1,0.3,1); --dur:200ms;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+    --gold-soft:rgba(227,179,65,.16);
+    --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+  --gold-soft:rgba(227,179,65,.16);
+  --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+}
+@media (prefers-reduced-motion: reduce){ :root{ --dur:0ms; } }
+@media print{
+  :root, :root[data-theme="dark"]{
+    --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+    --gold-soft:rgba(218,165,32,.12);
+    --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  }
+  .theme-btn{display:none}
+  .stage{break-inside:avoid}
+}
+
+/* ================= base skin (design-system §3–§4) ================= */
+*{box-sizing:border-box}
+html{color-scheme:light dark}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--font-body); font-size:var(--text-base); line-height:var(--leading-prose);
+  -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:820px; margin:0 auto; padding:var(--space-5) var(--space-4) var(--space-6);}
+.topbar{display:flex; align-items:baseline; justify-content:space-between; gap:var(--space-3);
+  border-bottom:1px solid var(--gray-line); padding-bottom:var(--space-2); margin-bottom:var(--space-4);}
+.eyebrow{font-family:var(--font-ui); font-size:var(--text-xs); letter-spacing:.08em; text-transform:uppercase; color:var(--gray-text);}
+h1{font-family:var(--font-body); font-weight:600; font-size:var(--text-xl); line-height:1.2; margin:.2em 0 .1em;}
+h2{font-family:var(--font-ui); font-weight:600; font-size:var(--text-lg); line-height:1.3; margin:var(--space-5) 0 var(--space-2);}
+p{margin:0 0 var(--space-3);}
+.prose{max-width:66ch;}
+.muted{color:var(--gray-text);}
+.mono,code{font-family:var(--font-mono); font-variant-numeric:tabular-nums;}
+a{color:inherit;}
+:focus-visible{outline:2px solid var(--ink); outline-offset:2px; box-shadow:0 0 0 5px var(--gold-soft);}
+
+.theme-btn{font-family:var(--font-ui); font-size:var(--text-xs); background:none;
+  border:1px solid var(--gray-line); color:var(--gray-text); padding:6px 10px; cursor:pointer; border-radius:2px;}
+.theme-btn:hover{background:var(--gray-fill);}
+
+/* spec header */
+details.spec{border:1px solid var(--gray-line); border-radius:2px; margin:0 0 var(--space-4); background:var(--gray-fill);}
+details.spec>summary{font-family:var(--font-ui); font-size:var(--text-sm); cursor:pointer;
+  padding:var(--space-2) var(--space-3); list-style:none; color:var(--gray-text);}
+details.spec>summary::-webkit-details-marker{display:none}
+details.spec>summary::before{content:"▸ "; color:var(--gold);}
+details.spec[open]>summary::before{content:"▾ ";}
+.spec-body{padding:0 var(--space-3) var(--space-3); font-family:var(--font-ui); font-size:var(--text-sm); line-height:1.5;}
+.spec-body dt{font-weight:600; margin-top:var(--space-2);}
+.spec-body dd{margin:0; color:var(--gray-text);}
+
+/* stage */
+.stage{margin:var(--space-4) 0; text-align:center;}
+svg{max-width:100%; height:auto; font-family:var(--font-ui);}
+figcaption{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); margin-top:var(--space-2);}
+
+/* controls */
+.controls{border-top:1px solid var(--gray-line); padding-top:var(--space-3); margin-top:var(--space-4);
+  display:grid; grid-template-columns:1fr 1fr; gap:var(--space-3) var(--space-4);}
+.controls .full{grid-column:1/-1;}
+@media(max-width:560px){ .controls{grid-template-columns:1fr;} }
+.ctl label{display:flex; justify-content:space-between; align-items:baseline;
+  font-family:var(--font-ui); font-size:var(--text-sm); line-height:var(--leading-ui);}
+.ctl .val{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm); color:var(--ink);}
+.ctl .val.gold{color:var(--gold); font-weight:600;}
+.ctl .note{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); margin-top:4px;}
+
+/* range slider — filled track works in ALL engines (design-system v2 fix):
+   wireSlider() paints the webkit track with a two-stop gradient on input. */
+input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:18px;
+  background:transparent; margin:6px 0 0; cursor:pointer;}
+input[type=range]::-webkit-slider-runnable-track{height:2px; border-radius:1px;
+  background:var(--track, var(--gray-line));}
+input[type=range]::-moz-range-track{height:2px; background:var(--gray-line);}
+input[type=range]::-moz-range-progress{height:2px; background:var(--gold);}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; appearance:none;
+  width:18px; height:18px; margin-top:-8px; border-radius:50%; background:var(--gold); border:1px solid var(--ink);}
+input[type=range]::-moz-range-thumb{width:18px; height:18px; border-radius:50%; background:var(--gold); border:1px solid var(--ink);}
+
+/* buttons + segmented + stepper */
+.btn{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:1px solid var(--ink); padding:8px 14px; cursor:pointer; border-radius:2px;}
+.btn:hover{background:var(--gray-fill);}
+.btn.primary{background:var(--gold); border-color:var(--gold); color:#111111;}
+.btn[disabled]{border-color:var(--gray-line); color:var(--gray-line); cursor:default; background:var(--paper);}
+.seg{display:inline-flex; border:1px solid var(--ink); border-radius:2px; overflow:hidden;}
+.seg button{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:0; border-left:1px solid var(--ink); padding:7px 12px; cursor:pointer;}
+.seg button:first-child{border-left:0;}
+.seg button[aria-pressed="true"]{background:var(--gold); color:#111111;}
+.stepper{display:inline-flex; align-items:center; gap:var(--space-2); font-family:var(--font-ui); font-size:var(--text-sm);}
+.stepper .count{font-family:var(--font-mono); font-variant-numeric:tabular-nums; color:var(--gray-text);}
+
+.foot{display:flex; align-items:center; gap:var(--space-3); margin-top:var(--space-5);
+  border-top:1px solid var(--gray-line); padding-top:var(--space-3); flex-wrap:wrap;}
+.foot .btn{margin-right:auto;}
+.hint{font-family:var(--font-ui); font-size:var(--text-sm); color:var(--gray-text);}
+
+/* math reveal */
+.mathbox{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm);
+  background:var(--gray-fill); border-left:2px solid var(--gold); padding:var(--space-3);
+  margin:var(--space-3) 0; overflow-x:auto; white-space:pre; line-height:1.7; text-align:left;}
+.attach{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text);
+  border-top:1px dotted var(--gray-line); margin-top:var(--space-6); padding-top:var(--space-3);}
+.tag{display:inline-block; font-family:var(--font-ui); font-size:var(--text-xs);
+  border:1px solid var(--gray-line); border-radius:999px; padding:1px 8px; color:var(--gray-text); margin-left:6px;}
+.callout{font-family:var(--font-ui); font-size:var(--text-sm); border:1px solid var(--gray-line);
+  border-left:2px solid var(--gold); padding:var(--space-2) var(--space-3); margin:var(--space-3) 0; background:var(--paper);}
+</style>
+
+<!-- component CSS — added AFTER the shared skin, never restyling it -->
+<style>
+.pt-g{cursor:grab;}
+.pt-g:active{cursor:grabbing;}
+.modebar{display:flex; justify-content:center; gap:var(--space-3); flex-wrap:wrap;
+  align-items:center; margin-top:var(--space-3);}
+.legend{display:flex; justify-content:center; gap:var(--space-4); flex-wrap:wrap;
+  font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text);
+  margin-top:var(--space-2);}
+.legend span{display:inline-flex; align-items:center; gap:6px;}
+.legend svg{width:34px; height:12px; overflow:visible;}
+.readout{font-family:var(--font-mono); font-variant-numeric:tabular-nums;
+  font-size:var(--text-sm); background:var(--gray-fill); border-left:2px solid var(--gold);
+  padding:var(--space-3); margin:var(--space-3) 0 0; overflow-x:auto; white-space:pre;
+  line-height:1.7; text-align:left;}
+.answer{font-family:var(--font-mono); font-variant-numeric:tabular-nums;
+  font-size:var(--text-lg); text-align:center; margin:var(--space-3) 0 0;}
+.answer b{color:var(--gold);}
+</style>
+
+<!-- theme boot: apply stored choice before first paint (no flash) -->
+<script>
+try{var t=localStorage.getItem("m170-theme");if(t)document.documentElement.dataset.theme=t;}catch(e){}
+</script>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="eyebrow">MATH 170 · Distance is a choice · Norms</div>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Color theme">◑ auto</button>
+  </div>
+
+  <h1 data-edit="title">Three rulers on one grid <span class="tag">L1 · L2 · L∞</span></h1>
+  <p class="prose muted" data-edit="intro">Distance is not one thing. Walk the streets and you count
+  blocks; fly and you cut the corner; ask "what was the biggest single step?" and you get a third
+  answer. Move the two points and watch three rulers disagree — then switch modes and see what a
+  circle looks like to each of them.</p>
+
+  <div data-slot="notes-top"></div>
+
+
+  <figure class="stage">
+    <svg id="grid" viewBox="0 0 520 520" role="img"
+         aria-label="Coordinate grid showing distances measured three different ways"></svg>
+
+    <div class="modebar">
+      <div class="seg" role="group" aria-label="What the grid shows" id="modeSeg">
+        <button type="button" data-m="path" aria-pressed="true">two points</button>
+        <button type="button" data-m="circle" aria-pressed="false">circles</button>
+      </div>
+    </div>
+
+    <div class="legend" id="legend"></div>
+    <figcaption id="cap">Drag either point, or focus one and use the arrow keys — everything moves in half units.</figcaption>
+  </figure>
+
+  <p class="answer" id="answer" aria-live="polite"></p>
+  <div class="readout" id="readout" aria-live="polite"></div>
+
+  <div class="controls">
+    <div class="ctl" id="ctlRadius" hidden>
+      <label for="rSlider">radius <span class="val gold" id="rSliderv">3</span></label>
+      <input type="range" id="rSlider" min="0.5" max="6" step="0.5" value="3">
+      <div class="note" data-edit="note-radius">every point exactly this far from the centre — by the ruler you pick</div>
+    </div>
+    <div class="ctl" id="ctlMetric" hidden>
+      <label id="metricLabel">which ruler</label>
+      <div class="seg" role="group" aria-labelledby="metricLabel" id="metricSeg" style="margin-top:6px;">
+        <button type="button" data-k="1" aria-pressed="true">L1</button>
+        <button type="button" data-k="2" aria-pressed="false">L2</button>
+        <button type="button" data-k="inf" aria-pressed="false">L∞</button>
+      </div>
+      <div class="note" data-edit="note-metric">the same radius, three different shapes</div>
+    </div>
+  </div>
+
+  <div data-slot="notes-bottom"></div>
+
+  <div class="foot">
+    <button class="btn" id="reset" type="button">Reset</button>
+    <span class="hint" data-edit="hint-try">Try: put both points in the same row. Which two of the three rulers agree now?</span>
+  </div>
+
+</div>
+
+<script type="application/json" id="m170-config">
+{
+  "_v": 1,
+  "mode": "path",
+  "pointA": [1, 2],
+  "pointB": [4, 6],
+  "centre": [0, 0],
+  "window": {"min": -7, "max": 7},
+  "snap": 0.5,
+  "tickEvery": 2,
+  "radiusSlider": {"min": 0.5, "max": 6, "step": 0.5, "value": 3},
+  "circleRuler": "1",
+  "labels": {"a": "A", "b": "B", "centre": "C"},
+  "_meta": {
+    "mode": { "label": "Which mode the page opens in", "kind": "choice",
+      "options": ["path", "circle"] },
+    "pointA": { "label": "First point", "kind": "list",
+      "help": "An [x, y] pair. The default (1, 2) with (4, 6) is chosen so all three distances come out whole: 7, 5 and 4. Change it and the pinned example in the page comment no longer applies." },
+    "pointB": { "label": "Second point", "kind": "list" },
+    "centre": { "label": "Centre of the circles", "kind": "list" },
+    "window": { "label": "Grid runs from min to max on both axes", "kind": "table",
+      "columns": ["min", "max"] },
+    "snap": { "label": "Points snap to this step", "kind": "number" },
+    "tickEvery": { "label": "Number a tick every n units", "kind": "number" },
+    "radiusSlider": { "label": "Radius slider", "kind": "range-spec" },
+    "circleRuler": { "label": "Ruler selected in circle mode at load", "kind": "choice",
+      "options": ["1", "2", "inf"] },
+    "labels": { "label": "Names printed beside the points", "kind": "text" }
+  }
+}
+</script>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- theme: auto → light → dark (design-system v2) ---------- */
+var root = document.documentElement, themeBtn = document.getElementById("themeBtn");
+function themeLabel(){
+  var m = root.dataset.theme || "auto";
+  themeBtn.textContent = m==="dark" ? "● dark" : m==="light" ? "○ light" : "◑ auto";
+}
+themeBtn.addEventListener("click", function(){
+  var cur = root.dataset.theme || "auto";
+  var next = cur==="auto" ? "light" : cur==="light" ? "dark" : "auto";
+  if(next==="auto"){ delete root.dataset.theme; try{localStorage.removeItem("m170-theme");}catch(e){} }
+  else { root.dataset.theme = next; try{localStorage.setItem("m170-theme", next);}catch(e){} }
+  themeLabel(); render();
+});
+if(window.matchMedia){ window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function(){ render(); }); }
+themeLabel();
+
+/* ---------- shared slider helper (design-system v2) ---------- */
+function wireSlider(id, fmt, onInput){
+  var el = document.getElementById(id), out = document.getElementById(id+"v");
+  function paint(){
+    var p = (el.value - el.min) / (el.max - el.min) * 100;
+    el.style.setProperty("--track",
+      "linear-gradient(to right, var(--gold) "+p+"%, var(--gray-line) "+p+"%)");
+    if(out) out.textContent = fmt(+el.value);
+  }
+  el.addEventListener("input", function(){ paint(); onInput(); });
+  paint();
+  return { el: el, paint: paint, set: function(v){ el.value = v; paint(); } };
+}
+function css(v){ return getComputedStyle(document.body).getPropertyValue(v).trim(); }
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+
+/* ---------- everything tunable comes from the config island ---------- */
+var CFG = JSON.parse(document.getElementById("m170-config").textContent);
+var LO = +CFG.window.min, HI = +CFG.window.max;
+var SNAP = +CFG.snap || 0.5;
+var TICK = Math.max(1, +CFG.tickEvery || 2);
+var LAB = CFG.labels || {a:"A", b:"B", centre:"C"};
+function pair(p, dflt){
+  if(!p || p.length < 2) return dflt.slice();
+  return [clampG(+p[0]), clampG(+p[1])];
+}
+function clampG(v){ return Math.min(HI, Math.max(LO, isFinite(v) ? v : 0)); }
+
+var INIT = {
+  mode: CFG.mode === "circle" ? "circle" : "path",
+  a: pair(CFG.pointA, [1,2]),
+  b: pair(CFG.pointB, [4,6]),
+  c: pair(CFG.centre, [0,0]),
+  r: +((CFG.radiusSlider||{}).value) || 3,
+  ruler: ["1","2","inf"].indexOf(String(CFG.circleRuler))>=0 ? String(CFG.circleRuler) : "1"
+};
+var state = { mode:INIT.mode, a:INIT.a.slice(), b:INIT.b.slice(), c:INIT.c.slice(),
+              r:INIT.r, ruler:INIT.ruler };
+
+/* ---------- the three rulers ---------- */
+function gaps(p, q){ return [Math.abs(q[0]-p[0]), Math.abs(q[1]-p[1])]; }
+function L1(p,q){ var g=gaps(p,q); return g[0]+g[1]; }
+function L2(p,q){ var g=gaps(p,q); return Math.sqrt(g[0]*g[0]+g[1]*g[1]); }
+function LINF(p,q){ var g=gaps(p,q); return Math.max(g[0],g[1]); }
+function nice(v){
+  var r = Math.round(v*1000)/1000;
+  return (r % 1 === 0) ? String(r) : r.toFixed(2);
+}
+
+/* ---------- geometry ---------- */
+var svg = document.getElementById("grid");
+var W=520, H=520, pad=34;
+function sx(x){ return pad + (x-LO)/(HI-LO)*(W-2*pad); }
+function sy(y){ return (H-pad) - (y-LO)/(HI-LO)*(H-2*pad); }
+function snapv(v){ return Math.min(HI, Math.max(LO, Math.round(v/SNAP)*SNAP)); }
+
+function txt(x,y,s,color,anchor,size,extra){
+  return '<text x="'+x+'" y="'+y+'" fill="'+color+'" text-anchor="'+(anchor||"start")+
+    '" font-size="'+(size||11)+'"'+(extra||"")+'>'+esc(s)+'</text>';
+}
+function mono(x,y,s,color,anchor,size){
+  return txt(x,y,s,color,anchor,size,
+    ' font-family="var(--font-mono)" style="font-variant-numeric:tabular-nums"');
+}
+function dot(key, p, label, ink, gold){
+  var X=sx(p[0]), Y=sy(p[1]);
+  return '<g class="pt-g" data-pt="'+key+'" tabindex="0" role="button" aria-label="Point '+
+    esc(label)+' at ('+nice(p[0])+', '+nice(p[1])+'). Drag it, or use arrow keys to move it.">'+
+    '<circle cx="'+X+'" cy="'+Y+'" r="14" fill="transparent"/>'+
+    '<circle cx="'+X+'" cy="'+Y+'" r="6.5" fill="'+gold+'" stroke="'+ink+'" stroke-width="1.5"/>'+
+    txt(X+10, Y-9, label+" ("+nice(p[0])+", "+nice(p[1])+")", ink, "start", 11)+'</g>';
+}
+
+function gridSvg(ink, gray, line){
+  var out="", g;
+  for(g=Math.ceil(LO); g<=HI; g++){
+    out+='<line x1="'+sx(g)+'" y1="'+pad+'" x2="'+sx(g)+'" y2="'+(H-pad)+
+         '" stroke="'+line+'" stroke-width="1"/>';
+    out+='<line x1="'+pad+'" y1="'+sy(g)+'" x2="'+(W-pad)+'" y2="'+sy(g)+
+         '" stroke="'+line+'" stroke-width="1"/>';
+  }
+  out+='<line x1="'+pad+'" y1="'+sy(0)+'" x2="'+(W-pad)+'" y2="'+sy(0)+'" stroke="'+ink+'" stroke-width="1.5"/>';
+  out+='<line x1="'+sx(0)+'" y1="'+pad+'" x2="'+sx(0)+'" y2="'+(H-pad)+'" stroke="'+ink+'" stroke-width="1.5"/>';
+  for(g=Math.ceil(LO); g<=HI; g++){
+    if(g===0 || g % TICK !== 0) continue;
+    out+=mono(sx(g), sy(0)+14, String(g), gray, "middle", 9);
+    out+=mono(sx(0)-6, sy(g)+3, String(g), gray, "end", 9);
+  }
+  return out;
+}
+
+/* ---------- path mode ---------- */
+function renderPath(ink, gold, gray, line, soft){
+  var a=state.a, b=state.b;
+  var corner=[b[0], a[1]];                 /* walk along x first, then along y */
+  var g=gaps(a,b), longerIsX = g[0] >= g[1];
+  var out=gridSvg(ink, gray, line);
+
+  /* L∞ — the longer of the two L1 steps, wearing a wide pale band */
+  var e = longerIsX ? [a, corner] : [corner, b];
+  if(Math.max(g[0],g[1]) > 0){
+    out+='<line x1="'+sx(e[0][0])+'" y1="'+sy(e[0][1])+'" x2="'+sx(e[1][0])+'" y2="'+sy(e[1][1])+
+         '" stroke="'+gold+'" stroke-opacity="0.35" stroke-width="14" stroke-linecap="round"/>';
+    out+=txt((sx(e[0][0])+sx(e[1][0]))/2, (sy(e[0][1])+sy(e[1][1]))/2 - 14,
+             "L∞ = "+nice(LINF(a,b)), ink, "middle", 11, ' font-weight="600"');
+  }
+
+  /* L1 — two solid gold steps along the grid lines */
+  out+='<polyline points="'+sx(a[0])+','+sy(a[1])+' '+sx(corner[0])+','+sy(corner[1])+' '+
+       sx(b[0])+','+sy(b[1])+'" fill="none" stroke="'+gold+'" stroke-width="3.5"/>';
+
+  /* L2 — one ink dashed line straight across */
+  out+='<line x1="'+sx(a[0])+'" y1="'+sy(a[1])+'" x2="'+sx(b[0])+'" y2="'+sy(b[1])+
+       '" stroke="'+ink+'" stroke-width="2.5" stroke-dasharray="8 5"/>';
+
+  out+=dot("a", a, LAB.a, ink, gold);
+  out+=dot("b", b, LAB.b, ink, gold);
+  return out;
+}
+
+function pathReadout(){
+  var a=state.a, b=state.b, g=gaps(a,b);
+  var sq = g[0]*g[0] + g[1]*g[1];
+  var L=[];
+  L.push(LAB.a+" = ("+nice(a[0])+", "+nice(a[1])+")     "+LAB.b+" = ("+nice(b[0])+", "+nice(b[1])+")");
+  L.push("");
+  L.push("sideways gap = |"+nice(b[0])+" − "+nice(a[0])+"| = "+nice(g[0]));
+  L.push("up-down gap  = |"+nice(b[1])+" − "+nice(a[1])+"| = "+nice(g[1]));
+  L.push("");
+  L.push("L1  = "+nice(g[0])+" + "+nice(g[1])+"  = "+nice(L1(a,b))+"        (add the two gaps)");
+  L.push("L2  = √("+nice(g[0])+"² + "+nice(g[1])+"²) = √"+nice(sq)+" = "+nice(L2(a,b))+
+         "   (straight across)");
+  L.push("L∞  = the larger of "+nice(g[0])+" and "+nice(g[1])+" = "+nice(LINF(a,b))+
+         "     (the biggest single step)");
+  return L.join("\n");
+}
+
+/* ---------- circle mode ---------- */
+function ballPath(kind, c, r){
+  var X=sx(c[0]), Y=sy(c[1]);
+  var ux = sx(c[0]+r)-X, uy = Y-sy(c[1]+r);
+  if(kind==="2") return '<ellipse cx="'+X+'" cy="'+Y+'" rx="'+ux+'" ry="'+uy+'"';
+  if(kind==="inf") return '<rect x="'+(X-ux)+'" y="'+(Y-uy)+'" width="'+(2*ux)+'" height="'+(2*uy)+'"';
+  return '<polygon points="'+(X+ux)+','+Y+' '+X+','+(Y-uy)+' '+(X-ux)+','+Y+' '+X+','+(Y+uy)+'"';
+}
+function renderCircle(ink, gold, gray, line, soft){
+  var out=gridSvg(ink, gray, line);
+  var shape=ballPath(state.ruler, state.c, state.r);
+  out+=shape+' fill="'+soft+'" stroke="'+gold+'" stroke-width="3"/>';
+  out+=dot("c", state.c, LAB.centre, ink, gold);
+  return out;
+}
+function circleReadout(){
+  var c=state.c, r=state.r, L=[];
+  var cx=nice(c[0]), cy=nice(c[1]), rr=nice(r);
+  L.push("centre "+LAB.centre+" = ("+cx+", "+cy+")      radius = "+rr);
+  L.push("");
+  if(state.ruler==="1"){
+    L.push("L1 circle:  every (x, y) with  |x − "+cx+"| + |y − "+cy+"| = "+rr);
+    L.push("");
+    L.push("  the two gaps must add to "+rr+", so one grows only if the other shrinks");
+    L.push("  → a diamond, with corners "+rr+" away straight up, down, left and right");
+  } else if(state.ruler==="2"){
+    L.push("L2 circle:  every (x, y) with  √( (x − "+cx+")² + (y − "+cy+")² ) = "+rr);
+    L.push("");
+    L.push("  the ordinary circle — the only one of the three that is round");
+  } else {
+    L.push("L∞ circle:  every (x, y) with  the larger of |x − "+cx+"| and |y − "+cy+"| = "+rr);
+    L.push("");
+    L.push("  neither gap may exceed "+rr+", and one of them must reach it");
+    L.push("  → a square, "+nice(2*r)+" across, with corners at the diagonals");
+  }
+  return L.join("\n");
+}
+
+/* ---------- legend (shape + colour, never colour alone) ---------- */
+function legendSvg(kind, gold, ink){
+  if(kind==="l1")  return '<svg aria-hidden="true"><line x1="0" y1="6" x2="34" y2="6" stroke="'+gold+'" stroke-width="3.5"/></svg>';
+  if(kind==="l2")  return '<svg aria-hidden="true"><line x1="0" y1="6" x2="34" y2="6" stroke="'+ink+'" stroke-width="2.5" stroke-dasharray="8 5"/></svg>';
+  return '<svg aria-hidden="true"><line x1="0" y1="6" x2="34" y2="6" stroke="'+gold+'" stroke-opacity="0.35" stroke-width="11" stroke-linecap="round"/></svg>';
+}
+function renderLegend(gold, ink){
+  var el=document.getElementById("legend");
+  if(state.mode==="circle"){ el.innerHTML=""; return; }
+  el.innerHTML =
+    '<span>'+legendSvg("l1",gold,ink)+' L1 — two steps along the grid</span>'+
+    '<span>'+legendSvg("l2",gold,ink)+' L2 — straight across (dashed)</span>'+
+    '<span>'+legendSvg("inf",gold,ink)+' L∞ — the longer step, highlighted</span>';
+}
+
+/* ---------- render ---------- */
+function render(){
+  var ink=css("--ink"), gold=css("--gold"), gray=css("--gray-text"),
+      line=css("--gray-line"), soft=css("--gold-soft");
+  var focusKey=(document.activeElement && document.activeElement.dataset)
+               ? document.activeElement.dataset.pt : null;
+
+  svg.innerHTML = state.mode==="path"
+    ? renderPath(ink, gold, gray, line, soft)
+    : renderCircle(ink, gold, gray, line, soft);
+
+  if(focusKey!=null){
+    var fg=svg.querySelector('[data-pt="'+focusKey+'"]');
+    if(fg) fg.focus({preventScroll:true});
+  }
+  renderLegend(gold, ink);
+
+  if(state.mode==="path"){
+    document.getElementById("answer").innerHTML =
+      "L1 = <b>"+nice(L1(state.a,state.b))+"</b> &nbsp; L2 = <b>"+nice(L2(state.a,state.b))+
+      "</b> &nbsp; L∞ = <b>"+nice(LINF(state.a,state.b))+"</b>";
+    document.getElementById("readout").textContent = pathReadout();
+  } else {
+    var name = state.ruler==="1" ? "L1" : state.ruler==="2" ? "L2" : "L∞";
+    var shape = state.ruler==="1" ? "a diamond" : state.ruler==="2" ? "a round circle" : "a square";
+    document.getElementById("answer").innerHTML =
+      "the "+name+" circle of radius <b>"+nice(state.r)+"</b> is "+shape;
+    document.getElementById("readout").textContent = circleReadout();
+  }
+}
+
+/* ---------- dragging + keyboard (half-unit snap) ---------- */
+var dragging=null;
+function svgPoint(evt){
+  var pt=svg.createSVGPoint(); pt.x=evt.clientX; pt.y=evt.clientY;
+  return pt.matrixTransform(svg.getScreenCTM().inverse());
+}
+function moveTo(key, x, y){
+  var p=[snapv(x), snapv(y)];
+  if(key==="a") state.a=p; else if(key==="b") state.b=p; else if(key==="c") state.c=p;
+  render();
+}
+function fromScreen(p){
+  return [ LO + (p.x-pad)/(W-2*pad)*(HI-LO),
+           LO + ((H-pad)-p.y)/(H-2*pad)*(HI-LO) ];
+}
+svg.addEventListener("pointerdown", function(e){
+  var g=e.target.closest("[data-pt]"); if(!g) return;
+  dragging=g.dataset.pt;
+  svg.setPointerCapture(e.pointerId);
+  g.focus({preventScroll:true});
+  e.preventDefault();
+});
+svg.addEventListener("pointermove", function(e){
+  if(dragging===null) return;
+  var w=fromScreen(svgPoint(e));
+  moveTo(dragging, w[0], w[1]);
+});
+svg.addEventListener("pointerup", function(){ dragging=null; });
+svg.addEventListener("pointercancel", function(){ dragging=null; });
+svg.addEventListener("keydown", function(e){
+  var g=e.target.closest ? e.target.closest("[data-pt]") : null; if(!g) return;
+  var step=SNAP*(e.shiftKey?10:1), dx=0, dy=0;
+  if(e.key==="ArrowUp") dy=step; else if(e.key==="ArrowDown") dy=-step;
+  else if(e.key==="ArrowLeft") dx=-step; else if(e.key==="ArrowRight") dx=step;
+  else return;
+  e.preventDefault();
+  var k=g.dataset.pt;
+  var cur = k==="a" ? state.a : k==="b" ? state.b : state.c;
+  moveTo(k, cur[0]+dx, cur[1]+dy);
+});
+
+/* ---------- controls ---------- */
+var rS = wireSlider("rSlider", function(v){ return nice(v); }, function(){
+  state.r = +rS.el.value; render();
+});
+(function(){
+  var spec=CFG.radiusSlider||{};
+  if(spec.min!=null) rS.el.min=spec.min;
+  if(spec.max!=null) rS.el.max=spec.max;
+  if(spec.step!=null) rS.el.step=spec.step;
+  rS.set(state.r);
+})();
+
+function segSet(id, attr, val){
+  Array.prototype.forEach.call(document.getElementById(id).querySelectorAll("button"), function(x){
+    x.setAttribute("aria-pressed", String(x.dataset[attr]===String(val)));
+  });
+}
+function setMode(m){
+  state.mode = m==="circle" ? "circle" : "path";
+  segSet("modeSeg","m",state.mode);
+  var isCircle = state.mode==="circle";
+  document.getElementById("ctlRadius").hidden = !isCircle;
+  document.getElementById("ctlMetric").hidden = !isCircle;
+  document.getElementById("cap").textContent = isCircle
+    ? "Drag the centre, set a radius, and pick a ruler — the shape is every point exactly that far away."
+    : "Drag either point, or focus one and use the arrow keys — everything moves in half units.";
+  render();
+}
+document.getElementById("modeSeg").addEventListener("click", function(e){
+  var b=e.target.closest("button"); if(!b) return;
+  setMode(b.dataset.m);
+});
+document.getElementById("metricSeg").addEventListener("click", function(e){
+  var b=e.target.closest("button"); if(!b) return;
+  state.ruler=b.dataset.k; segSet("metricSeg","k",state.ruler); render();
+});
+
+/* ---------- Reset → the initial teaching state ---------- */
+document.getElementById("reset").addEventListener("click", function(){
+  state.a=INIT.a.slice(); state.b=INIT.b.slice(); state.c=INIT.c.slice();
+  state.r=INIT.r; state.ruler=INIT.ruler;
+  rS.set(state.r); segSet("metricSeg","k",state.ruler);
+  setMode(INIT.mode);
+});
+
+segSet("metricSeg","k",state.ruler);
+setMode(state.mode);
+})();
+</script>
+</body>
+</html>

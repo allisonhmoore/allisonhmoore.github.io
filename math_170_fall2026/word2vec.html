@@ -1,0 +1,806 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Word2Vec — one honest forward pass · MATH 170</title>
+
+<!-- ================================================================
+     DESIGN-SYSTEM v2 TOKEN BLOCK — copied verbatim into every file.
+     A global tweak stays a find-replace across the set.
+     This file is the EXEMPLAR: builders copy its <style> and skeleton.
+     ================================================================ -->
+<style>
+/* hidden must always win — author display rules on these classes would otherwise beat the attribute */
+[hidden]{display:none !important}
+:root{
+  /* color — light */
+  --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+  --gold-soft:rgba(218,165,32,.12);
+  --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  /* type */
+  --font-body: ui-serif, Georgia, "Times New Roman", serif;
+  --font-ui:   system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+  --text-xl:1.75rem; --text-lg:1.25rem; --text-base:1rem; --text-sm:.875rem; --text-xs:.75rem;
+  --leading-prose:1.6; --leading-ui:1.3;
+  /* spacing */
+  --space-1:4px; --space-2:8px; --space-3:16px; --space-4:24px; --space-5:32px; --space-6:48px;
+  /* motion */
+  --ease:cubic-bezier(0.16,1,0.3,1); --dur:200ms;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+    --gold-soft:rgba(227,179,65,.16);
+    --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+  --gold-soft:rgba(227,179,65,.16);
+  --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+}
+@media (prefers-reduced-motion: reduce){ :root{ --dur:0ms; } }
+@media print{
+  :root, :root[data-theme="dark"]{
+    --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+    --gold-soft:rgba(218,165,32,.12);
+    --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  }
+  .theme-btn{display:none}
+  .stage{break-inside:avoid}
+}
+
+/* ================= base skin (design-system §3–§4) ================= */
+*{box-sizing:border-box}
+html{color-scheme:light dark}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--font-body); font-size:var(--text-base); line-height:var(--leading-prose);
+  -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:820px; margin:0 auto; padding:var(--space-5) var(--space-4) var(--space-6);}
+.topbar{display:flex; align-items:baseline; justify-content:space-between; gap:var(--space-3);
+  border-bottom:1px solid var(--gray-line); padding-bottom:var(--space-2); margin-bottom:var(--space-4);}
+.eyebrow{font-family:var(--font-ui); font-size:var(--text-xs); letter-spacing:.08em; text-transform:uppercase; color:var(--gray-text);}
+h1{font-family:var(--font-body); font-weight:600; font-size:var(--text-xl); line-height:1.2; margin:.2em 0 .1em;}
+h2{font-family:var(--font-ui); font-weight:600; font-size:var(--text-lg); line-height:1.3; margin:var(--space-5) 0 var(--space-2);}
+p{margin:0 0 var(--space-3);}
+.prose{max-width:66ch;}
+.muted{color:var(--gray-text);}
+.mono,code{font-family:var(--font-mono); font-variant-numeric:tabular-nums;}
+a{color:inherit;}
+:focus-visible{outline:2px solid var(--ink); outline-offset:2px; box-shadow:0 0 0 5px var(--gold-soft);}
+
+.theme-btn{font-family:var(--font-ui); font-size:var(--text-xs); background:none;
+  border:1px solid var(--gray-line); color:var(--gray-text); padding:6px 10px; cursor:pointer; border-radius:2px;}
+.theme-btn:hover{background:var(--gray-fill);}
+
+/* spec header */
+details.spec{border:1px solid var(--gray-line); border-radius:2px; margin:0 0 var(--space-4); background:var(--gray-fill);}
+details.spec>summary{font-family:var(--font-ui); font-size:var(--text-sm); cursor:pointer;
+  padding:var(--space-2) var(--space-3); list-style:none; color:var(--gray-text);}
+details.spec>summary::-webkit-details-marker{display:none}
+details.spec>summary::before{content:"▸ "; color:var(--gold);}
+details.spec[open]>summary::before{content:"▾ ";}
+.spec-body{padding:0 var(--space-3) var(--space-3); font-family:var(--font-ui); font-size:var(--text-sm); line-height:1.5;}
+.spec-body dt{font-weight:600; margin-top:var(--space-2);}
+.spec-body dd{margin:0; color:var(--gray-text);}
+
+/* stage */
+.stage{margin:var(--space-4) 0; text-align:center;}
+svg{max-width:100%; height:auto; font-family:var(--font-ui);}
+figcaption{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); margin-top:var(--space-2);}
+
+/* controls */
+.controls{border-top:1px solid var(--gray-line); padding-top:var(--space-3); margin-top:var(--space-4);
+  display:grid; grid-template-columns:1fr 1fr; gap:var(--space-3) var(--space-4);}
+.controls .full{grid-column:1/-1;}
+@media(max-width:560px){ .controls{grid-template-columns:1fr;} }
+.ctl label{display:flex; justify-content:space-between; align-items:baseline;
+  font-family:var(--font-ui); font-size:var(--text-sm); line-height:var(--leading-ui);}
+.ctl .val{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm); color:var(--ink);}
+.ctl .val.gold{color:var(--gold); font-weight:600;}
+.ctl .note{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); margin-top:4px;}
+
+/* range slider — filled track works in ALL engines (design-system v2 fix):
+   wireSlider() paints the webkit track with a two-stop gradient on input. */
+input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:18px;
+  background:transparent; margin:6px 0 0; cursor:pointer;}
+input[type=range]::-webkit-slider-runnable-track{height:2px; border-radius:1px;
+  background:var(--track, var(--gray-line));}
+input[type=range]::-moz-range-track{height:2px; background:var(--gray-line);}
+input[type=range]::-moz-range-progress{height:2px; background:var(--gold);}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; appearance:none;
+  width:18px; height:18px; margin-top:-8px; border-radius:50%; background:var(--gold); border:1px solid var(--ink);}
+input[type=range]::-moz-range-thumb{width:18px; height:18px; border-radius:50%; background:var(--gold); border:1px solid var(--ink);}
+
+/* buttons + segmented + stepper */
+.btn{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:1px solid var(--ink); padding:8px 14px; cursor:pointer; border-radius:2px;}
+.btn:hover{background:var(--gray-fill);}
+.btn.primary{background:var(--gold); border-color:var(--gold); color:#111111;}
+.btn[disabled]{border-color:var(--gray-line); color:var(--gray-line); cursor:default; background:var(--paper);}
+.seg{display:inline-flex; border:1px solid var(--ink); border-radius:2px; overflow:hidden;}
+.seg button{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:0; border-left:1px solid var(--ink); padding:7px 12px; cursor:pointer;}
+.seg button:first-child{border-left:0;}
+.seg button[aria-pressed="true"]{background:var(--gold); color:#111111;}
+.stepper{display:inline-flex; align-items:center; gap:var(--space-2); font-family:var(--font-ui); font-size:var(--text-sm);}
+.stepper .count{font-family:var(--font-mono); font-variant-numeric:tabular-nums; color:var(--gray-text);}
+
+.foot{display:flex; align-items:center; gap:var(--space-3); margin-top:var(--space-5);
+  border-top:1px solid var(--gray-line); padding-top:var(--space-3); flex-wrap:wrap;}
+.foot .btn{margin-right:auto;}
+.hint{font-family:var(--font-ui); font-size:var(--text-sm); color:var(--gray-text);}
+
+/* math reveal */
+.mathbox{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm);
+  background:var(--gray-fill); border-left:2px solid var(--gold); padding:var(--space-3);
+  margin:var(--space-3) 0; overflow-x:auto; white-space:pre; line-height:1.7; text-align:left;}
+.attach{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text);
+  border-top:1px dotted var(--gray-line); margin-top:var(--space-6); padding-top:var(--space-3);}
+.tag{display:inline-block; font-family:var(--font-ui); font-size:var(--text-xs);
+  border:1px solid var(--gray-line); border-radius:999px; padding:1px 8px; color:var(--gray-text); margin-left:6px;}
+.callout{font-family:var(--font-ui); font-size:var(--text-sm); border:1px solid var(--gray-line);
+  border-left:2px solid var(--gold); padding:var(--space-2) var(--space-3); margin:var(--space-3) 0; background:var(--paper);}
+</style>
+
+<!-- ============ page-specific styles (pipeline, tables, stations) ============ -->
+<style>
+.rail{display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:4px 2px; font-family:var(--font-ui);}
+.rail .arrow{color:var(--gray-text); padding:0 3px; font-size:var(--text-sm);}
+.st-btn{font-family:var(--font-ui); font-size:var(--text-sm); line-height:var(--leading-ui);
+  background:var(--paper); color:var(--gray-text); border:1px dashed var(--gray-line);
+  border-radius:2px; padding:7px 10px; cursor:pointer;}
+.st-btn:hover{background:var(--gray-fill);}
+.st-btn.visited{border-style:solid; border-color:var(--ink); color:var(--ink);}
+.st-btn.current{background:var(--gold); border:1px solid var(--gold); color:#111111; font-weight:600;}
+.station{border:1px solid var(--gray-line); border-radius:2px; margin-top:var(--space-3);
+  padding:var(--space-3) var(--space-4) var(--space-4); text-align:left;}
+.station h2{margin:0 0 var(--space-2);}
+.station .sm{font-family:var(--font-ui); font-size:var(--text-sm); color:var(--ink); max-width:66ch;}
+.station .cap{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); max-width:66ch; margin:var(--space-2) 0;}
+.sentence{font-size:var(--text-lg); margin:var(--space-2) 0 var(--space-3);}
+.blank{display:inline-block; min-width:3.4em; border-bottom:2px solid var(--gold);}
+.tscroll{overflow-x:auto;}
+.wtab{border-collapse:collapse; font-family:var(--font-ui); font-size:var(--text-sm); margin:var(--space-2) 0;}
+.wtab th{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); font-weight:600; text-align:left; padding:4px 10px; border-bottom:1px solid var(--gray-line);}
+.wtab th.num, .wtab td.num{text-align:right; font-family:var(--font-mono); font-variant-numeric:tabular-nums;}
+.wtab td{padding:4px 10px; border-bottom:1px solid var(--gray-fill);}
+.wtab tr.ctx{background:var(--gold-soft);}
+.wtab .rowtag{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text);}
+.onehot .one{font-weight:700;}
+.onehot .zero{color:var(--gray-text);}
+.wordbtn{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:1px solid var(--ink); border-radius:2px; padding:4px 10px; cursor:pointer; min-width:6.5em; text-align:left;}
+.wordbtn:hover{background:var(--gray-fill);}
+.wordbtn.done{border-color:var(--gray-line);}
+.expx{font-size:var(--text-xs); color:var(--gray-text); text-align:left !important; white-space:nowrap;}
+.gval{color:var(--gold); font-weight:600;}
+.hline{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:1.05rem; margin:var(--space-2) 0;}
+.figblock{margin:var(--space-3) 0; text-align:center;}
+.readout{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm);}
+.lossbig{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:1.9rem; font-weight:600; color:var(--gold); margin:var(--space-2) 0;}
+.nudgerow{display:flex; align-items:center; gap:var(--space-3); flex-wrap:wrap; margin:var(--space-3) 0 var(--space-2);}
+.nudgerow .count{font-family:var(--font-mono); font-variant-numeric:tabular-nums; color:var(--gray-text); font-size:var(--text-sm);}
+.passlog{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-xs); color:var(--gray-text); line-height:1.9; margin:0 0 var(--space-2); white-space:pre-wrap;}
+.mathtoggle{margin-top:var(--space-2);}
+</style>
+
+<!-- theme boot: apply stored choice before first paint (no flash) -->
+<script>
+try{var t=localStorage.getItem("m170-theme");if(t)document.documentElement.dataset.theme=t;}catch(e){}
+</script>
+
+<!-- ==================================================================
+PINNED NUMBERS — computed with python3 at build time (2026-07-03) from
+the worksheet's V=6, N=3 tables (course-data.md, Week 13). They hold for
+the DEFAULT config island further down this file; edit the island and
+they no longer apply. The JS below implements the identical formulas and
+must reproduce these exactly for that default data.
+
+initial forward pass (original tables; context = Witches, have, and, cauldrons):
+  h = [0.55, 0.15, 0.10]                       (exactly)
+  u(Witches)   = 0.120000   exp = 1.127497   p = 0.159897
+  u(have)      = 0.055000   exp = 1.056541   p = 0.149834
+  u(and)       = 0.180000   exp = 1.197217   p = 0.169784
+  u(cauldrons) = 0.370000   exp = 1.447735   p = 0.205311
+  u(cats)      = 0.135000   exp = 1.144537   p = 0.162313
+  u(dogs)      = 0.075000   exp = 1.077884   p = 0.152861
+  sum of the six exp terms = 7.051410 ; probabilities sum to 1.0000000000
+  loss(target = cats) = −ln 0.162313 = 1.818228
+  loss(target = dogs) = −ln 0.152861 = 1.878228
+
+"nudge the weights" = ONE true CBOW gradient step, learning rate 0.5:
+  e_w = p_w − 1{w = target}
+  W′ row for w   ←  W′ row − 0.5 · e_w · h                (all six rows)
+  EH_k = Σ_w e_w · (old W′ row for w)_k
+  W row for c    ←  W row − 0.5 · EH_k / 4                (four context rows)
+
+p(cats) over 5 successive nudges (target = cats) — strictly increasing, verified:
+  0.162313 → 0.187857 → 0.217187 → 0.256609 → 0.313732 → 0.395932
+loss trajectory:
+  1.818228 → 1.672075 → 1.526998 → 1.360202 → 1.159215 → 0.926514
+after nudge 1 (JS must match):
+  h = [0.538829, 0.143719, 0.130445]
+  W′ row for cats = [0.330364, 0.262827, 0.541884]
+  u(cats) = 0.286469 ; sum of exp = 7.088998 ; p(cats) = 0.187857
+target = dogs trajectory (also strictly increasing):
+  0.152861 → 0.176290 → 0.200934 → 0.232151 → 0.276455 → 0.341572
+================================================================== -->
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="eyebrow">MATH 170 · From words to numbers · A First Look at Word2Vec</div>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Color theme">◑ auto</button>
+  </div>
+
+  <h1 data-edit="title">One honest forward pass <span class="tag">word2vec · CBOW</span></h1>
+  <p class="prose muted" data-edit="intro">You are the AI. The sentence <em>“Witches have ____ and
+  cauldrons.”</em> crosses your desk with the middle word hidden. All you own is two
+  small tables of numbers. Walk the five stations and watch a guess — and a complaint
+  about the guess — come out of nothing but multiply, add, <em>e</em>, and log.</p>
+
+  <div data-slot="notes-top"></div>
+
+
+  <div class="stage">
+    <div class="rail" id="rail" role="group" aria-label="Pipeline stations, context through loss"></div>
+    <div class="station" id="stationView"></div>
+  </div>
+
+  <div class="controls">
+    <div class="ctl full">
+      <div class="stepper">
+        <button class="btn" id="backBtn" type="button">◂ Back</button>
+        <button class="btn" id="stepBtn" type="button">Step ▸</button>
+        <span class="count" id="stepCount">station 1 of 5 — context</span>
+      </div>
+    </div>
+    <div class="ctl">
+      <label>the word being graded (the one in the blank)</label>
+      <div class="seg" role="group" aria-label="Target word" id="targetSeg" style="margin-top:6px"></div>
+      <div class="note" data-edit="note-target">switching re-runs all five stations — same context, different grade</div>
+    </div>
+    <div class="ctl">
+      <label>&nbsp;</label>
+      <div class="note" data-edit="note-live">Every number on this page is live. Nudge the weights at the loss
+      station, then walk back and find what moved.</div>
+    </div>
+  </div>
+
+  <div data-slot="notes-bottom"></div>
+
+  <div class="foot">
+    <button class="btn" id="reset" type="button">Reset</button>
+    <span class="hint" data-edit="hint-try">Try: step to the loss station, nudge three times, then walk back to the bars.</span>
+  </div>
+
+</div>
+
+<script type="application/json" id="m170-config">
+{
+  "_v": 1,
+  "vocab": ["Witches","have","and","cauldrons","cats","dogs"],
+  "context": ["Witches","have","and","cauldrons"],
+  "W": {
+    "Witches":   [0.2, 0.0, -0.1],
+    "have":      [0.7, 0.3,  0.1],
+    "and":       [0.4, 0.2,  0.0],
+    "cauldrons": [0.9, 0.1,  0.4],
+    "cats":      [0.6, 0.1,  0.5],
+    "dogs":      [0.3, 0.8,  0.6]
+  },
+  "Wprime": {
+    "Witches":   [0.1, 0.3, 0.2],
+    "have":      [0.0, 0.1, 0.4],
+    "and":       [0.2, 0.4, 0.1],
+    "cauldrons": [0.6, 0.2, 0.1],
+    "cats":      [0.1, 0.2, 0.5],
+    "dogs":      [0.0, 0.3, 0.3]
+  },
+  "learningRate": 0.5,
+  "targets": ["cats","dogs"],
+  "target": "cats",
+  "stationNames": ["context","average h","scores u","softmax","loss"],
+  "sentence": {"pre": "“Witches have ", "post": " and cauldrons.”"},
+  "worksheetH": "h = ¼([0.2, 0, −0.1] + [0.7, 0.3, 0.1] + [0.4, 0.2, 0] + [0.9, 0.1, 0.4]) = [0.55, 0.15, 0.1]",
+  "_meta": {
+    "vocab": { "label": "The vocabulary, in table order", "kind": "list",
+      "regen": "labeled-table",
+      "help": "Every word the model can score. The two weight tables must carry one row per word listed here." },
+    "context": { "label": "The context words (the blank's neighbours)", "kind": "list",
+      "regen": "labeled-table",
+      "help": "Must all appear in the vocabulary; their W rows are the ones averaged into h." },
+    "W": { "label": "Embedding table W — one row per word", "kind": "table",
+      "regen": "labeled-table",
+      "help": "The worksheet's first table, verbatim. Row length sets the number of columns for both tables; change these and the pinned numbers in the page comment no longer apply." },
+    "Wprime": { "label": "Scoring table W′ᵀ — one row per word", "kind": "table",
+      "regen": "labeled-table",
+      "help": "The worksheet's second table, verbatim. Dotted with h to score each word." },
+    "learningRate": { "label": "Learning rate of one nudge", "kind": "number",
+      "help": "How far a single training step moves the tables. The worksheet run uses 0.5." },
+    "targets": { "label": "Words offered in the target picker", "kind": "list",
+      "help": "The buttons under the pipeline are written from this list; each must be in the vocabulary." },
+    "target": { "label": "Target word selected at load", "kind": "choice",
+      "options": ["cats","dogs"] },
+    "stationNames": { "label": "Names of the five pipeline stations", "kind": "list",
+      "help": "Five names, in order; the page has exactly five stations, so extra names are ignored and missing ones fall back." },
+    "sentence": { "label": "The masked sentence, either side of the blank", "kind": "text",
+      "help": "Written by the page at station 1, so it cannot carry a data-edit key — edit it here instead." },
+    "worksheetH": { "label": "The worksheet's one-line version of the average", "kind": "text",
+      "help": "Quoted verbatim, and true only for the DEFAULT W table above. Leave it empty to drop that line from the station-2 math reveal." }
+  }
+}
+</script>
+
+<script>
+(function(){
+"use strict";
+/* Pinned check (see build comment in <head>; holds for the DEFAULT config
+   island): initial p(cats) = 0.162313, loss = 1.818228; after nudge 1
+   (lr 0.5) p(cats) = 0.187857. */
+
+/* ---------- worksheet data — all of it from the config island ---------- */
+var CFG = JSON.parse(document.getElementById("m170-config").textContent);
+function strList(a){
+  return (Array.isArray(a) ? a : []).map(String).filter(function(s){ return s.length>0; });
+}
+var VOCAB = (function(){
+  var v = strList(CFG.vocab), out = [], seen = {};
+  v.forEach(function(w){ if(!seen[w]){ seen[w]=1; out.push(w); } });
+  return out.length ? out : ["word"];
+})();
+var DIM = (function(){                /* columns per row — taken from W, floor 1 */
+  var r = (CFG.W||{})[VOCAB[0]];
+  var n = Array.isArray(r) ? r.length : 3;
+  return Math.max(1, Math.min(64, Math.round(n) || 3));
+})();
+var DIMS = (function(){ var a=[]; for(var k=0;k<DIM;k++) a.push(k); return a; })();
+function table(src){                  /* one clean numeric row of length DIM per word */
+  var t = (src && typeof src==="object") ? src : {}, out = {};
+  VOCAB.forEach(function(w){
+    var r = Array.isArray(t[w]) ? t[w] : [];
+    out[w] = DIMS.map(function(k){ var x=+r[k]; return isFinite(x) ? x : 0; });
+  });
+  return out;
+}
+var W0 = table(CFG.W);                /* embedding table W — one row per word */
+var WP0 = table(CFG.Wprime);          /* scoring table W′ᵀ — one row per word */
+var CONTEXT = (function(){
+  var c = strList(CFG.context).filter(function(w){ return VOCAB.indexOf(w)>=0; });
+  return c.length ? c : [VOCAB[0]];
+})();
+var NC = CONTEXT.length;              /* how many rows the average is over */
+var LR = (function(){ var v=+CFG.learningRate; return isFinite(v) ? v : 0.5; })();
+var TARGETS = (function(){
+  var t = strList(CFG.targets).filter(function(w){ return VOCAB.indexOf(w)>=0; });
+  return t.length ? t : [VOCAB[VOCAB.length-1]];
+})();
+var TARGET0 = TARGETS.indexOf(String(CFG.target))>=0 ? String(CFG.target) : TARGETS[0];
+var NAMES = (function(){
+  var d = ["context","average h","scores u","softmax","loss"];
+  var n = strList(CFG.stationNames);
+  return d.map(function(x,i){ return n[i]!=null ? n[i] : x; });
+})();
+var SENT = (function(){
+  var s = (CFG.sentence && typeof CFG.sentence==="object") ? CFG.sentence : {};
+  return { pre: String(s.pre!=null ? s.pre : ""), post: String(s.post!=null ? s.post : "") };
+})();
+var WSH = String(CFG.worksheetH != null ? CFG.worksheetH : "");
+function ord(n){ return n===1 ? "1st" : n===2 ? "2nd" : n===3 ? "3rd" : n+"th"; }
+var NUMWORD = ["zero","one","two","three","four","five","six","seven","eight","nine","ten"];
+function numWord(n){ return NUMWORD[n] || String(n); }
+var NSTAT = NAMES.length;             /* five, always — one function per station */
+var NV = VOCAB.length, NVW = numWord(NV);   /* vocabulary size, in figures and in words */
+
+/* ---------- theme: auto → light → dark (design-system v2) ---------- */
+var root = document.documentElement, themeBtn = document.getElementById("themeBtn");
+function themeLabel(){
+  var m = root.dataset.theme || "auto";
+  themeBtn.textContent = m==="dark" ? "● dark" : m==="light" ? "○ light" : "◑ auto";
+}
+themeBtn.addEventListener("click", function(){
+  var cur = root.dataset.theme || "auto";
+  var next = cur==="auto" ? "light" : cur==="light" ? "dark" : "auto";
+  if(next==="auto"){ delete root.dataset.theme; try{localStorage.removeItem("m170-theme");}catch(e){} }
+  else { root.dataset.theme = next; try{localStorage.setItem("m170-theme", next);}catch(e){} }
+  themeLabel(); renderAll();
+});
+if(window.matchMedia){ window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function(){ renderAll(); }); }
+themeLabel();
+
+/* ---------- small helpers ---------- */
+function css(v){ return getComputedStyle(document.body).getPropertyValue(v).trim(); }
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+function attr(s){ return esc(s).replace(/"/g,"&quot;"); }
+function fm(x,d){ if(d==null)d=3; var s=(+x).toFixed(d); if(s.charAt(0)==="-")s="−"+s.slice(1); return s; }
+function pad(s,n){ while(s.length<n) s+=" "; return s; }
+function dimv(r,k){ var x = r && r[k]; return isFinite(x) ? +x : 0; }
+function copyT(t){ var o={}; VOCAB.forEach(function(w){ o[w]=t[w].slice(); }); return o; }
+function txt(x,y,s,color,anchor,size,family,weight){
+  return '<text x="'+x+'" y="'+y+'" fill="'+color+'" text-anchor="'+(anchor||"start")+
+    '" font-size="'+(size||12)+'" font-family="'+(family||"var(--font-ui)")+'"'+
+    (weight?' font-weight="'+weight+'"':'')+
+    (family==="var(--font-mono)"?' style="font-variant-numeric:tabular-nums"':'')+'>'+esc(s)+'</text>';
+}
+function ln(x1,y1,x2,y2,color,w,dash){
+  return '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+color+
+    '" stroke-width="'+(w||1)+'"'+(dash?' stroke-dasharray="'+dash+'"':'')+'/>';
+}
+function arrow(x1,y1,x2,y2,color,w){
+  var a=Math.atan2(y2-y1,x2-x1), L=7+(w||1)*1.5;
+  var p1=(x2-L*Math.cos(a-0.42)).toFixed(1)+","+(y2-L*Math.sin(a-0.42)).toFixed(1);
+  var p2=(x2-L*Math.cos(a+0.42)).toFixed(1)+","+(y2-L*Math.sin(a+0.42)).toFixed(1);
+  return ln(x1,y1,x2,y2,color,w)+
+    '<polygon points="'+x2+','+y2+' '+p1+' '+p2+'" fill="'+color+'"/>';
+}
+
+/* ---------- model: the forward pass ---------- */
+function forward(W,Wp){
+  var h=DIMS.map(function(k){
+    var s=0; CONTEXT.forEach(function(c){ s+=W[c][k]; }); return s/NC;
+  });
+  var u={}, ex={}, sum=0;
+  VOCAB.forEach(function(w){
+    var s=0; for(var k=0;k<DIM;k++) s+=Wp[w][k]*h[k];
+    u[w]=s;
+    ex[w]=Math.exp(u[w]); sum+=ex[w];
+  });
+  var p={}; VOCAB.forEach(function(w){ p[w]=ex[w]/sum; });
+  return {h:h,u:u,ex:ex,sum:sum,p:p};
+}
+
+/* one true CBOW gradient step, lr = 0.5 — matches the pinned python numbers */
+function gradStep(){
+  var f=forward(S.W,S.Wp), h=f.h, e={};
+  VOCAB.forEach(function(w){ e[w]=f.p[w]-(w===S.target?1:0); });
+  var EH=DIMS.map(function(k){
+    var s=0; VOCAB.forEach(function(w){ s+=e[w]*S.Wp[w][k]; }); return s;
+  });
+  VOCAB.forEach(function(w){
+    for(var k=0;k<DIM;k++) S.Wp[w][k]-=LR*e[w]*h[k];
+  });
+  CONTEXT.forEach(function(c){
+    for(var k=0;k<DIM;k++) S.W[c][k]-=LR*EH[k]/NC;
+  });
+}
+
+/* ---------- state (initial teaching state = the spec's Reset state) ---------- */
+function freshState(){
+  return { station:1, visited:{1:true}, target:TARGET0,
+           W:copyT(W0), Wp:copyT(WP0), nudges:0, taps:{}, open:{}, history:[] };
+}
+var S = freshState();
+
+/* ---------- shared fragments ---------- */
+function mathBtn(n){
+  return '<button type="button" class="btn mathtoggle" data-act="math" data-m="'+n+
+    '" aria-expanded="'+(!!S.open[n])+'">'+(S.open[n]?"Hide the math ▾":"Show the math ▸")+'</button>';
+}
+function nudgeNote(){
+  return '<p class="cap">after '+S.nudges+' nudge'+(S.nudges===1?"":"s")+
+    ' the tables have moved — these are the live numbers; Reset brings back the worksheet originals.</p>';
+}
+
+/* ---------- station 1 · context ---------- */
+function st1(){
+  var t=S.target, h='';
+  h+='<h2>Station 1 · the context</h2>';
+  h+='<p class="sentence">'+esc(SENT.pre)+'<span class="blank" role="img" aria-label="blank, the hidden word">&nbsp;</span>'+esc(SENT.post)+'</p>';
+  h+='<p class="sm">The blank is hidden from the model. Its '+numWord(NC)+' neighbors — <strong>'+esc(CONTEXT.join(", "))+'</strong> — are all it gets to see. The picker below the pipeline says the word that really belongs there is <strong>“'+t+'”</strong>; at the last station we grade the model on exactly that word.</p>';
+  h+='<p class="cap">Each neighbor enters as a one-hot row — a 1 in its own column, 0 everywhere else (the same trick as the one-hot worksheet):</p>';
+  h+='<div class="tscroll"><table class="wtab onehot"><tr><th></th>';
+  VOCAB.forEach(function(w){ h+='<th class="num">'+w+'</th>'; });
+  h+='</tr>';
+  CONTEXT.forEach(function(c){
+    h+='<tr><th scope="row">'+c+'</th>';
+    VOCAB.forEach(function(w){
+      h+='<td class="num '+(w===c?'one':'zero')+'">'+(w===c?'1':'0')+'</td>';
+    });
+    h+='</tr>';
+  });
+  h+='</table></div>';
+  h+=mathBtn(1);
+  if(S.open[1]){
+    h+='<div class="mathbox">'+
+      '“have” as a one-hot row  =  [0, 1, 0, 0, 0, 0]\n'+
+      'what it does next station:\n'+
+      '  0·(Witches’ row) + 1·(have’s row) + 0·(and’s row) + 0·(cauldrons’ row) + …\n'+
+      '  =  exactly W’s row for “have”\n'+
+      'a one-hot computes nothing — it points at a row.'+
+      '</div>';
+  }
+  return h;
+}
+
+/* ---------- station 2 · average → h ---------- */
+function svgProj(f){
+  var ink=css("--ink"), gold=css("--gold"), gray=css("--gray-text");
+  var Wd=460, Hd=300;
+  var tipsX=[dimv(f.h,0)], tipsY=[dimv(f.h,1)];   /* the flat shadow needs two columns; 0 if absent */
+  CONTEXT.forEach(function(c){ tipsX.push(dimv(S.W[c],0)); tipsY.push(dimv(S.W[c],1)); });
+  var xmin=-0.10, xmax=Math.max(1.06, Math.max.apply(null,tipsX)+0.14);
+  var ymin=-0.16, ymax=Math.max(0.46, Math.max.apply(null,tipsY)+0.12);
+  function X(v){ return 44+(v-xmin)/(xmax-xmin)*(Wd-44-14); }
+  function Y(v){ return (Hd-34)-(v-ymin)/(ymax-ymin)*(Hd-34-16); }
+  var out='';
+  out+=ln(X(xmin),Y(0),X(xmax),Y(0),ink,1);
+  out+=ln(X(0),Y(ymin),X(0),Y(ymax),ink,1);
+  [0.5,1.0].forEach(function(v){
+    out+=ln(X(v),Y(0)-3,X(v),Y(0)+3,ink,1);
+    out+=txt(X(v),Y(0)+16,v.toFixed(1),gray,"middle",10,"var(--font-mono)");
+  });
+  [0.2,0.4].forEach(function(v){
+    out+=ln(X(0)-3,Y(v),X(0)+3,Y(v),ink,1);
+    out+=txt(X(0)-7,Y(v)+3,v.toFixed(1),gray,"end",10,"var(--font-mono)");
+  });
+  out+=txt(X(xmax)-2,Y(0)-8,"1st number in the row",gray,"end",10);
+  out+=txt(X(0)+6,Y(ymax)+10,"2nd number",gray,"start",10);
+  CONTEXT.forEach(function(c){
+    var tx=X(dimv(S.W[c],0)), ty=Y(dimv(S.W[c],1));
+    out+=arrow(X(0),Y(0),tx,ty,ink,1.2);
+    var anch = tx>Wd-76 ? "end" : "start";
+    out+=txt(tx+(anch==="end"?-8:8),ty-6,c,ink,anch,11);
+  });
+  var hx=X(dimv(f.h,0)), hy=Y(dimv(f.h,1));
+  out+=arrow(X(0),Y(0),hx,hy,gold,2.2);
+  out+='<circle cx="'+hx+'" cy="'+hy+'" r="4" fill="'+gold+'" stroke="'+ink+'" stroke-width="1"/>';
+  out+=txt(hx+8,hy+15,"h (the average)",ink,"start",11,"var(--font-ui)","600");
+  return '<svg viewBox="0 0 460 300" role="img" aria-label="Four context arrows and their midpoint h, first two coordinates only">'+out+'</svg>';
+}
+function st2(f){
+  var h='';
+  h+='<h2>Station 2 · look up &amp; average — the summary h</h2>';
+  h+='<p class="sm">Each neighbor’s one-hot points at its row in the first worksheet table, W — the embedding table. The '+numWord(NC)+' rows are averaged, column by column, into one '+numWord(DIM)+'-number summary called <em>h</em>. That average is the model’s whole picture of the context.</p>';
+  if(S.nudges>0) h+=nudgeNote();
+  h+='<div class="tscroll"><table class="wtab">';
+  h+='<tr><th>word</th><th class="num" colspan="'+DIM+'">its row in W ('+numWord(DIM)+' numbers)</th><th></th></tr>';
+  VOCAB.forEach(function(w){
+    var ctx = CONTEXT.indexOf(w)>=0;
+    h+='<tr'+(ctx?' class="ctx"':'')+'><th scope="row">'+w+'</th>';
+    for(var k=0;k<DIM;k++) h+='<td class="num">'+fm(S.W[w][k])+'</td>';
+    h+='<td class="rowtag">'+(ctx?'← context':'')+'</td></tr>';
+  });
+  h+='</table></div>';
+  h+='<p class="cap">A real model’s table looks just like this — with tens of thousands of rows, one per word it knows, and hundreds of columns. Same lookup, same average.</p>';
+  h+='<div class="hline">h&nbsp;&nbsp;=&nbsp;&nbsp;<span class="gval">['+f.h.map(function(x){return fm(x);}).join(", ")+']</span></div>';
+  h+='<figure class="figblock">'+svgProj(f)+
+     '<figcaption>Only the <strong>first two</strong> of each row’s '+numWord(DIM)+' numbers, drawn as arrows from zero — a flat shadow of the '+DIM+'-number rows. h (gold) lands at the midpoint of the '+numWord(NC)+' tips.</figcaption></figure>';
+  h+=mathBtn(2);
+  if(S.open[2]){
+    var rows=CONTEXT.map(function(c){ return S.W[c]; });
+    var L=[];
+    if(S.nudges===0 && WSH){
+      L.push("worksheet form:");
+      L.push(WSH);
+      L.push("");
+      L.push("column by column:");
+    }
+    var lbl=DIMS.map(function(k){ return ord(k+1)+" numbers"; });
+    for(var k=0;k<DIM;k++){
+      var s=0; rows.forEach(function(r){ s+=r[k]; });
+      L.push(pad(lbl[k]+":",13)+"("+rows.map(function(r){return fm(r[k]);}).join(" + ")+") / "+NC+"  =  "+fm(s)+" / "+NC+"  =  "+fm(s/NC));
+    }
+    L.push("");
+    L.push("h = ["+f.h.map(function(x){return fm(x);}).join(", ")+"]");
+    h+='<div class="mathbox">'+L.join("\n")+'</div>';
+  }
+  return h;
+}
+
+/* ---------- station 3 · scores u ---------- */
+function st3(f){
+  var h='';
+  h+='<h2>Station 3 · score every vocabulary word — the '+NVW+' u’s</h2>';
+  h+='<p class="sm">Now the second worksheet table, W′ᵀ — one <em>scoring</em> row per vocabulary word. A word’s score is its W′ᵀ row dotted with h: multiply the '+numWord(DIM)+' matching pairs, add them up. A high score means “this context looks like my kind of neighborhood.” <strong>Tap a word</strong> to watch its score build.</p>';
+  if(S.nudges>0) h+=nudgeNote();
+  h+='<div class="tscroll"><table class="wtab">';
+  h+='<tr><th>word</th><th class="num" colspan="'+DIM+'">its row in W′ᵀ</th><th class="num">score u</th></tr>';
+  var allDone=true;
+  VOCAB.forEach(function(w){
+    var done=!!S.taps[w]; if(!done) allDone=false;
+    h+='<tr><td><button type="button" class="wordbtn'+(done?' done':'')+'" data-act="tap" data-w="'+w+'" aria-expanded="'+done+'">'+w+'</button></td>';
+    for(var k=0;k<DIM;k++) h+='<td class="num">'+fm(S.Wp[w][k])+'</td>';
+    h+='<td class="num">'+(done?'<span class="gval">'+fm(f.u[w])+'</span>':'<span class="muted" style="font-family:var(--font-ui);font-size:var(--text-xs)">tap →</span>')+'</td></tr>';
+    if(done){
+      var pr=DIMS.map(function(k){ return fm(S.Wp[w][k])+"×"+fm(f.h[k]); });
+      var pd=DIMS.map(function(k){ return fm(S.Wp[w][k]*f.h[k]); });
+      h+='<tr><td></td><td colspan="'+(DIM+1)+'" class="expx">'+pr.join(" + ")+"  =  "+pd.join(" + ")+"  =  "+fm(f.u[w])+'</td></tr>';
+    }
+  });
+  h+='</table></div>';
+  h+='<p style="margin:var(--space-2) 0"><button type="button" class="btn" data-act="tapall">score all '+NVW+'</button></p>';
+  if(allDone){
+    h+='<div class="hline">u&nbsp;&nbsp;=&nbsp;&nbsp;<span class="gval">['+VOCAB.map(function(w){return fm(f.u[w]);}).join(", ")+']</span></div>';
+    h+='<p class="cap">One score per vocabulary word — off to softmax.</p>';
+  }
+  return h;
+}
+
+/* ---------- station 4 · softmax (the exemplar's bars, deliberately) ---------- */
+function svgBars(f){
+  var ink=css("--ink"), gold=css("--gold"), gray=css("--gray-text"),
+      line=css("--gray-line"), fill=css("--gray-fill");
+  var W=640,H=380,padL=70,padR=30,padT=34,padB=94;
+  var plotW=W-padL-padR, plotH=H-padT-padB, n=NV, gap=22;
+  var bw=(plotW-gap*(n-1))/n;
+  var out="";
+  out+=ln(padL,H-padB,W-padR,H-padB,ink,1.5);
+  [0,.25,.5,.75,1].forEach(function(t){
+    var y=(H-padB)-t*plotH;
+    if(t>0) out+=ln(padL,y,W-padR,y,line,1);
+    out+=txt(padL-10,y+4,(t*100)+"%",gray,"end",11);
+  });
+  var maxP=0; VOCAB.forEach(function(w){ if(f.p[w]>maxP) maxP=f.p[w]; });
+  VOCAB.forEach(function(w,i){
+    var x=padL+i*(bw+gap), hh=f.p[w]*plotH, y=(H-padB)-hh, win=f.p[w]===maxP;
+    out+='<rect x="'+x+'" y="'+y+'" width="'+bw+'" height="'+Math.max(hh,.5)+
+         '" fill="'+(win?gold:fill)+'" stroke="'+ink+'" stroke-width="1"/>';
+    out+=txt(x+bw/2, y-8, (f.p[w]*100).toFixed(1)+"%", ink, "middle", 13, "var(--font-mono)", win?"600":"400");
+    out+=txt(x+bw/2, H-padB+20, w, ink, "middle", 12);
+    out+=txt(x+bw/2, H-padB+38, "u "+fm(f.u[w]), gray, "middle", 11, "var(--font-mono)");
+    if(w===S.target) out+=txt(x+bw/2, H-padB+58, "▲ target", ink, "middle", 11, "var(--font-ui)", "600");
+  });
+  var sp=0; VOCAB.forEach(function(w){ sp+=f.p[w]; });
+  out+=txt(W-padR, padT-12, "sum = "+sp.toFixed(2), gray, "end", 12, "var(--font-mono)");
+  return '<svg viewBox="0 0 640 380" role="img" aria-label="Softmax probability bars for the '+NVW+' vocabulary words">'+out+'</svg>';
+}
+function st4(f){
+  var t=S.target, h='';
+  h+='<h2>Station 4 · softmax — '+NVW+' scores become '+NVW+' probabilities</h2>';
+  h+='<p class="sm">The exact squash from the softmax page — yesterday it was three animals, today it is the '+NVW+' vocabulary words. Raise <em>e</em> to each score, divide by the total: every share is positive, and the '+NVW+' shares add to exactly 1.</p>';
+  h+='<figure class="figblock">'+svgBars(f)+
+     '<figcaption>Same bars, same rules as the softmax manipulative. The tallest bar is the model’s guess; ▲ marks the word we are grading.</figcaption></figure>';
+  var sp=0; VOCAB.forEach(function(w){ sp+=f.p[w]; });
+  h+='<p class="readout" aria-live="polite">p('+t+') = '+fm(f.p[t])+' · the '+NVW+' bars sum to '+sp.toFixed(2)+'</p>';
+  h+=mathBtn(4);
+  if(S.open[4]){
+    var L=["one e per score:"];
+    VOCAB.forEach(function(w){ L.push("e^"+fm(f.u[w])+" = "+fm(f.ex[w])+"   ("+w+")"); });
+    L.push("─────────────────────────────────────────────────");
+    L.push("sum = "+VOCAB.map(function(w){return fm(f.ex[w]);}).join(" + "));
+    L.push("    = "+fm(f.sum));
+    L.push("");
+    VOCAB.forEach(function(w){
+      L.push(pad("p("+w+")",13)+" = "+fm(f.ex[w])+" / "+fm(f.sum)+" = "+fm(f.p[w]));
+    });
+    L.push("");
+    L.push("the "+NVW+" probabilities add to "+fm(sp));
+    h+='<div class="mathbox">'+L.join("\n")+'</div>';
+    h+='<p class="cap">In symbols: p(word) = e<span class="mono">^u</span> ÷ (the '+NVW+'-term sum written out above). Raising to a power of <em>e</em> keeps every weight positive and makes gaps dramatic; dividing by the total forces the shares to 1.</p>';
+  }
+  return h;
+}
+
+/* ---------- station 5 · loss + the nudge ---------- */
+function st5(f){
+  var t=S.target, p=f.p[t], L=-Math.log(p), h='';
+  h+='<h2>Station 5 · the loss — how loudly training will complain</h2>';
+  h+='<p class="sm">The model gave “'+t+'” only p = '+fm(p)+' — about '+(p*100).toFixed(1)+'% — for the word that actually belongs in the blank. The loss is how loudly training will complain about that:</p>';
+  h+='<div class="lossbig" aria-live="polite">L = −ln '+fm(p)+' = '+fm(L)+'</div>';
+  h+='<p class="cap">A perfect guess (p = 1) makes the loss 0; p = 0.01 would score about 4.6. Smaller is happier. With '+(S.nudges===0?'fresh, arbitrary tables the guess is nearly uniform — of course it is; the model has never been corrected.':'the nudged tables the complaint is already quieter.')+'</p>';
+  h+='<div class="nudgerow">'+
+     '<button type="button" class="btn" data-act="nudge">Nudge the weights ▸</button>'+
+     '<span class="cap" style="margin:0">a training step, done for you</span>'+
+     '<span class="count">nudges: '+S.nudges+'</span></div>';
+  if(S.history.length){
+    var last=S.history[S.history.length-1];
+    h+='<p class="readout" aria-live="polite">after '+last.n+' nudge'+(last.n===1?"":"s")+': p('+last.t+') '+
+       fm(last.p0)+' → '+fm(last.p1)+' · loss '+fm(last.L0)+' → '+fm(last.L1)+'</p>';
+    h+='<div class="passlog">'+S.history.map(function(e){
+      return 'pass '+e.n+' · target '+e.t+' · p '+fm(e.p0,4)+' → '+fm(e.p1,4)+' · loss '+fm(e.L0,4)+' → '+fm(e.L1,4);
+    }).join("\n")+'</div>';
+    h+='<p class="sm">That nudge moved the tables, not the rules: W′ᵀ’s row for “'+t+'” slid toward h, the other '+numWord(NV-1)+' scoring rows eased away, and the '+numWord(NC)+' context rows of W leaned along. Walk back — stations 2, 3, and 4 are already showing the new numbers. Do this a million times over a million sentences and the embedding map draws itself.</p>';
+  }
+  h+=mathBtn(5);
+  if(S.open[5]){
+    h+='<div class="mathbox">'+
+      'p('+t+')  =  '+fm(p,6)+'\n'+
+      'loss      =  −ln('+fm(p,6)+')  =  '+fm(L,6)+'\n'+
+      'check     :  e^−'+fm(L)+'  =  '+fm(Math.exp(-L))+'   (ln undoes e^x — Part 1)'+
+      '</div>';
+    h+='<p class="cap">Training’s only goal is to make this one number smaller, one small nudge per sentence.</p>';
+  }
+  return h;
+}
+
+/* ---------- render ---------- */
+var rail=document.getElementById("rail"), view=document.getElementById("stationView");
+var backBtn=document.getElementById("backBtn"), stepBtn=document.getElementById("stepBtn"),
+    stepCount=document.getElementById("stepCount");
+
+function renderRail(){
+  var out="";
+  for(var i=1;i<=NSTAT;i++){
+    if(i>1) out+='<span class="arrow" aria-hidden="true">→</span>';
+    var cls="st-btn"+(S.visited[i]?" visited":"")+(S.station===i?" current":"");
+    out+='<button type="button" class="'+cls+'" data-act="go" data-st="'+i+'"'+
+         (S.station===i?' aria-current="step"':'')+'>'+i+' · '+NAMES[i-1]+'</button>';
+  }
+  rail.innerHTML=out;
+}
+function renderStepper(){
+  backBtn.disabled = S.station===1;
+  stepBtn.disabled = S.station===NSTAT;
+  stepCount.textContent = "station "+S.station+" of "+NSTAT+" — "+NAMES[S.station-1];
+  if(document.activeElement===stepBtn && stepBtn.disabled) backBtn.focus();
+  if(document.activeElement===backBtn && backBtn.disabled) stepBtn.focus();
+}
+function renderStation(){
+  var f=forward(S.W,S.Wp);
+  view.innerHTML = [st1,st2,st3,st4,st5][S.station-1](f);
+}
+function renderAll(focusSel){
+  renderRail(); renderStepper(); renderStation();
+  if(focusSel){
+    var el=view.querySelector(focusSel)||rail.querySelector(focusSel);
+    if(el) el.focus();
+  }
+}
+
+/* ---------- interaction ---------- */
+function goTo(n, fromRail){
+  S.station=n; S.visited[n]=true;
+  renderAll(fromRail?('[data-act="go"][data-st="'+n+'"]'):null);
+}
+rail.addEventListener("click", function(ev){
+  var b=ev.target.closest('[data-act="go"]'); if(!b) return;
+  goTo(+b.dataset.st, true);
+});
+backBtn.addEventListener("click", function(){ if(S.station>1) goTo(S.station-1); });
+stepBtn.addEventListener("click", function(){ if(S.station<NSTAT) goTo(S.station+1); });
+
+view.addEventListener("click", function(ev){
+  var b=ev.target.closest("[data-act]"); if(!b) return;
+  var act=b.dataset.act;
+  if(act==="tap"){
+    var w=b.dataset.w; S.taps[w]=!S.taps[w];
+    renderAll('[data-act="tap"][data-w="'+w+'"]');
+  } else if(act==="tapall"){
+    VOCAB.forEach(function(w){ S.taps[w]=true; });
+    renderAll('[data-act="tapall"]');
+  } else if(act==="math"){
+    var m=+b.dataset.m; S.open[m]=!S.open[m];
+    renderAll('[data-act="math"][data-m="'+m+'"]');
+  } else if(act==="nudge"){
+    var f0=forward(S.W,S.Wp), t=S.target, p0=f0.p[t], L0=-Math.log(p0);
+    gradStep();
+    S.nudges++;
+    var f1=forward(S.W,S.Wp), p1=f1.p[t], L1=-Math.log(p1);
+    S.history.push({n:S.nudges, t:t, p0:p0, p1:p1, L0:L0, L1:L1});
+    renderAll('[data-act="nudge"]');
+  }
+});
+
+/* target picker — switching re-runs all five stations */
+var seg=document.getElementById("targetSeg");
+seg.innerHTML = TARGETS.map(function(w){          /* written from the island, never hard-coded */
+  return '<button type="button" data-target="'+attr(w)+'" aria-pressed="false">'+esc(w)+'</button>';
+}).join("");
+function paintTarget(){
+  Array.prototype.forEach.call(seg.querySelectorAll("button"), function(b){
+    b.setAttribute("aria-pressed", String(b.dataset.target===S.target));
+  });
+}
+seg.addEventListener("click", function(ev){
+  var b=ev.target.closest("[data-target]"); if(!b) return;
+  if(S.target===b.dataset.target) return;
+  S.target=b.dataset.target;
+  paintTarget(); renderAll();
+});
+
+document.getElementById("reset").addEventListener("click", function(){
+  S=freshState();
+  paintTarget(); renderAll();
+});
+
+paintTarget();
+renderAll();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,839 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What kinds of manipulatives can this produce? · MATH 170</title>
+
+<!-- ================================================================
+     DOC PAGE (tools/lint.py DOC_PAGES): the colleague-facing types
+     gallery. Carries the canonical token block, the theme boot, print
+     and reduced-motion rules; carries no teaching spec and no .attach
+     footer, because it attaches to no worksheet.
+
+     The config island sits in <head> on purpose: the pre-paint boot
+     script reads the palette values out of it, so a stored colour is
+     applied before the first paint. design/palettes.json is inlined
+     verbatim (as JSON, whitespace removed); regenerate the file and
+     rebuild the page rather than hand-editing it here.
+     ================================================================ -->
+<script type="application/json" id="m170-config">
+{"_v":1,"palettes":{"_generated-by":"design agent, round 2 — every ratio computed with WCAG 2.x relative luminance, none estimated","_spec":"design/color-system.md","_consumed-by":"Studio spot-color picker (ROUND2-PLAN P6) and the types gallery (P7)","default":"goldenrod","token-interface":["--ink","--paper","--gold","--gold-soft","--gray-text","--gray-line","--gray-fill"],"note-on-interface":"A palette changes VALUES only. The custom-property names above are the contract with 30-odd static pages and the multiuser app; they never change, and --gold stays named --gold even when it is violet.","ramp-tokens":{"names":["--gold-r1","--gold-r2","--gold-r3","--gold-r4","--gold-r5"],"optional":true,"when":"sequential magnitude only (softmax bars, Markov distribution over time, Q-value heat). Pages that need no sequential encoding must not emit them.","accent-station":{"light":3,"dark":5}},"requirements":{"ink-on-paper":4.5,"gray-text-on-paper":4.5,"ink-on-gray-fill":4.5,"ink-on-accent":4.5,"ink-on-accent-wash":4.5,"ink-hairline-on-accent":3.0,"ink-focus-ring-on-paper":3.0,"accent-on-paper":{"light":"documented exception (see color-system.md §5) — no single-spot accent light enough to carry #111111 text at 4.5:1 can also reach 3:1 against white; the mandatory 1px --ink hairline is the conforming boundary","dark":3.0}},"palettes":{"goldenrod":{"label":"Goldenrod","hue-note":"The default and the anchor: oklch(0.7516 0.1469 84). Warm ochre, the colour of a second ink on cheap paper. Every other palette is this one with the hue dial turned.","derivation":{"hue-deg":83.99,"restraint-k":1.0,"light-oklch":"oklch(0.7516 0.1469 83.99)","dark-oklch":"oklch(0.7904 0.1386 85.24)","gamut-clipped":{"light":false,"dark":false},"lightness-clamped":{"light":false,"dark":false}},"light":{"--ink":"#111111","--paper":"#FFFFFF","--gold":"#DAA520","--gold-soft":"rgba(218,165,32,.12)","--gray-text":"#666666","--gray-line":"#CCCCCC","--gray-fill":"#F2F2F2"},"dark":{"--ink":"#ECECEC","--paper":"#151515","--gold":"#E3B341","--gold-soft":"rgba(227,179,65,.16)","--gray-text":"#9A9A9A","--gray-line":"#3A3A3A","--gray-fill":"#1F1F1F"},"ramp":{"light":["#FFECC7","#FBC54C","#DAA520","#B58700","#906B00"],"dark":["#594000","#7B5A00","#9F7600","#C4920F","#E3B341"],"tokens":["--gold-r1","--gold-r2","--gold-r3","--gold-r4","--gold-r5"],"three-step":{"light":["#FFECC7","#DAA520","#906B00"],"dark":["#594000","#9F7600","#E3B341"]}},"ramp-check":{"light-luminance-monotone":true,"dark-luminance-monotone":true,"light-min-adjacent-contrast":1.37,"dark-min-adjacent-contrast":1.45,"light-span-station1-to-station5":4.21,"dark-span-station1-to-station5":5.0,"light-accent-station":3,"dark-accent-station":5},"contrast":{"light":[{"pair":"ink-on-paper","ratio":18.88,"required":4.5,"status":"required","passes":true,"why":"body text, axes, numbers"},{"pair":"gray-text-on-paper","ratio":5.74,"required":4.5,"status":"required","passes":true,"why":"captions, ticks, eyebrow, hints"},{"pair":"ink-on-gray-fill","ratio":16.87,"required":4.5,"status":"required","passes":true,"why":"text inside the spec panel"},{"pair":"ink-on-accent","ratio":8.44,"required":4.5,"status":"required","passes":true,"why":"selected segmented cell / primary button label (#111111 is hard-coded in the skin)"},{"pair":"ink-on-accent-wash","ratio":17.24,"required":4.5,"status":"required","passes":true,"why":"text sitting on a --gold-soft fill"},{"pair":"ink-hairline-on-accent","ratio":8.44,"required":3.0,"status":"required","passes":true,"why":"the 1px --ink outline that bounds every accent mark; in light theme it is what carries WCAG 1.4.11"},{"pair":"accent-on-paper","ratio":2.24,"required":3.0,"status":"exception","passes":false,"why":"accent mark against the page"},{"pair":"accent-on-gray-fill","ratio":2.0,"required":3.0,"status":"advisory","passes":false,"why":"accent mark inside the spec panel (hairline applies)"},{"pair":"accent-wash-on-paper","ratio":1.1,"required":1.1,"status":"advisory","passes":false,"why":"the --gold-soft wash itself; decorative fill, never a boundary"},{"pair":"gray-line-on-paper","ratio":1.61,"required":3.0,"status":"advisory","passes":false,"why":"gridlines / slider track / rules — decorative per 1.4.11; essential boundaries use --ink"},{"pair":"ink-focus-ring-on-paper","ratio":18.88,"required":3.0,"status":"required","passes":true,"why":"recommended focus indicator (see color-system.md §6)"}],"dark":[{"pair":"ink-on-paper","ratio":15.46,"required":4.5,"status":"required","passes":true,"why":"body text, axes, numbers"},{"pair":"gray-text-on-paper","ratio":6.49,"required":4.5,"status":"required","passes":true,"why":"captions, ticks, eyebrow, hints"},{"pair":"ink-on-gray-fill","ratio":13.95,"required":4.5,"status":"required","passes":true,"why":"text inside the spec panel"},{"pair":"ink-on-accent","ratio":9.7,"required":4.5,"status":"required","passes":true,"why":"selected segmented cell / primary button label (#111111 is hard-coded in the skin)"},{"pair":"ink-on-accent-wash","ratio":11.33,"required":4.5,"status":"required","passes":true,"why":"text sitting on a --gold-soft fill"},{"pair":"ink-hairline-on-accent","ratio":1.65,"required":3.0,"status":"advisory","passes":false,"why":"the 1px --ink outline that bounds every accent mark; in light theme it is what carries WCAG 1.4.11"},{"pair":"accent-on-paper","ratio":9.38,"required":3.0,"status":"required","passes":true,"why":"accent mark against the page"},{"pair":"accent-on-gray-fill","ratio":8.47,"required":3.0,"status":"advisory","passes":true,"why":"accent mark inside the spec panel (hairline applies)"},{"pair":"accent-wash-on-paper","ratio":1.36,"required":1.1,"status":"advisory","passes":true,"why":"the --gold-soft wash itself; decorative fill, never a boundary"},{"pair":"gray-line-on-paper","ratio":1.61,"required":3.0,"status":"advisory","passes":false,"why":"gridlines / slider track / rules — decorative per 1.4.11; essential boundaries use --ink"},{"pair":"ink-focus-ring-on-paper","ratio":15.46,"required":3.0,"status":"required","passes":true,"why":"recommended focus indicator (see color-system.md §6)"}]},"verdict":"pass","failing-required-pairs":[]},"terracotta":{"label":"Terracotta","hue-note":"Hue 42. Goldenrod's warm neighbour — same weight on the page, redder. Choose it when a room's projector renders yellow as washed-out beige.","derivation":{"hue-deg":42.0,"restraint-k":0.86,"light-oklch":"oklch(0.7516 0.1264 42.00)","dark-oklch":"oklch(0.7904 0.1192 42.00)","gamut-clipped":{"light":false,"dark":false},"lightness-clamped":{"light":false,"dark":false}},"light":{"--ink":"#111111","--paper":"#FFFFFF","--gold":"#F1926D","--gold-soft":"rgba(241,146,109,.12)","--gray-text":"#666666","--gray-line":"#CCCCCC","--gray-fill":"#F2F2F2"},"dark":{"--ink":"#ECECEC","--paper":"#151515","--gold":"#FBA07D","--gold-soft":"rgba(251,160,125,.16)","--gray-text":"#9A9A9A","--gray-line":"#3A3A3A","--gray-fill":"#1F1F1F"},"ramp":{"light":["#FFE9E1","#FFBCA1","#F1926D","#CE734E","#AD5530"],"dark":["#762800","#964523","#B76341","#D9815E","#FBA07D"],"tokens":["--gold-r1","--gold-r2","--gold-r3","--gold-r4","--gold-r5"],"three-step":{"light":["#FFE9E1","#F1926D","#AD5530"],"dark":["#762800","#B76341","#FBA07D"]}},"ramp-check":{"light-luminance-monotone":true,"dark-luminance-monotone":true,"light-min-adjacent-contrast":1.39,"dark-min-adjacent-contrast":1.44,"light-span-station1-to-station5":4.37,"dark-span-station1-to-station5":5.03,"light-accent-station":3,"dark-accent-station":5},"contrast":{"light":[{"pair":"ink-on-paper","ratio":18.88,"required":4.5,"status":"required","passes":true,"why":"body text, axes, numbers"},{"pair":"gray-text-on-paper","ratio":5.74,"required":4.5,"status":"required","passes":true,"why":"captions, ticks, eyebrow, hints"},{"pair":"ink-on-gray-fill","ratio":16.87,"required":4.5,"status":"required","passes":true,"why":"text inside the spec panel"},{"pair":"ink-on-accent","ratio":8.16,"required":4.5,"status":"required","passes":true,"why":"selected segmented cell / primary button label (#111111 is hard-coded in the skin)"},{"pair":"ink-on-accent-wash","ratio":17.18,"required":4.5,"status":"required","passes":true,"why":"text sitting on a --gold-soft fill"},{"pair":"ink-hairline-on-accent","ratio":8.16,"required":3.0,"status":"required","passes":true,"why":"the 1px --ink outline that bounds every accent mark; in light theme it is what carries WCAG 1.4.11"},{"pair":"accent-on-paper","ratio":2.31,"required":3.0,"status":"exception","passes":false,"why":"accent mark against the page"},{"pair":"accent-on-gray-fill","ratio":2.07,"required":3.0,"status":"advisory","passes":false,"why":"accent mark inside the spec panel (hairline applies)"},{"pair":"accent-wash-on-paper","ratio":1.1,"required":1.1,"status":"advisory","passes":false,"why":"the --gold-soft wash itself; decorative fill, never a boundary"},{"pair":"gray-line-on-paper","ratio":1.61,"required":3.0,"status":"advisory","passes":false,"why":"gridlines / slider track / rules — decorative per 1.4.11; essential boundaries use --ink"},{"pair":"ink-focus-ring-on-paper","ratio":18.88,"required":3.0,"status":"required","passes":true,"why":"recommended focus indicator (see color-system.md §6)"}],"dark":[{"pair":"ink-on-paper","ratio":15.46,"required":4.5,"status":"required","passes":true,"why":"body text, axes, numbers"},{"pair":"gray-text-on-paper","ratio":6.49,"required":4.5,"status":"required","passes":true,"why":"captions, ticks, eyebrow, hints"},{"pair":"ink-on-gray-fill","ratio":13.95,"required":4.5,"status":"required","passes":true,"why":"text inside the spec panel"},{"pair":"ink-on-accent","ratio":9.38,"required":4.5,"status":"required","passes":true,"why":"selected segmented cell / primary button label (#111111 is hard-coded in the skin)"},{"pair":"ink-on-accent-wash","ratio":11.43,"required":4.5,"status":"required","passes":true,"why":"text sitting on a --gold-soft fill"},{"pair":"ink-hairline-on-accent","ratio":1.7,"required":3.0,"status":"advisory","passes":false,"why":"the 1px --ink outline that bounds every accent mark; in light theme it is what carries WCAG 1.4.11"},{"pair":"accent-on-paper","ratio":9.07,"required":3.0,"status":"required","passes":true,"why":"accent mark against the page"},{"pair":"accent-on-gray-fill","ratio":8.18,"required":3.0,"status":"advisory","passes":true,"why":"accent mark inside the spec panel (hairline applies)"},{"pair":"accent-wash-on-paper","ratio":1.35,"required":1.1,"status":"advisory","passes":true,"why":"the --gold-soft wash itself; decorative fill, never a boundary"},{"pair":"gray-line-on-paper","ratio":1.61,"required":3.0,"status":"advisory","passes":false,"why":"gridlines / slider track / rules — decorative per 1.4.11; essential boundaries use --ink"},{"pair":"ink-focus-ring-on-paper","ratio":15.46,"required":3.0,"status":"required","passes":true,"why":"recommended focus indicator (see color-system.md §6)"}]},"verdict":"pass","failing-required-pairs":[]},"moss":{"label":"Moss","hue-note":"Hue 140. A yellow-green held back to 72% ink weight so it never reads as a green \"correct\" tick. The most botanical / least digital of the set.","derivation":{"hue-deg":140.0,"restraint-k":0.72,"light-oklch":"oklch(0.7516 0.1058 140.00)","dark-oklch":"oklch(0.7904 0.0998 140.00)","gamut-clipped":{"light":false,"dark":false},"lightness-clamped":{"light":false,"dark":false}},"light":{"--ink":"#111111","--paper":"#FFFFFF","--gold":"#8ABF7F","--gold-soft":"rgba(138,191,127,.12)","--gray-text":"#666666","--gray-line":"#CCCCCC","--gray-fill":"#F2F2F2"},"dark":{"--ink":"#ECECEC","--paper":"#151515","--gold":"#98CB8D","--gold-soft":"rgba(152,203,141,.16)","--gray-text":"#9A9A9A","--gray-line":"#3A3A3A","--gray-fill":"#1F1F1F"},"ramp":{"light":["#CCFFC1","#A9DF9D","#8ABF7F","#6B9F60","#4E8043"],"dark":["#245119","#406E35","#5C8C52","#7AAB6F","#98CB8D"],"tokens":["--gold-r1","--gold-r2","--gold-r3","--gold-r4","--gold-r5"],"three-step":{"light":["#CCFFC1","#8ABF7F","#4E8043"],"dark":["#245119","#5C8C52","#98CB8D"]}},"ramp-check":{"light-luminance-monotone":true,"dark-luminance-monotone":true,"light-min-adjacent-contrast":1.36,"dark-min-adjacent-contrast":1.43,"light-span-station1-to-station5":4.15,"dark-span-station1-to-station5":4.97,"light-accent-station":3,"dark-accent-station":5},"contrast":{"light":[{"pair":"ink-on-paper","ratio":18.88,"required":4.5,"status":"required","passes":true,"why":"body text, axes, numbers"},{"pair":"gray-text-on-paper","ratio":5.74,"required":4.5,"status":"required","passes":true,"why":"captions, ticks, eyebrow, hints"},{"pair":"ink-on-gray-fill","ratio":16.87,"required":4.5,"status":"required","passes":true,"why":"text inside the spec panel"},{"pair":"ink-on-accent","ratio":8.85,"required":4.5,"status":"required","passes":true,"why":"selected segmented cell / primary button label (#111111 is hard-coded in the skin)"},{"pair":"ink-on-accent-wash","ratio":17.39,"required":4.5,"status":"required","passes":true,"why":"text sitting on a --gold-soft fill"},{"pair":"ink-hairline-on-accent","ratio":8.85,"required":3.0,"status":"required","passes":true,"why":"the 1px --ink outline that bounds every accent mark; in light theme it is what carries WCAG 1.4.11"},{"pair":"accent-on-paper","ratio":2.13,"required":3.0,"status":"exception","passes":false,"why":"accent mark against the page"},{"pair":"accent-on-gray-fill","ratio":1.91,"required":3.0,"status":"advisory","passes":false,"why":"accent mark inside the spec panel (hairline applies)"},{"pair":"accent-wash-on-paper","ratio":1.09,"required":1.1,"status":"advisory","passes":false,"why":"the --gold-soft wash itself; decorative fill, never a boundary"},{"pair":"gray-line-on-paper","ratio":1.61,"required":3.0,"status":"advisory","passes":false,"why":"gridlines / slider track / rules — decorative per 1.4.11; essential boundaries use --ink"},{"pair":"ink-focus-ring-on-paper","ratio":18.88,"required":3.0,"status":"required","passes":true,"why":"recommended focus indicator (see color-system.md §6)"}],"dark":[{"pair":"ink-on-paper","ratio":15.46,"required":4.5,"status":"required","passes":true,"why":"body text, axes, numbers"},{"pair":"gray-text-on-paper","ratio":6.49,"required":4.5,"status":"required","passes":true,"why":"captions, ticks, eyebrow, hints"},{"pair":"ink-on-gray-fill","ratio":13.95,"required":4.5,"status":"required","passes":true,"why":"text inside the spec panel"},{"pair":"ink-on-accent","ratio":10.13,"required":4.5,"status":"required","passes":true,"why":"selected segmented cell / primary button label (#111111 is hard-coded in the skin)"},{"pair":"ink-on-accent-wash","ratio":11.2,"required":4.5,"status":"required","passes":true,"why":"text sitting on a --gold-soft fill"},{"pair":"ink-hairline-on-accent","ratio":1.58,"required":3.0,"status":"advisory","passes":false,"why":"the 1px --ink outline that bounds every accent mark; in light theme it is what carries WCAG 1.4.11"},{"pair":"accent-on-paper","ratio":9.79,"required":3.0,"status":"required","passes":true,"why":"accent mark against the page"},{"pair":"accent-on-gray-fill","ratio":8.84,"required":3.0,"status":"advisory","passes":true,"why":"accent mark inside the spec panel (hairline applies)"},{"pair":"accent-wash-on-paper","ratio":1.38,"required":1.1,"status":"advisory","passes":true,"why":"the --gold-soft wash itself; decorative fill, never a boundary"},{"pair":"gray-line-on-paper","ratio":1.61,"required":3.0,"status":"advisory","passes":false,"why":"gridlines / slider track / rules — decorative per 1.4.11; essential boundaries use --ink"},{"pair":"ink-focus-ring-on-paper","ratio":15.46,"required":3.0,"status":"required","passes":true,"why":"recommended focus indicator (see color-system.md §6)"}]},"verdict":"pass","failing-required-pairs":[]},"verdigris":{"label":"Verdigris","hue-note":"Hue 196. Blue-green, the maximum hue distance from goldenrod that still clears the luminance floor comfortably. Chalkboard-adjacent; the coolest calm option.","derivation":{"hue-deg":196.0,"restraint-k":0.72,"light-oklch":"oklch(0.7516 0.1058 196.00)","dark-oklch":"oklch(0.7904 0.0998 196.00)","gamut-clipped":{"light":false,"dark":false},"lightness-clamped":{"light":false,"dark":false}},"light":{"--ink":"#111111","--paper":"#FFFFFF","--gold":"#4BC3C4","--gold-soft":"rgba(75,195,196,.12)","--gray-text":"#666666","--gray-line":"#CCCCCC","--gray-fill":"#F2F2F2"},"dark":{"--ink":"#ECECEC","--paper":"#151515","--gold":"#62CFD0","--gold-soft":"rgba(98,207,208,.16)","--gray-text":"#9A9A9A","--gray-line":"#3A3A3A","--gray-fill":"#1F1F1F"},"ramp":{"light":["#B0FFFF","#6FE3E4","#4BC3C4","#1CA3A4","#008283"],"dark":["#005051","#006F70","#058F91","#3DAEAF","#62CFD0"],"tokens":["--gold-r1","--gold-r2","--gold-r3","--gold-r4","--gold-r5"],"three-step":{"light":["#B0FFFF","#4BC3C4","#008283"],"dark":["#005051","#058F91","#62CFD0"]}},"ramp-check":{"light-luminance-monotone":true,"dark-luminance-monotone":true,"light-min-adjacent-contrast":1.35,"dark-min-adjacent-contrast":1.44,"light-span-station1-to-station5":4.11,"dark-span-station1-to-station5":5.01,"light-accent-station":3,"dark-accent-station":5},"contrast":{"light":[{"pair":"ink-on-paper","ratio":18.88,"required":4.5,"status":"required","passes":true,"why":"body text, axes, numbers"},{"pair":"gray-text-on-paper","ratio":5.74,"required":4.5,"status":"required","passes":true,"why":"captions, ticks, eyebrow, hints"},{"pair":"ink-on-gray-fill","ratio":16.87,"required":4.5,"status":"required","passes":true,"why":"text inside the spec panel"},{"pair":"ink-on-accent","ratio":8.9,"required":4.5,"status":"required","passes":true,"why":"selected segmented cell / primary button label (#111111 is hard-coded in the skin)"},{"pair":"ink-on-accent-wash","ratio":17.3,"required":4.5,"status":"required","passes":true,"why":"text sitting on a --gold-soft fill"},{"pair":"ink-hairline-on-accent","ratio":8.9,"required":3.0,"status":"required","passes":true,"why":"the 1px --ink outline that bounds every accent mark; in light theme it is what carries WCAG 1.4.11"},{"pair":"accent-on-paper","ratio":2.12,"required":3.0,"status":"exception","passes":false,"why":"accent mark against the page"},{"pair":"accent-on-gray-fill","ratio":1.89,"required":3.0,"status":"advisory","passes":false,"why":"accent mark inside the spec panel (hairline applies)"},{"pair":"accent-wash-on-paper","ratio":1.09,"required":1.1,"status":"advisory","passes":false,"why":"the --gold-soft wash itself; decorative fill, never a boundary"},{"pair":"gray-line-on-paper","ratio":1.61,"required":3.0,"status":"advisory","passes":false,"why":"gridlines / slider track / rules — decorative per 1.4.11; essential boundaries use --ink"},{"pair":"ink-focus-ring-on-paper","ratio":18.88,"required":3.0,"status":"required","passes":true,"why":"recommended focus indicator (see color-system.md §6)"}],"dark":[{"pair":"ink-on-paper","ratio":15.46,"required":4.5,"status":"required","passes":true,"why":"body text, axes, numbers"},{"pair":"gray-text-on-paper","ratio":6.49,"required":4.5,"status":"required","passes":true,"why":"captions, ticks, eyebrow, hints"},{"pair":"ink-on-gray-fill","ratio":13.95,"required":4.5,"status":"required","passes":true,"why":"text inside the spec panel"},{"pair":"ink-on-accent","ratio":10.21,"required":4.5,"status":"required","passes":true,"why":"selected segmented cell / primary button label (#111111 is hard-coded in the skin)"},{"pair":"ink-on-accent-wash","ratio":11.23,"required":4.5,"status":"required","passes":true,"why":"text sitting on a --gold-soft fill"},{"pair":"ink-hairline-on-accent","ratio":1.57,"required":3.0,"status":"advisory","passes":false,"why":"the 1px --ink outline that bounds every accent mark; in light theme it is what carries WCAG 1.4.11"},{"pair":"accent-on-paper","ratio":9.87,"required":3.0,"status":"required","passes":true,"why":"accent mark against the page"},{"pair":"accent-on-gray-fill","ratio":8.91,"required":3.0,"status":"advisory","passes":true,"why":"accent mark inside the spec panel (hairline applies)"},{"pair":"accent-wash-on-paper","ratio":1.38,"required":1.1,"status":"advisory","passes":true,"why":"the --gold-soft wash itself; decorative fill, never a boundary"},{"pair":"gray-line-on-paper","ratio":1.61,"required":3.0,"status":"advisory","passes":false,"why":"gridlines / slider track / rules — decorative per 1.4.11; essential boundaries use --ink"},{"pair":"ink-focus-ring-on-paper","ratio":15.46,"required":3.0,"status":"required","passes":true,"why":"recommended focus indicator (see color-system.md §6)"}]},"verdict":"pass","failing-required-pairs":[]},"harbor":{"label":"Harbor","hue-note":"Hue 248. Blue is dark by nature; holding lightness constant lands it as a pale lithograph blue rather than a cobalt. Reads quietly, needs the ink hairline most.","derivation":{"hue-deg":248.0,"restraint-k":0.78,"light-oklch":"oklch(0.7516 0.1146 248.00)","dark-oklch":"oklch(0.7904 0.1081 248.00)","gamut-clipped":{"light":false,"dark":false},"lightness-clamped":{"light":false,"dark":false}},"light":{"--ink":"#111111","--paper":"#FFFFFF","--gold":"#71B4F4","--gold-soft":"rgba(113,180,244,.12)","--gray-text":"#666666","--gray-line":"#CCCCCC","--gray-fill":"#F2F2F2"},"dark":{"--ink":"#ECECEC","--paper":"#151515","--gold":"#81C1FD","--gold-soft":"rgba(129,193,253,.16)","--gray-text":"#9A9A9A","--gray-line":"#3A3A3A","--gray-fill":"#1F1F1F"},"ramp":{"light":["#E2F1FF","#A5D3FF","#71B4F4","#5194D1","#3276B1"],"dark":["#00477A","#24649A","#4482BA","#62A1DB","#81C1FD"],"tokens":["--gold-r1","--gold-r2","--gold-r3","--gold-r4","--gold-r5"],"three-step":{"light":["#E2F1FF","#71B4F4","#3276B1"],"dark":["#00477A","#4482BA","#81C1FD"]}},"ramp-check":{"light-luminance-monotone":true,"dark-luminance-monotone":true,"light-min-adjacent-contrast":1.37,"dark-min-adjacent-contrast":1.44,"light-span-station1-to-station5":4.19,"dark-span-station1-to-station5":5.03,"light-accent-station":3,"dark-accent-station":5},"contrast":{"light":[{"pair":"ink-on-paper","ratio":18.88,"required":4.5,"status":"required","passes":true,"why":"body text, axes, numbers"},{"pair":"gray-text-on-paper","ratio":5.74,"required":4.5,"status":"required","passes":true,"why":"captions, ticks, eyebrow, hints"},{"pair":"ink-on-gray-fill","ratio":16.87,"required":4.5,"status":"required","passes":true,"why":"text inside the spec panel"},{"pair":"ink-on-accent","ratio":8.58,"required":4.5,"status":"required","passes":true,"why":"selected segmented cell / primary button label (#111111 is hard-coded in the skin)"},{"pair":"ink-on-accent-wash","ratio":17.3,"required":4.5,"status":"required","passes":true,"why":"text sitting on a --gold-soft fill"},{"pair":"ink-hairline-on-accent","ratio":8.58,"required":3.0,"status":"required","passes":true,"why":"the 1px --ink outline that bounds every accent mark; in light theme it is what carries WCAG 1.4.11"},{"pair":"accent-on-paper","ratio":2.2,"required":3.0,"status":"exception","passes":false,"why":"accent mark against the page"},{"pair":"accent-on-gray-fill","ratio":1.97,"required":3.0,"status":"advisory","passes":false,"why":"accent mark inside the spec panel (hairline applies)"},{"pair":"accent-wash-on-paper","ratio":1.09,"required":1.1,"status":"advisory","passes":false,"why":"the --gold-soft wash itself; decorative fill, never a boundary"},{"pair":"gray-line-on-paper","ratio":1.61,"required":3.0,"status":"advisory","passes":false,"why":"gridlines / slider track / rules — decorative per 1.4.11; essential boundaries use --ink"},{"pair":"ink-focus-ring-on-paper","ratio":18.88,"required":3.0,"status":"required","passes":true,"why":"recommended focus indicator (see color-system.md §6)"}],"dark":[{"pair":"ink-on-paper","ratio":15.46,"required":4.5,"status":"required","passes":true,"why":"body text, axes, numbers"},{"pair":"gray-text-on-paper","ratio":6.49,"required":4.5,"status":"required","passes":true,"why":"captions, ticks, eyebrow, hints"},{"pair":"ink-on-gray-fill","ratio":13.95,"required":4.5,"status":"required","passes":true,"why":"text inside the spec panel"},{"pair":"ink-on-accent","ratio":9.87,"required":4.5,"status":"required","passes":true,"why":"selected segmented cell / primary button label (#111111 is hard-coded in the skin)"},{"pair":"ink-on-accent-wash","ratio":11.28,"required":4.5,"status":"required","passes":true,"why":"text sitting on a --gold-soft fill"},{"pair":"ink-hairline-on-accent","ratio":1.62,"required":3.0,"status":"advisory","passes":false,"why":"the 1px --ink outline that bounds every accent mark; in light theme it is what carries WCAG 1.4.11"},{"pair":"accent-on-paper","ratio":9.55,"required":3.0,"status":"required","passes":true,"why":"accent mark against the page"},{"pair":"accent-on-gray-fill","ratio":8.62,"required":3.0,"status":"advisory","passes":true,"why":"accent mark inside the spec panel (hairline applies)"},{"pair":"accent-wash-on-paper","ratio":1.37,"required":1.1,"status":"advisory","passes":true,"why":"the --gold-soft wash itself; decorative fill, never a boundary"},{"pair":"gray-line-on-paper","ratio":1.61,"required":3.0,"status":"advisory","passes":false,"why":"gridlines / slider track / rules — decorative per 1.4.11; essential boundaries use --ink"},{"pair":"ink-focus-ring-on-paper","ratio":15.46,"required":3.0,"status":"required","passes":true,"why":"recommended focus indicator (see color-system.md §6)"}]},"verdict":"pass","failing-required-pairs":[]},"heather":{"label":"Heather","hue-note":"Hue 306. Violet. Low native chroma at this lightness, so it behaves like a tinted graphite — the quietest palette here.","derivation":{"hue-deg":306.0,"restraint-k":0.78,"light-oklch":"oklch(0.7516 0.1146 306.00)","dark-oklch":"oklch(0.7904 0.1081 306.00)","gamut-clipped":{"light":false,"dark":false},"lightness-clamped":{"light":false,"dark":false}},"light":{"--ink":"#111111","--paper":"#FFFFFF","--gold":"#C09BE8","--gold-soft":"rgba(192,155,232,.12)","--gray-text":"#666666","--gray-line":"#CCCCCC","--gray-fill":"#F2F2F2"},"dark":{"--ink":"#ECECEC","--paper":"#151515","--gold":"#CCA9F2","--gold-soft":"rgba(204,169,242,.16)","--gray-text":"#9A9A9A","--gray-line":"#3A3A3A","--gray-fill":"#1F1F1F"},"ramp":{"light":["#F3EAFF","#DDBEFF","#C09BE8","#A17CC6","#825EA6"],"dark":["#543372","#704E91","#8D6BB0","#AC89D0","#CCA9F2"],"tokens":["--gold-r1","--gold-r2","--gold-r3","--gold-r4","--gold-r5"],"three-step":{"light":["#F3EAFF","#C09BE8","#825EA6"],"dark":["#543372","#8D6BB0","#CCA9F2"]}},"ramp-check":{"light-luminance-monotone":true,"dark-luminance-monotone":true,"light-min-adjacent-contrast":1.4,"dark-min-adjacent-contrast":1.45,"light-span-station1-to-station5":4.4,"dark-span-station1-to-station5":5.03,"light-accent-station":3,"dark-accent-station":5},"contrast":{"light":[{"pair":"ink-on-paper","ratio":18.88,"required":4.5,"status":"required","passes":true,"why":"body text, axes, numbers"},{"pair":"gray-text-on-paper","ratio":5.74,"required":4.5,"status":"required","passes":true,"why":"captions, ticks, eyebrow, hints"},{"pair":"ink-on-gray-fill","ratio":16.87,"required":4.5,"status":"required","passes":true,"why":"text inside the spec panel"},{"pair":"ink-on-accent","ratio":8.18,"required":4.5,"status":"required","passes":true,"why":"selected segmented cell / primary button label (#111111 is hard-coded in the skin)"},{"pair":"ink-on-accent-wash","ratio":17.26,"required":4.5,"status":"required","passes":true,"why":"text sitting on a --gold-soft fill"},{"pair":"ink-hairline-on-accent","ratio":8.18,"required":3.0,"status":"required","passes":true,"why":"the 1px --ink outline that bounds every accent mark; in light theme it is what carries WCAG 1.4.11"},{"pair":"accent-on-paper","ratio":2.31,"required":3.0,"status":"exception","passes":false,"why":"accent mark against the page"},{"pair":"accent-on-gray-fill","ratio":2.06,"required":3.0,"status":"advisory","passes":false,"why":"accent mark inside the spec panel (hairline applies)"},{"pair":"accent-wash-on-paper","ratio":1.09,"required":1.1,"status":"advisory","passes":false,"why":"the --gold-soft wash itself; decorative fill, never a boundary"},{"pair":"gray-line-on-paper","ratio":1.61,"required":3.0,"status":"advisory","passes":false,"why":"gridlines / slider track / rules — decorative per 1.4.11; essential boundaries use --ink"},{"pair":"ink-focus-ring-on-paper","ratio":18.88,"required":3.0,"status":"required","passes":true,"why":"recommended focus indicator (see color-system.md §6)"}],"dark":[{"pair":"ink-on-paper","ratio":15.46,"required":4.5,"status":"required","passes":true,"why":"body text, axes, numbers"},{"pair":"gray-text-on-paper","ratio":6.49,"required":4.5,"status":"required","passes":true,"why":"captions, ticks, eyebrow, hints"},{"pair":"ink-on-gray-fill","ratio":13.95,"required":4.5,"status":"required","passes":true,"why":"text inside the spec panel"},{"pair":"ink-on-accent","ratio":9.46,"required":4.5,"status":"required","passes":true,"why":"selected segmented cell / primary button label (#111111 is hard-coded in the skin)"},{"pair":"ink-on-accent-wash","ratio":11.36,"required":4.5,"status":"required","passes":true,"why":"text sitting on a --gold-soft fill"},{"pair":"ink-hairline-on-accent","ratio":1.69,"required":3.0,"status":"advisory","passes":false,"why":"the 1px --ink outline that bounds every accent mark; in light theme it is what carries WCAG 1.4.11"},{"pair":"accent-on-paper","ratio":9.15,"required":3.0,"status":"required","passes":true,"why":"accent mark against the page"},{"pair":"accent-on-gray-fill","ratio":8.26,"required":3.0,"status":"advisory","passes":true,"why":"accent mark inside the spec panel (hairline applies)"},{"pair":"accent-wash-on-paper","ratio":1.36,"required":1.1,"status":"advisory","passes":true,"why":"the --gold-soft wash itself; decorative fill, never a boundary"},{"pair":"gray-line-on-paper","ratio":1.61,"required":3.0,"status":"advisory","passes":false,"why":"gridlines / slider track / rules — decorative per 1.4.11; essential boundaries use --ink"},{"pair":"ink-focus-ring-on-paper","ratio":15.46,"required":3.0,"status":"required","passes":true,"why":"recommended focus indicator (see color-system.md §6)"}]},"verdict":"pass","failing-required-pairs":[]},"mulberry":{"label":"Mulberry","hue-note":"Hue 352. Cool red-pink, held to 80% ink weight. Distinct from Terracotta by warmth, not by lightness; avoid pairing the two in one document set.","derivation":{"hue-deg":352.0,"restraint-k":0.8,"light-oklch":"oklch(0.7516 0.1175 352.00)","dark-oklch":"oklch(0.7904 0.1109 352.00)","gamut-clipped":{"light":false,"dark":false},"lightness-clamped":{"light":false,"dark":false}},"light":{"--ink":"#111111","--paper":"#FFFFFF","--gold":"#E78EB6","--gold-soft":"rgba(231,142,182,.12)","--gray-text":"#666666","--gray-line":"#CCCCCC","--gray-fill":"#F2F2F2"},"dark":{"--ink":"#ECECEC","--paper":"#151515","--gold":"#F29DC2","--gold-soft":"rgba(242,157,194,.16)","--gray-text":"#9A9A9A","--gray-line":"#3A3A3A","--gray-fill":"#1F1F1F"},"ramp":{"light":["#FFE7F0","#FFB4D4","#E78EB6","#C56F97","#A45279"],"dark":["#6F264B","#8E4367","#AF6084","#D07EA2","#F29DC2"],"tokens":["--gold-r1","--gold-r2","--gold-r3","--gold-r4","--gold-r5"],"three-step":{"light":["#FFE7F0","#E78EB6","#A45279"],"dark":["#6F264B","#AF6084","#F29DC2"]}},"ramp-check":{"light-luminance-monotone":true,"dark-luminance-monotone":true,"light-min-adjacent-contrast":1.41,"dark-min-adjacent-contrast":1.44,"light-span-station1-to-station5":4.42,"dark-span-station1-to-station5":5.05,"light-accent-station":3,"dark-accent-station":5},"contrast":{"light":[{"pair":"ink-on-paper","ratio":18.88,"required":4.5,"status":"required","passes":true,"why":"body text, axes, numbers"},{"pair":"gray-text-on-paper","ratio":5.74,"required":4.5,"status":"required","passes":true,"why":"captions, ticks, eyebrow, hints"},{"pair":"ink-on-gray-fill","ratio":16.87,"required":4.5,"status":"required","passes":true,"why":"text inside the spec panel"},{"pair":"ink-on-accent","ratio":8.04,"required":4.5,"status":"required","passes":true,"why":"selected segmented cell / primary button label (#111111 is hard-coded in the skin)"},{"pair":"ink-on-accent-wash","ratio":17.18,"required":4.5,"status":"required","passes":true,"why":"text sitting on a --gold-soft fill"},{"pair":"ink-hairline-on-accent","ratio":8.04,"required":3.0,"status":"required","passes":true,"why":"the 1px --ink outline that bounds every accent mark; in light theme it is what carries WCAG 1.4.11"},{"pair":"accent-on-paper","ratio":2.35,"required":3.0,"status":"exception","passes":false,"why":"accent mark against the page"},{"pair":"accent-on-gray-fill","ratio":2.1,"required":3.0,"status":"advisory","passes":false,"why":"accent mark inside the spec panel (hairline applies)"},{"pair":"accent-wash-on-paper","ratio":1.1,"required":1.1,"status":"advisory","passes":false,"why":"the --gold-soft wash itself; decorative fill, never a boundary"},{"pair":"gray-line-on-paper","ratio":1.61,"required":3.0,"status":"advisory","passes":false,"why":"gridlines / slider track / rules — decorative per 1.4.11; essential boundaries use --ink"},{"pair":"ink-focus-ring-on-paper","ratio":18.88,"required":3.0,"status":"required","passes":true,"why":"recommended focus indicator (see color-system.md §6)"}],"dark":[{"pair":"ink-on-paper","ratio":15.46,"required":4.5,"status":"required","passes":true,"why":"body text, axes, numbers"},{"pair":"gray-text-on-paper","ratio":6.49,"required":4.5,"status":"required","passes":true,"why":"captions, ticks, eyebrow, hints"},{"pair":"ink-on-gray-fill","ratio":13.95,"required":4.5,"status":"required","passes":true,"why":"text inside the spec panel"},{"pair":"ink-on-accent","ratio":9.33,"required":4.5,"status":"required","passes":true,"why":"selected segmented cell / primary button label (#111111 is hard-coded in the skin)"},{"pair":"ink-on-accent-wash","ratio":11.42,"required":4.5,"status":"required","passes":true,"why":"text sitting on a --gold-soft fill"},{"pair":"ink-hairline-on-accent","ratio":1.71,"required":3.0,"status":"advisory","passes":false,"why":"the 1px --ink outline that bounds every accent mark; in light theme it is what carries WCAG 1.4.11"},{"pair":"accent-on-paper","ratio":9.02,"required":3.0,"status":"required","passes":true,"why":"accent mark against the page"},{"pair":"accent-on-gray-fill","ratio":8.15,"required":3.0,"status":"advisory","passes":true,"why":"accent mark inside the spec panel (hairline applies)"},{"pair":"accent-wash-on-paper","ratio":1.35,"required":1.1,"status":"advisory","passes":true,"why":"the --gold-soft wash itself; decorative fill, never a boundary"},{"pair":"gray-line-on-paper","ratio":1.61,"required":3.0,"status":"advisory","passes":false,"why":"gridlines / slider track / rules — decorative per 1.4.11; essential boundaries use --ink"},{"pair":"ink-focus-ring-on-paper","ratio":15.46,"required":3.0,"status":"required","passes":true,"why":"recommended focus indicator (see color-system.md §6)"}]},"verdict":"pass","failing-required-pairs":[]}},"rejected":[{"key":"signal-red","label":"Signal Red","hue-deg":28.0,"restraint-k":0.92,"why":"rejected: 14 deg from Terracotta in OKLCH (indistinguishable at a glance in the picker) and red carries an error/\"wrong answer\" reading the course pages deliberately avoid."},{"key":"lemon","label":"Lemon","hue-deg":100.0,"restraint-k":1.0,"why":"rejected: 16 deg from Goldenrod — a second yellow is not a second choice."},{"key":"deep-cobalt","label":"Deep Cobalt","hue-deg":264.0,"restraint-k":1.0,"why":"rejected at textbook saturation: a true dark cobalt cannot clear the ink-on-accent luminance floor (Y >= 0.2002) without being lightened past recognition; the derivation clamps it into the same pale blue that Harbor already occupies."}]},"_meta":{"palettes":{"label":"Spot-colour palettes","help":"Generated by the design pass; regenerate rather than hand-edit."}}}
+</script>
+
+<style>
+:root{
+  /* color — light */
+  --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+  --gold-soft:rgba(218,165,32,.12);
+  --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  /* type */
+  --font-body: ui-serif, Georgia, "Times New Roman", serif;
+  --font-ui:   system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+  --text-xl:1.75rem; --text-lg:1.25rem; --text-base:1rem; --text-sm:.875rem; --text-xs:.75rem;
+  --leading-prose:1.6; --leading-ui:1.3;
+  /* spacing */
+  --space-1:4px; --space-2:8px; --space-3:16px; --space-4:24px; --space-5:32px; --space-6:48px;
+  /* motion */
+  --ease:cubic-bezier(0.16,1,0.3,1); --dur:200ms;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+    --gold-soft:rgba(227,179,65,.16);
+    --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+  --gold-soft:rgba(227,179,65,.16);
+  --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+}
+@media (prefers-reduced-motion: reduce){ :root{ --dur:0ms; } }
+@media print{
+  :root, :root[data-theme="dark"]{
+    --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+    --gold-soft:rgba(218,165,32,.12);
+    --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  }
+  .theme-btn{display:none}
+  .stage{break-inside:avoid}
+}
+
+/* ================= base skin (design-system §3–§4) ================= */
+*{box-sizing:border-box}
+html{color-scheme:light dark}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--font-body); font-size:var(--text-base); line-height:var(--leading-prose);
+  -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:820px; margin:0 auto; padding:var(--space-5) var(--space-4) var(--space-6);}
+.topbar{display:flex; align-items:baseline; justify-content:space-between; gap:var(--space-3);
+  border-bottom:1px solid var(--gray-line); padding-bottom:var(--space-2); margin-bottom:var(--space-4);}
+.eyebrow{font-family:var(--font-ui); font-size:var(--text-xs); letter-spacing:.08em; text-transform:uppercase; color:var(--gray-text);}
+h1{font-family:var(--font-body); font-weight:600; font-size:var(--text-xl); line-height:1.2; margin:.2em 0 .1em;}
+h2{font-family:var(--font-ui); font-weight:600; font-size:var(--text-lg); line-height:1.3; margin:var(--space-5) 0 var(--space-2);}
+h3{font-family:var(--font-ui); font-weight:600; font-size:var(--text-base); line-height:1.3; margin:0 0 var(--space-1);}
+p{margin:0 0 var(--space-3);}
+.prose{max-width:66ch;}
+.muted{color:var(--gray-text);}
+.mono,code{font-family:var(--font-mono); font-variant-numeric:tabular-nums;}
+a{color:inherit;}
+:focus-visible{outline:2px solid var(--ink); outline-offset:2px; box-shadow:0 0 0 5px var(--gold-soft);}
+
+.theme-btn{font-family:var(--font-ui); font-size:var(--text-xs); background:none;
+  border:1px solid var(--gray-line); color:var(--gray-text); padding:6px 10px; cursor:pointer; border-radius:2px;}
+.theme-btn:hover{background:var(--gray-fill);}
+
+.btn{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:1px solid var(--ink); padding:8px 14px; cursor:pointer; border-radius:2px;}
+.btn:hover{background:var(--gray-fill);}
+.btn.primary{background:var(--gold); border-color:var(--gold); color:#111111;}
+
+.foot{display:flex; align-items:center; gap:var(--space-3); margin-top:var(--space-5);
+  border-top:1px solid var(--gray-line); padding-top:var(--space-3); flex-wrap:wrap;}
+.foot .btn{margin-right:auto;}
+.hint{font-family:var(--font-ui); font-size:var(--text-sm); color:var(--gray-text);}
+.mathbox{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm);
+  background:var(--gray-fill); border-left:2px solid var(--gold); padding:var(--space-3);
+  margin:var(--space-3) 0; overflow-x:auto; white-space:pre; line-height:1.7; text-align:left;}
+.callout{font-family:var(--font-ui); font-size:var(--text-sm); border:1px solid var(--gray-line);
+  border-left:2px solid var(--gold); padding:var(--space-2) var(--space-3); margin:var(--space-3) 0; background:var(--paper);}
+ul.plain{font-family:var(--font-ui); font-size:var(--text-sm); line-height:1.55; max-width:66ch;
+  padding-left:1.1em; margin:0 0 var(--space-3);}
+ul.plain li{margin-bottom:var(--space-2);}
+
+/* ================= this page only ================= */
+/* the swatch row */
+.swatches{display:flex; flex-wrap:wrap; gap:var(--space-3); margin:var(--space-3) 0 var(--space-4); padding:0;}
+.sw{background:none; border:0; padding:4px; cursor:pointer; border-radius:2px;
+  display:flex; flex-direction:column; align-items:center; gap:6px; position:relative;}
+.sw .chip{position:relative; width:56px; height:56px; display:block;}
+.sw svg{display:block; width:56px; height:56px;}
+.sw .nm{font-family:var(--font-ui); font-size:var(--text-xs); line-height:1.2; color:var(--ink);}
+.sw .df{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); display:block;}
+.sw[aria-checked="true"]{outline:2px solid var(--ink); outline-offset:0;}
+.sw .tick{position:absolute; right:-3px; top:-5px; font-size:14px; line-height:1;
+  color:var(--ink); background:var(--paper); border:1px solid var(--ink); border-radius:2px;
+  padding:0 2px; display:none;}
+.sw[aria-checked="true"] .tick{display:block;}
+.live{font-family:var(--font-ui); font-size:var(--text-sm); color:var(--gray-text); min-height:1.4em;}
+
+/* the contrast readout */
+table.ratios{border-collapse:collapse; font-family:var(--font-mono); font-variant-numeric:tabular-nums;
+  font-size:var(--text-sm); margin:var(--space-2) 0 var(--space-3); width:100%; max-width:640px;}
+table.ratios th, table.ratios td{border-bottom:1px solid var(--gray-line); padding:6px 10px 6px 0; text-align:left; vertical-align:baseline;}
+table.ratios th{font-family:var(--font-ui); font-weight:600; font-size:var(--text-xs);
+  text-transform:uppercase; letter-spacing:.06em; color:var(--gray-text);}
+table.ratios td.n{text-align:right; padding-right:var(--space-2);}
+table.ratios td.mk{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); white-space:nowrap;}
+.tscroll{overflow-x:auto;}
+.fn{font-family:var(--font-ui); font-size:var(--text-sm); color:var(--gray-text); max-width:66ch;}
+
+/* archetype rows */
+.arch{display:grid; grid-template-columns:180px 1fr; gap:var(--space-4);
+  align-items:start; margin:0 0 var(--space-5); padding-top:var(--space-3);
+  border-top:1px solid var(--gray-line);}
+@media(max-width:560px){ .arch{grid-template-columns:1fr;} }
+.arch .body{font-family:var(--font-ui); font-size:var(--text-sm); line-height:1.55; max-width:60ch;}
+.arch .body p{margin:0 0 var(--space-2);}
+.arch .lab{color:var(--gray-text);}
+.arch .num{font-family:var(--font-mono); color:var(--gray-text); font-size:var(--text-xs);}
+.tn{max-width:180px; width:100%; height:auto; display:block;}
+.tn .s{stroke:var(--ink); stroke-width:1; fill:none;}
+.tn .s2{stroke:var(--ink); stroke-width:1.5; fill:none;}
+.tn .fi{fill:var(--ink); stroke:none;}
+.tn .p{fill:var(--paper); stroke:var(--ink); stroke-width:1;}
+.tn .g{fill:var(--gold); stroke:var(--ink); stroke-width:1;}
+.tn .gs{fill:var(--gold-soft); stroke:var(--ink); stroke-width:1;}
+.tn .gh{stroke:var(--gray-line); stroke-width:1; fill:none;}
+.tn .gd{stroke:var(--gray-line); stroke-width:1; fill:none; stroke-dasharray:3 3;}
+.tn .gf{fill:var(--gray-line); stroke:none;}
+.tn .au{stroke:var(--ink); stroke-width:3.6; fill:none; stroke-linecap:round; stroke-linejoin:round;}
+.tn .ao{stroke:var(--gold); stroke-width:1.8; fill:none; stroke-linecap:round; stroke-linejoin:round;}
+.tn .r1{fill:var(--gold-r1, var(--gold-soft)); stroke:var(--ink); stroke-width:1;}
+.tn .r3{fill:var(--gold-r3, var(--gold)); stroke:var(--ink); stroke-width:1;}
+.tn .r5{fill:var(--gold-r5, var(--gold)); stroke:var(--ink); stroke-width:1;}
+
+@media print{
+  .swatches, .copyrow, .live{display:none;}
+  .arch{break-inside:avoid;}
+}
+</style>
+
+<!-- the selected palette's four token blocks are written here at boot -->
+<style id="m170-palette-live"></style>
+
+<!-- boot: theme and colour applied before first paint (no flash) -->
+<script>
+window.M170 = (function(){
+  try{var t=localStorage.getItem("m170-theme");if(t)document.documentElement.dataset.theme=t;}catch(e){}
+  var CFG=null, PAL=null, DEF="goldenrod";
+  try{
+    CFG = JSON.parse(document.getElementById("m170-config").textContent);
+    PAL = CFG.palettes.palettes;
+    DEF = CFG.palettes["default"] || "goldenrod";
+  }catch(e){}
+  function tokens(p, theme, pad){
+    var out=[], b=p[theme], k, i;
+    for(k in b){ if(Object.prototype.hasOwnProperty.call(b,k)) out.push(pad+k+": "+b[k]+";"); }
+    var rt = (p.ramp && p.ramp.tokens) || [];
+    for(i=0;i<rt.length;i++) out.push(pad+rt[i]+": "+p.ramp[theme][i]+";");
+    return out.join("\n");
+  }
+  function cssFor(name){
+    var p = PAL && PAL[name]; if(!p) return "";
+    return ":root{\n"+tokens(p,"light","  ")+"\n}\n"
+      + '@media (prefers-color-scheme: dark){\n  :root:not([data-theme="light"]){\n'+tokens(p,"dark","    ")+"\n  }\n}\n"
+      + ':root[data-theme="dark"]{\n'+tokens(p,"dark","  ")+"\n}\n"
+      + '@media print{\n  :root, :root[data-theme="dark"]{\n'+tokens(p,"light","    ")+"\n  }\n}";
+  }
+  function apply(name){
+    if(!PAL || !PAL[name]) name = DEF;
+    var el = document.getElementById("m170-palette-live");
+    if(el) el.textContent = cssFor(name);
+    return name;
+  }
+  var stored=null; try{stored=localStorage.getItem("m170-palette");}catch(e){}
+  return {cfg:CFG, pal:PAL, def:DEF, cssFor:cssFor, apply:apply, current:apply(stored||DEF)};
+})();
+</script>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="eyebrow">MATH 170 · Math of AI · What this toolkit makes</div>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Color theme">◑ auto</button>
+  </div>
+
+  <h1 data-edit="title">What kinds of manipulatives can this produce?</h1>
+  <p class="prose" data-edit="intro">These are the shapes a manipulative can take. Each one is a small machine
+  for a single idea — a thing to drag, a step to press, an answer to commit to before the page will tell you
+  anything. Below each is one page from this course that uses it, so you can see the archetype doing real work
+  rather than posing.</p>
+
+  <div data-slot="notes-top"></div>
+
+  <h2 id="colour">Setting the colour</h2>
+  <p class="prose" data-edit="colour-intro">These pages have exactly one colour decision in them, and it is a
+  hue. Black text, white paper, and one spot colour — the way a two-colour textbook is printed. Pick a hue below
+  and everything on this page, including the thumbnails, changes with it. Nothing else is adjustable, and that is
+  the design: one knob is a decision, five knobs are a project.</p>
+  <p class="prose" data-edit="colour-where">The hue for the whole course is <strong>set in the Studio</strong> —
+  the small editing app the instructor runs on their own laptop — on its dashboard, and it takes effect for every
+  page at the next publish. This page previews the seven and hands you the CSS; it does not change anything
+  beyond itself.</p>
+
+  <div class="swatches" id="swatches" role="radiogroup" aria-label="Spot colour">
+    <p class="hint" id="swFallback">Choosing a colour needs JavaScript. Without it this page stays on the
+    default, Goldenrod, and everything below still reads.</p>
+  </div>
+  <p class="live" id="swLive" aria-live="polite"></p>
+
+  <div class="tscroll">
+    <table class="ratios" id="ratios">
+      <caption class="hint" style="text-align:left; padding-bottom:6px;" data-edit="ratios-caption">Measured
+      contrast, this palette, both themes.</caption>
+      <thead>
+        <tr><th scope="col">pair</th><th scope="col" colspan="2">light</th><th scope="col" colspan="2">dark</th></tr>
+      </thead>
+      <tbody id="ratioRows">
+        <tr><td colspan="5" class="mk">Ratios appear here when scripting is available; every number is in
+        <code>design/palettes.json</code> either way.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="fn" data-edit="ratios-note">All seven palettes pass every required pair. The numbers were computed,
+  not estimated.</p>
+  <p class="fn" data-edit="ratios-exception"><strong>Why one row says “see note”.</strong> The skin prints black
+  text directly on the accent, so the accent has to be light enough to carry that text at 4.5:1 — and anything
+  that light cannot also separate from white paper at 3:1. The two requirements pull opposite ways, and no hue
+  satisfies both. Every accent mark therefore carries a 1px ink hairline: that outline is the boundary the
+  standard asks for, it runs above 8:1 against the accent, and nothing on these pages is ever distinguished by
+  colour alone. (In dark theme the accent separates from the page on its own at better than 9:1, so there the
+  hairline is a habit rather than the load-bearing edge — which is why its dark row reads “advisory”.)</p>
+
+  <h3 style="margin-top:var(--space-4);">The CSS, if you are editing a file by hand</h3>
+  <pre class="mathbox" id="cssOut" tabindex="0" aria-label="CSS token declarations for the selected palette">…</pre>
+  <p class="copyrow"><button class="btn" type="button" id="copyBtn">Copy</button>
+  <span class="hint" id="copyMsg" aria-live="polite"></span></p>
+  <p class="fn" data-edit="css-note">The Studio applies this for you; this block is for anyone editing a file by
+  hand.</p>
+
+  <h2>The archetypes</h2>
+  <p class="prose muted" data-edit="arch-intro">Roughly in the order a student meets them, which is also roughly
+  what they cost to build.</p>
+
+  <!-- 1 -->
+  <div class="arch">
+    <div>
+      <svg class="tn" viewBox="0 0 160 100" role="img" aria-labelledby="tn1t">
+        <title id="tn1t">Three bins; two cards resting in them and one card dropping into the third.</title>
+        <rect class="s" x="10" y="55" width="40" height="38"></rect>
+        <rect class="s" x="60" y="55" width="40" height="38"></rect>
+        <rect class="s" x="110" y="55" width="40" height="38"></rect>
+        <rect class="s" x="17" y="63" width="26" height="18"></rect>
+        <rect class="s" x="67" y="63" width="26" height="18"></rect>
+        <rect class="g" x="115" y="14" width="30" height="20"></rect>
+        <path class="gd" d="M96 52 C 104 26, 120 14, 132 12"></path>
+      </svg>
+    </div>
+    <div class="body">
+      <h3>1 · Card sorter</h3>
+      <p><span class="lab">Teaches:</span> categories become real when a case moves between them; a one-clause
+      change to the story moves it.</p>
+      <p><span class="lab">In this course:</span> <a href="learning-type-sorter.html">Learning-Type
+      Sorter</a> <span class="num">week-01-learning-type-sorter.html</span></p>
+      <p><span class="lab">The move:</span> drag a card into a bin (or focus it and press 1/2/3).</p>
+    </div>
+  </div>
+
+  <!-- 2 -->
+  <div class="arch">
+    <div>
+      <svg class="tn" viewBox="0 0 160 100" role="img" aria-labelledby="tn2t">
+        <title id="tn2t">A table of cells with a curtain half drawn across it; the columns behind it are filled.</title>
+        <rect class="s" x="10" y="10" width="30" height="14"></rect>
+        <rect class="s" x="10" y="28" width="30" height="14"></rect>
+        <rect class="s" x="10" y="46" width="30" height="14"></rect>
+        <rect class="s" x="10" y="64" width="30" height="14"></rect>
+        <rect class="s" x="10" y="82" width="30" height="14"></rect>
+        <rect class="s" x="44" y="10" width="30" height="14"></rect>
+        <rect class="s" x="44" y="28" width="30" height="14"></rect>
+        <rect class="s" x="44" y="46" width="30" height="14"></rect>
+        <rect class="s" x="44" y="64" width="30" height="14"></rect>
+        <rect class="s" x="44" y="82" width="30" height="14"></rect>
+        <rect class="gs" x="86" y="10" width="30" height="14"></rect>
+        <rect class="gs" x="86" y="28" width="30" height="14"></rect>
+        <rect class="gs" x="86" y="46" width="30" height="14"></rect>
+        <rect class="gs" x="86" y="64" width="30" height="14"></rect>
+        <rect class="gs" x="86" y="82" width="30" height="14"></rect>
+        <rect class="gs" x="120" y="10" width="30" height="14"></rect>
+        <rect class="gs" x="120" y="28" width="30" height="14"></rect>
+        <rect class="gs" x="120" y="46" width="30" height="14"></rect>
+        <rect class="gs" x="120" y="64" width="30" height="14"></rect>
+        <rect class="gs" x="120" y="82" width="30" height="14"></rect>
+        <rect class="g" x="77" y="6" width="4" height="90"></rect>
+      </svg>
+    </div>
+    <div class="body">
+      <h3>2 · Progressive reveal</h3>
+      <p><span class="lab">Teaches:</span> the arithmetic didn't know what the columns meant — so <em>meaning</em>
+      is something we add, and can add wrongly.</p>
+      <p><span class="lab">In this course:</span> <a href="sandwich-reveal.html">You Are the Machine:
+      Three-Pass Reveal</a> <span class="num">week-01-sandwich-reveal.html</span></p>
+      <p><span class="lab">The move:</span> press Reveal, one pass at a time.</p>
+    </div>
+  </div>
+
+  <!-- 3 -->
+  <div class="arch">
+    <div>
+      <svg class="tn" viewBox="0 0 160 100" role="img" aria-labelledby="tn3t">
+        <title id="tn3t">Axes with hollow circles and filled squares, and a line with a handle at each end.</title>
+        <path class="s" d="M22 8 L22 88 L152 88"></path>
+        <path class="s" d="M46 88 L46 84 M78 88 L78 84 M110 88 L110 84 M142 88 L142 84
+                           M22 64 L26 64 M22 40 L26 40 M22 16 L26 16"></path>
+        <circle class="p" cx="48" cy="66" r="4"></circle>
+        <circle class="p" cx="70" cy="74" r="4"></circle>
+        <circle class="p" cx="60" cy="52" r="4"></circle>
+        <rect class="g" x="98" y="34" width="9" height="9"></rect>
+        <rect class="g" x="122" y="22" width="9" height="9"></rect>
+        <path class="s2" d="M34 78 L142 24"></path>
+        <circle class="g" cx="34" cy="78" r="5"></circle>
+        <circle class="g" cx="142" cy="24" r="5"></circle>
+      </svg>
+    </div>
+    <div class="body">
+      <h3>3 · Draggable plane</h3>
+      <p><span class="lab">Teaches:</span> an equation and a picture are one object; moving either moves both.</p>
+      <p><span class="lab">In this course:</span> <a href="decision-line.html">Draw the Decision Line</a>
+      <span class="num">week-02-decision-line.html</span></p>
+      <p><span class="lab">The move:</span> drag a point or a handle (arrow keys move it one step, Shift ten).</p>
+    </div>
+  </div>
+
+  <!-- 4 -->
+  <div class="arch">
+    <div>
+      <svg class="tn" viewBox="0 0 160 100" role="img" aria-labelledby="tn4t">
+        <title id="tn4t">Four panels — a graph, a formula, a table and a sentence — threaded by one connector.</title>
+        <rect class="s" x="8" y="8" width="66" height="38"></rect>
+        <rect class="s" x="86" y="8" width="66" height="38"></rect>
+        <rect class="s" x="8" y="54" width="66" height="38"></rect>
+        <rect class="s" x="86" y="54" width="66" height="38"></rect>
+        <path class="s" d="M18 16 L18 38 L66 38"></path>
+        <path class="s" d="M20 36 L64 16"></path>
+        <rect class="s" x="96" y="20" width="10" height="14"></rect>
+        <rect class="s" x="110" y="20" width="10" height="14"></rect>
+        <path class="s" d="M126 24 L142 24 M126 30 L142 30"></path>
+        <path class="s" d="M16 62 L66 62 M16 74 L66 74 M16 86 L66 86 M40 58 L40 90"></path>
+        <path class="gf" d="M96 62 h46 v2 h-46 z M96 72 h46 v2 h-46 z M96 82 h30 v2 h-30 z"></path>
+        <path class="au" d="M41 46 L41 50 L119 50 L119 46 M41 50 L41 54 M119 50 L119 54"></path>
+        <path class="ao" d="M41 46 L41 50 L119 50 L119 46 M41 50 L41 54 M119 50 L119 54"></path>
+      </svg>
+    </div>
+    <div class="body">
+      <h3>4 · Linked representations</h3>
+      <p><span class="lab">Teaches:</span> fluency is translation; the same fact in four notations.</p>
+      <p><span class="lab">In this course:</span> <a href="line-explorer.html">One Line, Four Ways</a>
+      <span class="num">week-02-line-explorer.html</span></p>
+      <p><span class="lab">The move:</span> drag the line, and watch three other panels move.</p>
+    </div>
+  </div>
+
+  <!-- 5 -->
+  <div class="arch">
+    <div>
+      <svg class="tn" viewBox="0 0 160 100" role="img" aria-labelledby="tn5t">
+        <title id="tn5t">Three bars of different heights above a slider whose thumb sits about two-thirds along.</title>
+        <rect class="r1" x="26" y="46" width="24" height="26"></rect>
+        <rect class="r3" x="68" y="26" width="24" height="46"></rect>
+        <rect class="r5" x="110" y="10" width="24" height="62"></rect>
+        <path class="gh" d="M16 86 L144 86"></path>
+        <circle class="g" cx="93" cy="86" r="8"></circle>
+      </svg>
+    </div>
+    <div class="body">
+      <h3>5 · Parameter instrument</h3>
+      <p><span class="lab">Teaches:</span> the shape of a dependence — what grows, what saturates, what flips.</p>
+      <p><span class="lab">In this course:</span> <a href="softmax.html">Turning Scores into a
+      Decision</a> <span class="num">week-13-softmax.html</span></p>
+      <p><span class="lab">The move:</span> pull a slider and read the number that matters.</p>
+    </div>
+  </div>
+
+  <!-- 6 -->
+  <div class="arch">
+    <div>
+      <svg class="tn" viewBox="0 0 160 100" role="img" aria-labelledby="tn6t">
+        <title id="tn6t">A scatter of dots with two centroid crosses and their faint previous positions, above a row of three step buttons.</title>
+        <circle class="s" cx="26" cy="20" r="3"></circle>
+        <circle class="s" cx="42" cy="34" r="3"></circle>
+        <circle class="s" cx="34" cy="48" r="3"></circle>
+        <circle class="s" cx="58" cy="18" r="3"></circle>
+        <circle class="s" cx="104" cy="26" r="3"></circle>
+        <circle class="s" cx="120" cy="40" r="3"></circle>
+        <circle class="s" cx="132" cy="20" r="3"></circle>
+        <circle class="s" cx="114" cy="52" r="3"></circle>
+        <circle class="gh" cx="52" cy="44" r="4"></circle>
+        <circle class="gh" cx="106" cy="42" r="4"></circle>
+        <path class="g" d="M35 27 h5 v-5 h6 v5 h5 v6 h-5 v5 h-6 v-5 h-5 z"></path>
+        <path class="g" d="M112 32 h5 v-5 h6 v5 h5 v6 h-5 v5 h-6 v-5 h-5 z"></path>
+        <rect class="s" x="12" y="70" width="40" height="20" rx="2"></rect>
+        <rect class="s" x="58" y="70" width="40" height="20" rx="2"></rect>
+        <rect class="s" x="104" y="70" width="44" height="20" rx="2"></rect>
+        <path class="fi" d="M26 80 L34 75 L34 85 z"></path>
+        <path class="fi" d="M84 80 L76 75 L76 85 z"></path>
+        <path class="fi" d="M128 80 L120 75 L120 85 z M138 80 L130 75 L130 85 z"></path>
+      </svg>
+    </div>
+    <div class="body">
+      <h3>6 · Algorithm stepper</h3>
+      <p><span class="lab">Teaches:</span> that “the algorithm converged” is a sentence with a reason attached.</p>
+      <p><span class="lab">In this course:</span> <a href="cluster-by-hand.html">You Are the Algorithm</a>
+      <span class="num">week-06-cluster-by-hand.html</span></p>
+      <p><span class="lab">The move:</span> run one half-step yourself and have it marked — the
+      stepper's Step button, handed to the student. (Its ancestor, <em>K-means, Step by Step</em>,
+      pressed Step for you; it was retired on 2026-08-05 and is in the archive.)</p>
+    </div>
+  </div>
+
+  <!-- 7 -->
+  <div class="arch">
+    <div>
+      <svg class="tn" viewBox="0 0 160 100" role="img" aria-labelledby="tn7t">
+        <title id="tn7t">A four-node graph beside a four-by-four grid; one edge and its two symmetric cells are marked.</title>
+        <path class="s" d="M20 24 L58 24 M20 24 L20 66 M20 66 L58 66"></path>
+        <path class="au" d="M58 24 L58 66"></path>
+        <path class="ao" d="M58 24 L58 66"></path>
+        <circle class="p" cx="20" cy="24" r="6"></circle>
+        <circle class="p" cx="58" cy="24" r="6"></circle>
+        <circle class="p" cx="20" cy="66" r="6"></circle>
+        <circle class="p" cx="58" cy="66" r="6"></circle>
+        <path class="gh" d="M74 18 L80 18 L80 78 L74 78"></path>
+        <rect class="s" x="90" y="16" width="15" height="15"></rect>
+        <rect class="s" x="105" y="16" width="15" height="15"></rect>
+        <rect class="s" x="120" y="16" width="15" height="15"></rect>
+        <rect class="s" x="135" y="16" width="15" height="15"></rect>
+        <rect class="s" x="90" y="31" width="15" height="15"></rect>
+        <rect class="s" x="105" y="31" width="15" height="15"></rect>
+        <rect class="g" x="120" y="31" width="15" height="15"></rect>
+        <rect class="s" x="135" y="31" width="15" height="15"></rect>
+        <rect class="s" x="90" y="46" width="15" height="15"></rect>
+        <rect class="g" x="105" y="46" width="15" height="15"></rect>
+        <rect class="s" x="120" y="46" width="15" height="15"></rect>
+        <rect class="s" x="135" y="46" width="15" height="15"></rect>
+        <rect class="s" x="90" y="61" width="15" height="15"></rect>
+        <rect class="s" x="105" y="61" width="15" height="15"></rect>
+        <rect class="s" x="120" y="61" width="15" height="15"></rect>
+        <rect class="s" x="135" y="61" width="15" height="15"></rect>
+      </svg>
+    </div>
+    <div class="body">
+      <h3>7 · Structure editor</h3>
+      <p><span class="lab">Teaches:</span> a graph and its matrix are the same object seen twice; edit either.</p>
+      <p><span class="lab">In this course:</span> <a href="adjacency.html">The Graph IS the Matrix</a>
+      <span class="num">week-11-adjacency.html</span></p>
+      <p><span class="lab">The move:</span> click a matrix cell, or drag a node.</p>
+    </div>
+  </div>
+
+  <!-- 8 -->
+  <div class="arch">
+    <div>
+      <svg class="tn" viewBox="0 0 160 100" role="img" aria-labelledby="tn8t">
+        <title id="tn8t">A four-row truth table; three rows are filled in and the fourth waits with a caret.</title>
+        <rect class="s" x="18" y="10" width="124" height="80"></rect>
+        <path class="s" d="M18 30 L142 30 M18 50 L142 50 M18 70 L142 70 M60 10 L60 90 M102 10 L102 90"></path>
+        <rect class="fi" x="34" y="16" width="10" height="8"></rect>
+        <rect class="fi" x="76" y="16" width="10" height="8"></rect>
+        <rect class="fi" x="118" y="16" width="10" height="8"></rect>
+        <rect class="fi" x="34" y="36" width="10" height="8"></rect>
+        <rect class="fi" x="76" y="36" width="10" height="8"></rect>
+        <rect class="fi" x="118" y="36" width="10" height="8"></rect>
+        <rect class="fi" x="34" y="56" width="10" height="8"></rect>
+        <rect class="fi" x="76" y="56" width="10" height="8"></rect>
+        <rect class="fi" x="118" y="56" width="10" height="8"></rect>
+        <rect class="fi" x="34" y="76" width="10" height="8"></rect>
+        <rect class="fi" x="76" y="76" width="10" height="8"></rect>
+        <rect class="g" x="120" y="74" width="5" height="12"></rect>
+      </svg>
+    </div>
+    <div class="body">
+      <h3>8 · Typed-answer checker</h3>
+      <p><span class="lab">Teaches:</span> commitment first, feedback second — the difference between recognising
+      an answer and having one.</p>
+      <p><span class="lab">In this course:</span> <a href="truth-tables.html">The Four Cousins of
+      If-Then</a> <span class="num">week-07-truth-tables.html</span></p>
+      <p><span class="lab">The move:</span> type T or F and press Enter.</p>
+    </div>
+  </div>
+
+  <!-- 9 -->
+  <div class="arch">
+    <div>
+      <svg class="tn" viewBox="0 0 160 100" role="img" aria-labelledby="tn9t">
+        <title id="tn9t">A five-by-five pixel grid with a rough digit drawn in it, an arrow, and a two-by-two result matrix.</title>
+        <rect class="s" x="8" y="18" width="60" height="60"></rect>
+        <path class="s" d="M20 18 L20 78 M32 18 L32 78 M44 18 L44 78 M56 18 L56 78
+                           M8 30 L68 30 M8 42 L68 42 M8 54 L68 54 M8 66 L68 66"></path>
+        <rect class="fi" x="20" y="18" width="12" height="12"></rect>
+        <rect class="fi" x="32" y="18" width="12" height="12"></rect>
+        <rect class="fi" x="44" y="18" width="12" height="12"></rect>
+        <rect class="fi" x="44" y="30" width="12" height="12"></rect>
+        <rect class="fi" x="32" y="42" width="12" height="12"></rect>
+        <rect class="fi" x="32" y="54" width="12" height="12"></rect>
+        <rect class="fi" x="32" y="66" width="12" height="12"></rect>
+        <path class="s" d="M76 48 L98 48 M92 43 L98 48 L92 53"></path>
+        <rect class="gs" x="106" y="24" width="22" height="22"></rect>
+        <rect class="s" x="128" y="24" width="22" height="22"></rect>
+        <rect class="s" x="106" y="46" width="22" height="22"></rect>
+        <rect class="gs" x="128" y="46" width="22" height="22"></rect>
+      </svg>
+    </div>
+    <div class="body">
+      <h3>9 · Drawing pad + classifier</h3>
+      <p><span class="lab">Teaches:</span> a classifier's decision is arithmetic you can read, not an oracle.</p>
+      <p><span class="lab">In this course:</span> <a href="trainable-machine.html">Trainable Machine</a>
+      <span class="num">week-03-trainable-machine.html</span></p>
+      <p><span class="lab">The move:</span> draw on the pad, train, test.</p>
+    </div>
+  </div>
+
+  <!-- 10 -->
+  <div class="arch">
+    <div>
+      <svg class="tn" viewBox="0 0 160 100" role="img" aria-labelledby="tn10t">
+        <title id="tn10t">A three-level game tree with one branch traced from the root down to a filled leaf.</title>
+        <path class="s" d="M80 20 L34 46 M80 20 L126 46"></path>
+        <path class="s" d="M34 46 L18 76 M34 46 L50 76 M80 46 L96 76 M126 46 L112 76 M126 46 L144 76"></path>
+        <path class="au" d="M80 20 L80 46 L64 76"></path>
+        <path class="ao" d="M80 20 L80 46 L64 76"></path>
+        <circle class="p" cx="80" cy="20" r="6"></circle>
+        <circle class="p" cx="34" cy="46" r="6"></circle>
+        <circle class="p" cx="126" cy="46" r="6"></circle>
+        <circle class="p" cx="80" cy="46" r="6"></circle>
+        <circle class="p" cx="18" cy="80" r="5"></circle>
+        <circle class="p" cx="50" cy="80" r="5"></circle>
+        <circle class="p" cx="96" cy="80" r="5"></circle>
+        <circle class="p" cx="112" cy="80" r="5"></circle>
+        <circle class="p" cx="144" cy="80" r="5"></circle>
+        <circle class="g" cx="64" cy="80" r="6"></circle>
+      </svg>
+    </div>
+    <div class="body">
+      <h3>10 · Game against the computer</h3>
+      <p><span class="lab">Teaches:</span> that a good move can be derived, and that the derivation is finite.</p>
+      <p><span class="lab">In this course:</span> <a href="minimax.html">Minimax on Tic-Tac-Toe</a>
+      <span class="num">week-08-minimax.html</span></p>
+      <p><span class="lab">The move:</span> take your turn; the machine answers and shows why.</p>
+    </div>
+  </div>
+
+  <!-- 11 -->
+  <div class="arch">
+    <div>
+      <svg class="tn" viewBox="0 0 160 100" role="img" aria-labelledby="tn11t">
+        <title id="tn11t">Axes carrying six named cursors; one of them is filled with the spot colour.</title>
+        <path class="s" d="M14 6 L14 88 L152 88"></path>
+        <g class="s">
+          <path d="M30 16 L30 30 L34 26.6 L36.6 32 L39 30.8 L36.4 25.6 L41 25.6 z"></path>
+          <rect x="42" y="18" width="20" height="9" rx="4"></rect>
+        </g>
+        <g class="s">
+          <path d="M96 22 L96 36 L100 32.6 L102.6 38 L105 36.8 L102.4 31.6 L107 31.6 z"></path>
+          <rect x="108" y="24" width="20" height="9" rx="4"></rect>
+        </g>
+        <g class="s">
+          <path d="M52 46 L52 60 L56 56.6 L58.6 62 L61 60.8 L58.4 55.6 L63 55.6 z"></path>
+          <rect x="64" y="48" width="20" height="9" rx="4"></rect>
+        </g>
+        <g class="s">
+          <path d="M112 54 L112 68 L116 64.6 L118.6 70 L121 68.8 L118.4 63.6 L123 63.6 z"></path>
+          <rect x="124" y="56" width="20" height="9" rx="4"></rect>
+        </g>
+        <g class="s">
+          <path d="M26 62 L26 76 L30 72.6 L32.6 78 L35 76.8 L32.4 71.6 L37 71.6 z"></path>
+          <rect x="38" y="64" width="20" height="9" rx="4"></rect>
+        </g>
+        <g>
+          <path class="g" d="M74 22 L74 36 L78 32.6 L80.6 38 L83 36.8 L80.4 31.6 L85 31.6 z"></path>
+          <rect class="g" x="86" y="24" width="20" height="9" rx="4"></rect>
+        </g>
+      </svg>
+    </div>
+    <div class="body">
+      <h3>11 · Shared plane (multi-student)</h3>
+      <p><span class="lab">Teaches:</span> that the class is a dataset, and that unsupervised means nobody told it
+      the groups.</p>
+      <p><span class="lab">In this course:</span> The Shared Plane
+      <span class="num">classroom/ — the one piece that needs a server</span></p>
+      <p><span class="lab">The move:</span> move your own cursor; watch twenty others.</p>
+    </div>
+  </div>
+
+  <p class="prose" data-edit="archetype-note">Most pages combine two or three of these. Softmax is a parameter
+  instrument with a ramp; word2vec is a stepper wearing five instruments; the graph sandbox is a structure editor
+  with a scoring loop; the two Week 9 games are “game against the computer” with a graph where the grid was. The
+  archetypes are a vocabulary for asking, not a menu of separate products.</p>
+
+  <h2>What they have in common</h2>
+  <ul class="plain" data-edit="common-list">
+    <li>One HTML file per idea. Opens from a double-click, works offline, hosts anywhere static. No build step,
+    no framework, no CDN, nothing to expire.</li>
+    <li>Black text, white paper, one spot colour. Prints clean; survives a projector; photographs off a
+    whiteboard.</li>
+    <li>Light and dark, following the reader's system, overridable, remembered.</li>
+    <li>Keyboard equivalents for every drag; visible focus; live numbers announced to screen readers; motion that
+    stops when the reader asks it to.</li>
+    <li>Nothing is ever distinguished by colour alone.</li>
+    <li>Each page names the worksheet it attaches to and what it is <em>not</em> for. They run after the paper
+    activity, as the reveal or the discussion engine — never as a replacement.</li>
+  </ul>
+
+  <h2>What this deliberately is not</h2>
+  <p class="prose" data-edit="not-list">It is not a homework platform. There are no accounts, no scores kept
+  anywhere, no analytics, and no cookie beyond the two keys that remember your theme and your colour. The
+  multi-student piece holds a room in memory and forgets it when the class ends.</p>
+
+  <div data-slot="notes-bottom"></div>
+
+  <div class="foot">
+    <button class="btn" type="button" id="reset">Reset colour</button>
+    <span class="hint"><a href="index.html">The gallery</a> is where the pages themselves live — twenty-nine of
+    them, one idea each.</span>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+var root = document.documentElement;
+var M = window.M170 || {};
+var PAL = M.pal, DEF = M.def || "goldenrod";
+var current = M.current || DEF;
+
+/* ---------- theme ---------- */
+var themeBtn = document.getElementById("themeBtn");
+function themeLabel(){
+  var m = root.dataset.theme || "auto";
+  themeBtn.textContent = m==="dark" ? "● dark" : m==="light" ? "○ light" : "◑ auto";
+}
+themeBtn.addEventListener("click", function(){
+  var cur = root.dataset.theme || "auto";
+  var next = cur==="auto" ? "light" : cur==="light" ? "dark" : "auto";
+  if(next==="auto"){ delete root.dataset.theme; try{localStorage.removeItem("m170-theme");}catch(e){} }
+  else { root.dataset.theme = next; try{localStorage.setItem("m170-theme", next);}catch(e){} }
+  themeLabel();
+});
+themeLabel();
+
+if(!PAL){ return; }   /* no config island: the page still reads, on the default colour */
+
+/* ---------- the swatch row ---------- */
+var NAMES = [], k;
+for(k in PAL){ if(Object.prototype.hasOwnProperty.call(PAL,k)) NAMES.push(k); }
+
+var host = document.getElementById("swatches");
+var live = document.getElementById("swLive");
+var SVGNS = "http://www.w3.org/2000/svg";
+
+function el(name, attrs){
+  var n = document.createElementNS(SVGNS, name), a;
+  for(a in attrs){ if(Object.prototype.hasOwnProperty.call(attrs,a)) n.setAttribute(a, attrs[a]); }
+  return n;
+}
+function chipSvg(p){
+  /* both themes at once: the light accent on white paper, the dark accent on the dark
+     page, each carrying the ink hairline that theme actually uses. */
+  var s = el("svg", {viewBox:"0 0 56 56", "aria-hidden":"true", focusable:"false"});
+  s.appendChild(el("path", {d:"M0 0 L56 0 L0 56 z", fill:"#FFFFFF"}));
+  s.appendChild(el("path", {d:"M56 0 L56 56 L0 56 z", fill:"#151515"}));
+  s.appendChild(el("path", {d:"M10 10 L46 10 L10 46 z",
+    fill:p.light["--gold"], stroke:p.light["--ink"], "stroke-width":"1"}));
+  s.appendChild(el("path", {d:"M46 10 L46 46 L10 46 z",
+    fill:p.dark["--gold"], stroke:p.dark["--ink"], "stroke-width":"1"}));
+  s.appendChild(el("rect", {x:"0.5", y:"0.5", width:"55", height:"55",
+    fill:"none", stroke:"#111111", "stroke-width":"1"}));
+  return s;
+}
+function buildSwatches(){
+  host.innerHTML = "";
+  NAMES.forEach(function(name){
+    var p = PAL[name];
+    var b = document.createElement("button");
+    b.type = "button"; b.className = "sw";
+    b.setAttribute("role", "radio");
+    b.setAttribute("data-name", name);
+    b.setAttribute("aria-checked", name===current ? "true" : "false");
+    b.tabIndex = name===current ? 0 : -1;
+    var chip = document.createElement("span");
+    chip.className = "chip";
+    chip.appendChild(chipSvg(p));
+    var tick = document.createElement("span");
+    tick.className = "tick"; tick.textContent = "✓"; tick.setAttribute("aria-hidden","true");
+    chip.appendChild(tick);
+    b.appendChild(chip);
+    var nm = document.createElement("span");
+    nm.className = "nm"; nm.textContent = p.label || name;
+    b.appendChild(nm);
+    if(name === DEF){
+      var df = document.createElement("span");
+      df.className = "df"; df.textContent = "default";
+      b.appendChild(df);
+    }
+    b.title = p["hue-note"] || "";
+    host.appendChild(b);
+  });
+}
+
+/* ---------- the readouts ---------- */
+var ROWS = [
+  ["text on paper",               "ink-on-paper"],
+  ["labels on paper",             "gray-text-on-paper"],
+  ["label on the accent",         "ink-on-accent"],
+  ["ink hairline on the accent",  "ink-hairline-on-accent"],
+  ["accent on paper",             "accent-on-paper"],
+  ["text on the accent wash",     "ink-on-accent-wash"]
+];
+function findPair(list, key){
+  for(var i=0;i<list.length;i++){ if(list[i].pair === key) return list[i]; }
+  return null;
+}
+function marker(c){
+  if(!c) return "—";
+  if(c.status === "exception") return "— see note";
+  if(c.status === "advisory")  return "— advisory";
+  return c.passes ? "✓ AA" : "✗ below";
+}
+function fillRatios(){
+  var p = PAL[current], body = document.getElementById("ratioRows"), out = "";
+  ROWS.forEach(function(r){
+    var L = findPair(p.contrast.light, r[1]), D = findPair(p.contrast.dark, r[1]);
+    out += "<tr><th scope=\"row\" style=\"font-family:var(--font-ui);text-transform:none;letter-spacing:0;"
+        +  "font-weight:400;color:var(--ink);font-size:var(--text-sm);\">" + r[0] + "</th>"
+        +  "<td class=\"n\">" + (L ? L.ratio.toFixed(2) + ":1" : "—") + "</td>"
+        +  "<td class=\"mk\">" + marker(L) + "</td>"
+        +  "<td class=\"n\">" + (D ? D.ratio.toFixed(2) + ":1" : "—") + "</td>"
+        +  "<td class=\"mk\">" + marker(D) + "</td></tr>";
+  });
+  body.innerHTML = out;
+}
+function fillCss(){
+  document.getElementById("cssOut").textContent = M.cssFor(current);
+}
+
+/* ---------- selection ---------- */
+function select(name, announce){
+  current = M.apply(name);
+  try{
+    if(current === DEF) localStorage.removeItem("m170-palette");
+    else localStorage.setItem("m170-palette", current);
+  }catch(e){}
+  Array.prototype.forEach.call(host.querySelectorAll(".sw"), function(b){
+    var on = b.getAttribute("data-name") === current;
+    b.setAttribute("aria-checked", on ? "true" : "false");
+    b.tabIndex = on ? 0 : -1;
+  });
+  fillRatios(); fillCss();
+  if(announce){
+    var p = PAL[current];
+    live.textContent = "Spot colour: " + (p.label || current) + ".";
+  }
+}
+
+host.addEventListener("click", function(ev){
+  var b = ev.target.closest ? ev.target.closest(".sw") : null;
+  if(b){ select(b.getAttribute("data-name"), true); b.focus(); }
+});
+host.addEventListener("keydown", function(ev){
+  var b = ev.target.closest ? ev.target.closest(".sw") : null;
+  if(!b) return;
+  var i = NAMES.indexOf(b.getAttribute("data-name")), j = -1;
+  if(ev.key === "ArrowRight" || ev.key === "ArrowDown") j = (i+1) % NAMES.length;
+  else if(ev.key === "ArrowLeft" || ev.key === "ArrowUp") j = (i-1+NAMES.length) % NAMES.length;
+  else if(ev.key === "Home") j = 0;
+  else if(ev.key === "End") j = NAMES.length - 1;
+  else if(ev.key === " " || ev.key === "Enter"){ ev.preventDefault(); select(NAMES[i], true); return; }
+  if(j >= 0){
+    ev.preventDefault();
+    select(NAMES[j], true);
+    var next = host.querySelector('.sw[data-name="' + NAMES[j] + '"]');
+    if(next) next.focus();
+  }
+});
+
+/* ---------- copy the CSS ---------- */
+var copyMsg = document.getElementById("copyMsg");
+document.getElementById("copyBtn").addEventListener("click", function(){
+  var pre = document.getElementById("cssOut"), txt = pre.textContent;
+  function selectText(){
+    try{
+      var r = document.createRange(); r.selectNodeContents(pre);
+      var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+      copyMsg.textContent = "Selected — press ctrl-C (⌘-C).";
+    }catch(e){ copyMsg.textContent = "Select the block above and copy it."; }
+  }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(function(){
+      copyMsg.textContent = "Copied.";
+    }, selectText);
+  } else { selectText(); }
+});
+
+/* ---------- reset ---------- */
+document.getElementById("reset").addEventListener("click", function(){
+  select(DEF, true);
+  var first = host.querySelector('.sw[data-name="' + DEF + '"]');
+  if(first) first.focus();
+});
+
+buildSwatches();
+select(current, false);
+})();
+</script>
+</body>
+</html>

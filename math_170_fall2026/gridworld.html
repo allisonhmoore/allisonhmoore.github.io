@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Train a Tiny Agent — Gridworld · MATH 170</title>
+<style>
+:root{
+  --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+  --gold-soft:rgba(218,165,32,.12);
+  --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  --font-body: ui-serif, Georgia, "Times New Roman", serif;
+  --font-ui:   system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+  --text-xl:1.75rem; --text-lg:1.25rem; --text-base:1rem; --text-sm:.875rem; --text-xs:.75rem;
+  --leading-prose:1.6; --leading-ui:1.3;
+  --space-1:4px; --space-2:8px; --space-3:16px; --space-4:24px; --space-5:32px; --space-6:48px;
+  --ease:cubic-bezier(0.16,1,0.3,1); --dur:200ms;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+    --gold-soft:rgba(227,179,65,.16);
+    --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+  --gold-soft:rgba(227,179,65,.16);
+  --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+}
+@media (prefers-reduced-motion: reduce){ :root{ --dur:0ms; } }
+@media print{
+  :root, :root[data-theme="dark"]{
+    --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+    --gold-soft:rgba(218,165,32,.12);
+    --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  }
+  .theme-btn{display:none}
+  .stage{break-inside:avoid}
+}
+*{box-sizing:border-box}
+html{color-scheme:light dark}
+body{margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--font-body); font-size:var(--text-base); line-height:var(--leading-prose);
+  -webkit-text-size-adjust:100%;}
+.wrap{max-width:820px; margin:0 auto; padding:var(--space-5) var(--space-4) var(--space-6);}
+.topbar{display:flex; align-items:baseline; justify-content:space-between; gap:var(--space-3);
+  border-bottom:1px solid var(--gray-line); padding-bottom:var(--space-2); margin-bottom:var(--space-4);}
+.eyebrow{font-family:var(--font-ui); font-size:var(--text-xs); letter-spacing:.08em; text-transform:uppercase; color:var(--gray-text);}
+h1{font-family:var(--font-body); font-weight:600; font-size:var(--text-xl); line-height:1.2; margin:.2em 0 .1em;}
+p{margin:0 0 var(--space-3);}
+.prose{max-width:66ch;}
+.muted{color:var(--gray-text);}
+.mono,code{font-family:var(--font-mono); font-variant-numeric:tabular-nums;}
+a{color:inherit;}
+:focus-visible{outline:2px solid var(--ink); outline-offset:2px; box-shadow:0 0 0 5px var(--gold-soft);}
+.theme-btn{font-family:var(--font-ui); font-size:var(--text-xs); background:none;
+  border:1px solid var(--gray-line); color:var(--gray-text); padding:6px 10px; cursor:pointer; border-radius:2px;}
+.theme-btn:hover{background:var(--gray-fill);}
+details.spec{border:1px solid var(--gray-line); border-radius:2px; margin:0 0 var(--space-4); background:var(--gray-fill);}
+details.spec>summary{font-family:var(--font-ui); font-size:var(--text-sm); cursor:pointer;
+  padding:var(--space-2) var(--space-3); list-style:none; color:var(--gray-text);}
+details.spec>summary::-webkit-details-marker{display:none}
+details.spec>summary::before{content:"▸ "; color:var(--gold);}
+details.spec[open]>summary::before{content:"▾ ";}
+.spec-body{padding:0 var(--space-3) var(--space-3); font-family:var(--font-ui); font-size:var(--text-sm); line-height:1.5;}
+.spec-body dt{font-weight:600; margin-top:var(--space-2);}
+.spec-body dd{margin:0; color:var(--gray-text);}
+.stage{margin:var(--space-4) 0;}
+svg{max-width:100%; height:auto; font-family:var(--font-ui); display:block; margin:0 auto;
+  border:1px solid var(--gray-line); border-radius:2px;}
+.controls{border-top:1px solid var(--gray-line); padding-top:var(--space-3); margin-top:var(--space-4);
+  display:grid; grid-template-columns:1fr 1fr; gap:var(--space-3) var(--space-4);}
+.controls .full{grid-column:1/-1;}
+@media(max-width:560px){ .controls{grid-template-columns:1fr;} }
+.ctl label{display:flex; justify-content:space-between; align-items:baseline;
+  font-family:var(--font-ui); font-size:var(--text-sm);}
+.ctl .val{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm);}
+input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:18px;
+  background:transparent; margin:6px 0 0; cursor:pointer;}
+input[type=range]::-webkit-slider-runnable-track{height:2px; border-radius:1px;
+  background:var(--track, var(--gray-line));}
+input[type=range]::-moz-range-track{height:2px; background:var(--gray-line);}
+input[type=range]::-moz-range-progress{height:2px; background:var(--gold);}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; appearance:none;
+  width:18px; height:18px; margin-top:-8px; border-radius:50%; background:var(--gold); border:1px solid var(--ink);}
+input[type=range]::-moz-range-thumb{width:18px; height:18px; border-radius:50%; background:var(--gold); border:1px solid var(--ink);}
+.btn{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:1px solid var(--ink); padding:8px 14px; cursor:pointer; border-radius:2px;}
+.btn:hover{background:var(--gray-fill);}
+.seg{display:inline-flex; border:1px solid var(--ink); border-radius:2px; overflow:hidden; flex-wrap:wrap;}
+.seg button{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:0; border-left:1px solid var(--ink); padding:7px 12px; cursor:pointer;}
+.seg button:first-child{border-left:0;}
+.seg button[aria-pressed="true"]{background:var(--gold); color:#111111;}
+.foot{display:flex; align-items:center; gap:var(--space-3); margin-top:var(--space-5);
+  border-top:1px solid var(--gray-line); padding-top:var(--space-3); flex-wrap:wrap;}
+.foot .btn{margin-right:auto;}
+.hint{font-family:var(--font-ui); font-size:var(--text-sm); color:var(--gray-text);}
+.mathbox{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm);
+  background:var(--gray-fill); border-left:2px solid var(--gold); padding:var(--space-3);
+  margin:var(--space-3) 0; overflow-x:auto; white-space:pre; line-height:1.7;}
+.attach{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text);
+  border-top:1px dotted var(--gray-line); margin-top:var(--space-6); padding-top:var(--space-3);}
+.tag{display:inline-block; font-family:var(--font-ui); font-size:var(--text-xs);
+  border:1px solid var(--gray-line); border-radius:999px; padding:1px 8px; color:var(--gray-text); margin-left:6px;}
+.chips{display:flex; gap:var(--space-2); flex-wrap:wrap; margin:var(--space-2) 0;}
+.chips button{font-family:var(--font-ui); font-size:var(--text-xs); border:1px solid var(--gray-line);
+  background:var(--paper); color:var(--ink); border-radius:999px; padding:3px 10px; cursor:pointer;}
+.chips button[aria-pressed="true"]{border-color:var(--gold); background:var(--gold-soft);}
+.stepbar{display:flex; gap:var(--space-2); align-items:center; margin:var(--space-2) 0; flex-wrap:wrap;}
+.count{font-family:var(--font-mono); font-variant-numeric:tabular-nums; color:var(--gray-text); font-size:var(--text-sm);}
+.status{font-family:var(--font-ui); font-size:var(--text-sm); min-height:1.4em;}
+.callout{font-family:var(--font-ui); font-size:var(--text-sm); border:1px solid var(--gray-line);
+  border-left:2px solid var(--gold); padding:var(--space-2) var(--space-3); margin:var(--space-3) 0;}
+.profnote{font-family:var(--font-ui); font-size:var(--text-sm); border:1px dotted var(--gray-line);
+  border-left:2px dotted var(--gold); padding:var(--space-3); margin:var(--space-4) 0;
+  color:var(--gray-text); max-width:72ch;}
+.profnote p{margin:0 0 var(--space-2);}
+.profnote p:last-child{margin-bottom:0;}
+.profnote strong,.profnote b{color:var(--ink);}
+.profnote ul{margin:0 0 var(--space-2); padding-left:1.2em;}
+.profnote code{font-size:.95em;}
+</style>
+<script>
+try{var t=localStorage.getItem("m170-theme");if(t)document.documentElement.dataset.theme=t;}catch(e){}
+</script>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="eyebrow">MATH 170 · Derivatives, descent and learning · Reinforcement learning (the Roomba from the first activity, for real)</div>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Color theme">◑ auto</button>
+  </div>
+
+  <h1 data-edit="title">Train a tiny agent <span class="tag">Q-learning</span></h1>
+  <p class="prose muted" data-edit="intro">The Roomba from the very first worksheet: bumps cost, finding the dock pays. It has
+  no map — only rewards. Train it and watch the map <em>grow backwards from the goal</em> as
+  numbers in the squares.</p>
+
+  <div data-slot="notes-top"></div>
+
+
+  <!-- PINNED (python, same constants), for the DEFAULT data in the config island: the
+       living-room layout; BFS-optimal start→dock = 9 moves; after ~200 seeded episodes the
+       greedy path is exactly 9 moves; goal-adjacent squares darken before the start does
+       (backward spread). Edit the island and these numbers no longer apply. -->
+
+  <div class="stage">
+    <div class="chips" id="worlds"></div>
+    <div class="seg" role="group" aria-label="Edit tool" id="tools">
+      <button type="button" data-t="none" aria-pressed="true">observe</button>
+      <button type="button" data-t="wall" aria-pressed="false">wall</button>
+      <button type="button" data-t="pen" aria-pressed="false">bump −5</button>
+      <button type="button" data-t="goal" aria-pressed="false">dock +10</button>
+      <button type="button" data-t="start" aria-pressed="false">start</button>
+    </div>
+    <svg id="svg" viewBox="0 0 660 420" aria-label="Gridworld"></svg>
+    <div class="stepbar">
+      <button class="btn" id="ep1" type="button">Step ▸ (1 episode)</button>
+      <button class="btn" id="ep25" type="button">Run ▸▸ (25 episodes)</button>
+      <button class="btn" id="drive" type="button">Let it drive</button>
+      <button class="btn" id="numbers" type="button" aria-pressed="false">numbers</button>
+      <button class="btn" id="reseed" type="button">new seed</button>
+      <span class="count" id="count">episodes: 0</span>
+    </div>
+    <div class="status" id="status" aria-live="polite">Untrained — every square is worth nothing yet.</div>
+    <div class="mathbox" id="mathbox">the update, after each move:
+new value = old + ½ · ( reward + 0.9 · best-next − old )</div>
+  </div>
+
+  <div class="controls">
+    <div class="ctl">
+      <label for="eps">Curiosity (how often it tries something random) <span class="val" id="epsv">0.30</span></label>
+      <input type="range" id="eps" min="0.05" max="0.5" step="0.05" value="0.3">
+      <div class="hint" data-edit="note-curiosity">high early = explores; low late = exploits what it knows</div>
+    </div>
+    <div class="hint" style="align-self:center" data-edit="note-rewards">Rewards: each move −0.1 (battery) · bump −5 · dock +10.
+    Editing the room resets learning — "the room changed; the old map is stale."</div>
+  </div>
+
+
+  <div data-slot="notes-bottom"></div>
+
+  <div class="foot">
+    <button class="btn" id="reset" type="button">Reset</button>
+    <span class="hint" data-edit="hint-try">Try: Run 25, watch the dock's neighbours darken first — then Run again and "let it drive."</span>
+  </div>
+
+</div>
+
+<script type="application/json" id="m170-config">
+{
+  "_v": 1,
+  "grid": {"w": 6, "h": 5},
+  "worlds": [
+    {"name": "Roomba's living room", "walls": [[2,1],[2,2],[4,3]], "goal": [5,0], "pens": [[1,3],[4,1]], "start": [0,4]},
+    {"name": "Two rooms, narrow door", "walls": [[3,0],[3,1],[3,3],[3,4]], "goal": [5,2], "pens": [[4,4]], "start": [0,2]},
+    {"name": "Blank", "walls": [], "goal": [5,0], "pens": [], "start": [0,4]}
+  ],
+  "startWorld": "Roomba's living room",
+  "seed": 7,
+  "rewards": {"step": -0.1, "bump": -5, "dock": 10},
+  "learnRate": 0.5,
+  "discount": 0.9,
+  "curiosity": {"min": 0.05, "max": 0.5, "step": 0.05, "value": 0.3},
+  "maxStepsPerEpisode": 200,
+  "runBatch": 25,
+  "driveMaxSteps": 40,
+  "noticeThreshold": 1,
+  "_meta": {
+    "grid": { "label": "Room size, in squares", "kind": "table", "columns": ["w", "h"],
+      "help": "The drawing scales to fit, so a bigger room means smaller squares." },
+    "worlds": { "label": "The rooms on the chip bar", "kind": "table",
+      "columns": ["name", "walls", "goal", "pens", "start"], "regen": "binary-grid",
+      "help": "Each row is one preset room. walls and pens are lists of [x, y]; goal and start are single [x, y] pairs, with x from 0 to w−1 and y from 0 (top) to h−1." },
+    "startWorld": { "label": "Room the page opens in", "kind": "text",
+      "help": "Must match one of the world names above; otherwise the first room is used." },
+    "seed": { "label": "Random seed", "kind": "number",
+      "help": "The agent's exploration is seeded, so a given seed replays identically. \"New seed\" walks this forward; Reset returns to this value." },
+    "rewards": { "label": "What each move is worth", "kind": "table",
+      "columns": ["step", "bump", "dock"],
+      "help": "step is the battery cost of every move; bump is a ⚡ square; dock is the goal. These numbers are printed on the board and on the tool buttons." },
+    "learnRate": { "label": "Learning rate — how much of each surprise is kept", "kind": "number",
+      "help": "The ½ in the update line. 0.5 prints as ½; any other value prints as the number." },
+    "discount": { "label": "Discount — how much the next square's value counts", "kind": "number" },
+    "curiosity": { "label": "Curiosity (ε) slider", "kind": "range-spec",
+      "help": "How often the agent tries a random move instead of its best one." },
+    "maxStepsPerEpisode": { "label": "Give up after this many moves in one episode", "kind": "number" },
+    "runBatch": { "label": "Episodes per \"Run ▸▸\" click", "kind": "number" },
+    "driveMaxSteps": { "label": "Moves allowed in a \"Let it drive\" test run", "kind": "number" },
+    "noticeThreshold": { "label": "A square counts as \"knows its worth\" above this value", "kind": "number",
+      "help": "Only decides which backward-spread sentence appears under the board; it does not touch the learning." }
+  }
+}
+</script>
+
+<script>
+(function(){
+"use strict";
+var root=document.documentElement, themeBtn=document.getElementById("themeBtn");
+function themeLabel(){var m=root.dataset.theme||"auto";
+  themeBtn.textContent=m==="dark"?"● dark":m==="light"?"○ light":"◑ auto";}
+themeBtn.addEventListener("click",function(){
+  var cur=root.dataset.theme||"auto",next=cur==="auto"?"light":cur==="light"?"dark":"auto";
+  if(next==="auto"){delete root.dataset.theme;try{localStorage.removeItem("m170-theme");}catch(e){}}
+  else{root.dataset.theme=next;try{localStorage.setItem("m170-theme",next);}catch(e){}}
+  themeLabel(); draw();});
+themeLabel();
+
+function wireSlider(id,onInput){
+  var el=document.getElementById(id), out=document.getElementById(id+"v");
+  function paint(){ var p=(el.value-el.min)/(el.max-el.min)*100;
+    el.style.setProperty("--track","linear-gradient(to right, var(--gold) "+p+"%, var(--gray-line) "+p+"%)");
+    out.textContent=(+el.value).toFixed(2); }
+  el.addEventListener("input",function(){ paint(); onInput&&onInput(); });
+  paint();
+  return {el:el,set:function(v){el.value=v;paint();}};
+}
+/* ---------- everything tunable comes from the config island ---------- */
+var CFG=JSON.parse(document.getElementById("m170-config").textContent);
+function num(v,d){ v=+v; return isFinite(v)?v:d; }
+function cell(p,d){ return (Array.isArray(p)&&p.length>1)?[Math.round(num(p[0],d[0])),Math.round(num(p[1],d[1]))]:d.slice(); }
+function cells(a){ return Array.isArray(a)?a.filter(function(p){return Array.isArray(p)&&p.length>1;})
+                                            .map(function(p){return [Math.round(+p[0]),Math.round(+p[1])];}):[]; }
+
+var W=Math.max(1,Math.round(num((CFG.grid||{}).w,6)));
+var H=Math.max(1,Math.round(num((CFG.grid||{}).h,5)));
+var ACTS=[[0,1],[0,-1],[1,0],[-1,0]];
+var R_STEP=num((CFG.rewards||{}).step,-0.1),
+    R_BUMP=num((CFG.rewards||{}).bump,-5),
+    R_DOCK=num((CFG.rewards||{}).dock,10);
+var ALPHA=num(CFG.learnRate,0.5), GAMMA=num(CFG.discount,0.9);
+var EPI_CAP=Math.max(1,Math.round(num(CFG.maxStepsPerEpisode,200)));
+var RUN_BATCH=Math.max(1,Math.round(num(CFG.runBatch,25)));
+var DRIVE_CAP=Math.max(1,Math.round(num(CFG.driveMaxSteps,40)));
+var SEED0=Math.round(num(CFG.seed,7));
+var NOTICE=num(CFG.noticeThreshold,1);
+
+var WORLD_LIST=(function(){
+  var w=Array.isArray(CFG.worlds)?CFG.worlds:[];
+  var out=w.filter(function(o){ return o && o.name; }).map(function(o){
+    return { name:String(o.name), walls:cells(o.walls), pens:cells(o.pens),
+             goal:cell(o.goal,[W-1,0]), start:cell(o.start,[0,H-1]) };
+  });
+  return out.length ? out
+    : [{name:"Blank", walls:[], pens:[], goal:[W-1,0], start:[0,H-1]}];
+})();
+function worldByName(n){
+  for(var i=0;i<WORLD_LIST.length;i++) if(WORLD_LIST[i].name===n) return WORLD_LIST[i];
+  return null;
+}
+var START_WORLD=worldByName(String(CFG.startWorld)) ? String(CFG.startWorld) : WORLD_LIST[0].name;
+
+/* the reward numbers are printed in three places — keep them all on the island */
+function signed(v){ return (v>0?"+":"−")+Math.abs(v); }
+function aLab(){ return ALPHA===0.5 ? "½" : String(ALPHA); }
+function updateLine(){
+  return "the update, after each move:\nnew value = old + "+aLab()+
+         " · ( reward + "+GAMMA+" · best-next − old )";
+}
+(function(){
+  var tb=document.getElementById("tools");
+  tb.querySelector('[data-t="pen"]').textContent  = "bump "+signed(R_BUMP);
+  tb.querySelector('[data-t="goal"]').textContent = "dock "+signed(R_DOCK);
+  document.getElementById("ep25").textContent = "Run ▸▸ ("+RUN_BATCH+" episodes)";
+  document.getElementById("mathbox").textContent = updateLine();
+})();
+
+/* apply the curiosity slider spec before wiring, so the first paint is right */
+(function(){
+  var s=CFG.curiosity||{}, el=document.getElementById("eps");
+  el.min=num(s.min,0.05); el.max=num(s.max,0.5); el.step=num(s.step,0.05);
+  el.value=Math.min(+el.max, Math.max(+el.min, num(s.value,0.3)));
+})();
+var eps=wireSlider("eps");
+var EPS0=+eps.el.value;
+
+/* seeded PRNG — reproducible sessions, no Math.random */
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0;
+  var t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t;
+  return ((t^t>>>14)>>>0)/4294967296; }; }
+var seed=SEED0, rng=mulberry32(seed);
+
+var curWorld=START_WORLD, world=null, Q={}, episodes=0, lastUpdate=null, driveTrail=null, showNums=false, tool="none";
+
+function loadWorld(name){
+  var w=worldByName(name) || WORLD_LIST[0];
+  curWorld=w.name;
+  world={walls:w.walls.map(function(p){return p.slice();}),
+         goal:w.goal.slice(), pens:w.pens.map(function(p){return p.slice();}),
+         start:w.start.slice()};
+  wipeQ("");
+}
+function wipeQ(msg){
+  Q={}; episodes=0; lastUpdate=null; driveTrail=null;
+  rng=mulberry32(seed);
+  document.getElementById("count").textContent="episodes: 0";
+  document.getElementById("status").textContent=msg||"Untrained — every square is worth nothing yet.";
+  draw();
+}
+function key(s,a){ return s[0]+","+s[1]+":"+a; }
+function isWall(x,y){ return world.walls.some(function(p){return p[0]===x&&p[1]===y;}); }
+function isPen(x,y){ return world.pens.some(function(p){return p[0]===x&&p[1]===y;}); }
+function stepEnv(s,ai){
+  var a=ACTS[ai], nx=s[0]+a[0], ny=s[1]+a[1];
+  if(nx<0||nx>=W||ny<0||ny>=H||isWall(nx,ny)){ nx=s[0]; ny=s[1]; }
+  var r=R_STEP;
+  if(nx===world.goal[0]&&ny===world.goal[1]) r=R_DOCK;
+  else if(isPen(nx,ny)) r=R_BUMP;
+  return {s:[nx,ny], r:r};
+}
+function bestQ(s){ var b=-1e9; for(var a=0;a<4;a++) b=Math.max(b,Q[key(s,a)]||0); return b; }
+function bestA(s){ var b=-1e9,bi=0; for(var a=0;a<4;a++){ var q=Q[key(s,a)]||0; if(q>b){b=q;bi=a;} } return bi; }
+function visited(s){ for(var a=0;a<4;a++) if(key(s,a) in Q) return true; return false; }
+
+function runEpisode(){
+  var s=world.start.slice(), e=+eps.el.value;
+  for(var t=0;t<EPI_CAP;t++){
+    var ai = rng()<e ? Math.floor(rng()*4) : bestA(s);
+    var out=stepEnv(s,ai);
+    var old=Q[key(s,ai)]||0;
+    var nv=old + ALPHA*(out.r + GAMMA*bestQ(out.s) - old);
+    Q[key(s,ai)]=nv;
+    lastUpdate={s:s.slice(), a:ai, r:out.r, old:old, nv:nv, next:out.s.slice()};
+    s=out.s;
+    if(s[0]===world.goal[0]&&s[1]===world.goal[1]) break;
+  }
+  episodes++;
+}
+function backwardSpreadNote(){
+  var g=world.goal, adj=0, st=0;
+  ACTS.forEach(function(a){
+    var p=[g[0]-a[0],g[1]-a[1]];
+    if(p[0]>=0&&p[0]<W&&p[1]>=0&&p[1]<H&&!isWall(p[0],p[1])&&bestQ(p)>NOTICE) adj++;
+  });
+  if(bestQ(world.start)>NOTICE) st=1;
+  if(adj>0&&!st) return "Value is flowing BACKWARD from the dock — its neighbours know their worth before the start does.";
+  if(st) return "The knowledge has reached the start — the arrows point home from everywhere it explored.";
+  return "";
+}
+
+/* drawing */
+function css(v){ return getComputedStyle(document.body).getPropertyValue(v).trim(); }
+var OX=30, OY=10;
+var CELL=(660-2*OX)/W, ROW=(420-2*OY)/H;   /* the board scales to the viewBox */
+function draw(){
+  var ink=css("--ink"), gold=css("--gold"), gray=css("--gray-text"),
+      line=css("--gray-line"), fill=css("--gray-fill");
+  var out="", maxV=0.001;
+  for(var x=0;x<W;x++)for(var y=0;y<H;y++) maxV=Math.max(maxV,bestQ([x,y]));
+  for(var x1=0;x1<W;x1++)for(var y1=0;y1<H;y1++){
+    var px=OX+x1*CELL, py=OY+y1*ROW;
+    var v=bestQ([x1,y1]);
+    var t=Math.max(0,v/maxV);
+    var f= isWall(x1,y1)?ink : "none";
+    out+='<rect x="'+px+'" y="'+py+'" width="'+CELL+'" height="'+ROW+'" fill="'+(isWall(x1,y1)?ink:"none")+'" stroke="'+line+'"/>';
+    if(!isWall(x1,y1)&&t>0.02)
+      out+='<rect x="'+px+'" y="'+py+'" width="'+CELL+'" height="'+ROW+'" fill="'+ink+'" opacity="'+(t*0.30).toFixed(3)+'"/>';
+    if(isPen(x1,y1))
+      out+='<text x="'+(px+CELL/2)+'" y="'+(py+ROW/2+6)+'" font-size="20" text-anchor="middle" fill="'+ink+'">⚡<tspan font-size="10" fill="'+gray+'"> '+signed(R_BUMP)+'</tspan></text>';
+    if(x1===world.goal[0]&&y1===world.goal[1])
+      out+='<rect x="'+(px+(CELL-44)/2)+'" y="'+(py+(ROW-36)/2)+'" width="44" height="36" fill="'+css("--gold-soft")+'" stroke="'+gold+'" stroke-width="2"/>'+
+           '<text x="'+(px+CELL/2)+'" y="'+(py+ROW/2+6)+'" font-size="11" text-anchor="middle" fill="'+ink+'">dock '+signed(R_DOCK)+'</text>';
+    // policy arrow
+    if(!isWall(x1,y1)&&visited([x1,y1])&&!(x1===world.goal[0]&&y1===world.goal[1])){
+      var a=ACTS[bestA([x1,y1])];
+      var cx=px+CELL/2, cy=py+ROW/2;
+      /* grid y grows downward, and so does the screen's: the head is at +a, the tail at −a */
+      out+='<line x1="'+(cx-a[0]*14)+'" y1="'+(cy-a[1]*10)+'" x2="'+(cx+a[0]*14)+'" y2="'+(cy+a[1]*10)+'" stroke="'+gray+'" stroke-width="2"/>'+
+           '<circle cx="'+(cx+a[0]*14)+'" cy="'+(cy+a[1]*10)+'" r="2.5" fill="'+gray+'"/>';
+    }
+    if(showNums&&!isWall(x1,y1))
+      out+='<text x="'+(px+6)+'" y="'+(py+14)+'" font-size="9" fill="'+gray+'" font-family="var(--font-mono)">'+v.toFixed(1)+'</text>';
+  }
+  // drive trail
+  if(driveTrail){
+    for(var i=0;i<driveTrail.length-1;i++){
+      var a2=driveTrail[i], b2=driveTrail[i+1];
+      out+='<line x1="'+(OX+a2[0]*CELL+CELL/2)+'" y1="'+(OY+a2[1]*ROW+ROW/2)+'" x2="'+(OX+b2[0]*CELL+CELL/2)+'" y2="'+(OY+b2[1]*ROW+ROW/2)+'" stroke="'+gold+'" stroke-width="3"/>';
+    }
+  }
+  // roomba at start
+  var sx=OX+world.start[0]*CELL+CELL/2, sy2=OY+world.start[1]*ROW+ROW/2;
+  out+='<circle cx="'+sx+'" cy="'+sy2+'" r="14" fill="'+fill+'" stroke="'+ink+'" stroke-width="2"/>'+
+       '<rect x="'+(sx-4)+'" y="'+(sy2-14)+'" width="8" height="4" fill="'+ink+'"/>'+
+       '<text x="'+sx+'" y="'+(sy2+30)+'" font-size="9" fill="'+gray+'" text-anchor="middle">start</text>';
+  document.getElementById("svg").innerHTML=out;
+  wireCells();
+}
+function wireCells(){
+  document.getElementById("svg").onclick=function(ev){
+    if(tool==="none") return;
+    var svg=document.getElementById("svg");
+    var pt=svg.createSVGPoint(); pt.x=ev.clientX; pt.y=ev.clientY;
+    var q=pt.matrixTransform(svg.getScreenCTM().inverse());
+    var x=Math.floor((q.x-OX)/CELL), y=Math.floor((q.y-OY)/ROW);
+    if(x<0||x>=W||y<0||y>=H) return;
+    var msg="The room changed — the old map is stale. Learning reset.";
+    if(tool==="wall"){
+      var i=world.walls.findIndex(function(p){return p[0]===x&&p[1]===y;});
+      if(i>=0) world.walls.splice(i,1); else world.walls.push([x,y]);
+    } else if(tool==="pen"){
+      var j=world.pens.findIndex(function(p){return p[0]===x&&p[1]===y;});
+      if(j>=0) world.pens.splice(j,1); else world.pens.push([x,y]);
+    } else if(tool==="goal") world.goal=[x,y];
+    else if(tool==="start") world.start=[x,y];
+    wipeQ(msg);
+  };
+}
+
+document.getElementById("ep1").addEventListener("click",function(){
+  runEpisode(); after();
+});
+document.getElementById("ep25").addEventListener("click",function(){
+  for(var i=0;i<RUN_BATCH;i++) runEpisode(); after();
+});
+function after(){
+  document.getElementById("count").textContent="episodes: "+episodes;
+  var note=backwardSpreadNote();
+  if(note) document.getElementById("status").textContent=note;
+  if(lastUpdate){
+    var u=lastUpdate;
+    document.getElementById("mathbox").textContent=
+      "last update, square ("+u.s+") moving "+["down","up","right","left"][u.a]+":\n"+
+      "new value = "+u.old.toFixed(2)+" + "+aLab()+" · ( "+u.r.toFixed(1)+" + "+GAMMA+" · "+bestQ(u.next).toFixed(2)+" − "+u.old.toFixed(2)+" ) = "+u.nv.toFixed(2);
+  }
+  driveTrail=null; draw();
+}
+document.getElementById("drive").addEventListener("click",function(){
+  var s=world.start.slice(), trail=[s.slice()];
+  for(var t=0;t<DRIVE_CAP;t++){
+    if(!visited(s)) break;
+    var out=stepEnv(s,bestA(s));
+    s=out.s; trail.push(s.slice());
+    if(s[0]===world.goal[0]&&s[1]===world.goal[1]) break;
+  }
+  driveTrail=trail;
+  var made=s[0]===world.goal[0]&&s[1]===world.goal[1];
+  document.getElementById("status").textContent = made
+    ? "Greedy drive: "+(trail.length-1)+" moves to the dock, no learning, no randomness — just the values."
+    : (episodes===0?"Untrained, it wanders — it has no values to follow yet.":"It got lost — more episodes (or lower curiosity late) will firm up the map.");
+  draw();
+});
+document.getElementById("numbers").addEventListener("click",function(){
+  showNums=!showNums; this.setAttribute("aria-pressed",String(showNums)); draw();
+});
+document.getElementById("reseed").addEventListener("click",function(){
+  seed=(seed*13+5)%97+1;
+  wipeQ("New seed ("+seed+") — a different random life, same physics.");
+});
+document.getElementById("tools").querySelectorAll("button").forEach(function(b){
+  b.addEventListener("click",function(){
+    tool=b.getAttribute("data-t");
+    document.getElementById("tools").querySelectorAll("button").forEach(function(x){
+      x.setAttribute("aria-pressed",String(x===b));});
+  });
+});
+var wh=document.getElementById("worlds");
+WORLD_LIST.forEach(function(w){
+  var name=w.name;
+  var b=document.createElement("button"); b.type="button"; b.textContent=name;
+  b.setAttribute("aria-pressed",String(name===curWorld));
+  b.addEventListener("click",function(){
+    wh.querySelectorAll("button").forEach(function(x){x.setAttribute("aria-pressed",String(x.textContent===name));});
+    loadWorld(name);
+  });
+  wh.appendChild(b);
+});
+document.getElementById("reset").addEventListener("click",function(){
+  seed=SEED0; eps.set(EPS0); showNums=false;
+  document.getElementById("numbers").setAttribute("aria-pressed","false");
+  tool="none";
+  document.getElementById("tools").querySelectorAll("button").forEach(function(x){
+    x.setAttribute("aria-pressed",String(x.getAttribute("data-t")==="none"));});
+  wh.querySelectorAll("button").forEach(function(x){x.setAttribute("aria-pressed",String(x.textContent===START_WORLD));});
+  loadWorld(START_WORLD);
+  document.getElementById("mathbox").textContent=updateLine();
+});
+
+loadWorld(START_WORLD);
+})();
+</script>
+</body>
+</html>

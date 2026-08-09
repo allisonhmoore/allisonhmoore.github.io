@@ -1,0 +1,646 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rolling Downhill — Gradient Descent · MATH 170</title>
+<style>
+:root{
+  --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+  --gold-soft:rgba(218,165,32,.12);
+  --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  --font-body: ui-serif, Georgia, "Times New Roman", serif;
+  --font-ui:   system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+  --text-xl:1.75rem; --text-lg:1.25rem; --text-base:1rem; --text-sm:.875rem; --text-xs:.75rem;
+  --leading-prose:1.6; --leading-ui:1.3;
+  --space-1:4px; --space-2:8px; --space-3:16px; --space-4:24px; --space-5:32px; --space-6:48px;
+  --ease:cubic-bezier(0.16,1,0.3,1); --dur:200ms;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+    --gold-soft:rgba(227,179,65,.16);
+    --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+  --gold-soft:rgba(227,179,65,.16);
+  --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+}
+@media (prefers-reduced-motion: reduce){ :root{ --dur:0ms; } }
+@media print{
+  :root, :root[data-theme="dark"]{
+    --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+    --gold-soft:rgba(218,165,32,.12);
+    --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  }
+  .theme-btn{display:none}
+  .stage{break-inside:avoid}
+}
+*{box-sizing:border-box}
+html{color-scheme:light dark}
+body{margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--font-body); font-size:var(--text-base); line-height:var(--leading-prose);
+  -webkit-text-size-adjust:100%;}
+.wrap{max-width:820px; margin:0 auto; padding:var(--space-5) var(--space-4) var(--space-6);}
+.topbar{display:flex; align-items:baseline; justify-content:space-between; gap:var(--space-3);
+  border-bottom:1px solid var(--gray-line); padding-bottom:var(--space-2); margin-bottom:var(--space-4);}
+.eyebrow{font-family:var(--font-ui); font-size:var(--text-xs); letter-spacing:.08em; text-transform:uppercase; color:var(--gray-text);}
+h1{font-family:var(--font-body); font-weight:600; font-size:var(--text-xl); line-height:1.2; margin:.2em 0 .1em;}
+p{margin:0 0 var(--space-3);}
+.prose{max-width:66ch;}
+.muted{color:var(--gray-text);}
+.mono,code{font-family:var(--font-mono); font-variant-numeric:tabular-nums;}
+a{color:inherit;}
+:focus-visible{outline:2px solid var(--ink); outline-offset:2px; box-shadow:0 0 0 5px var(--gold-soft);}
+.theme-btn{font-family:var(--font-ui); font-size:var(--text-xs); background:none;
+  border:1px solid var(--gray-line); color:var(--gray-text); padding:6px 10px; cursor:pointer; border-radius:2px;}
+.theme-btn:hover{background:var(--gray-fill);}
+details.spec{border:1px solid var(--gray-line); border-radius:2px; margin:0 0 var(--space-4); background:var(--gray-fill);}
+details.spec>summary{font-family:var(--font-ui); font-size:var(--text-sm); cursor:pointer;
+  padding:var(--space-2) var(--space-3); list-style:none; color:var(--gray-text);}
+details.spec>summary::-webkit-details-marker{display:none}
+details.spec>summary::before{content:"▸ "; color:var(--gold);}
+details.spec[open]>summary::before{content:"▾ ";}
+.spec-body{padding:0 var(--space-3) var(--space-3); font-family:var(--font-ui); font-size:var(--text-sm); line-height:1.5;}
+.spec-body dt{font-weight:600; margin-top:var(--space-2);}
+.spec-body dd{margin:0; color:var(--gray-text);}
+.stage{margin:var(--space-4) 0;}
+svg,canvas{max-width:100%; height:auto; font-family:var(--font-ui); display:block; margin:0 auto;
+  border:1px solid var(--gray-line); border-radius:2px;}
+.controls{border-top:1px solid var(--gray-line); padding-top:var(--space-3); margin-top:var(--space-4);
+  display:grid; grid-template-columns:1fr 1fr; gap:var(--space-3) var(--space-4);}
+.controls .full{grid-column:1/-1;}
+@media(max-width:560px){ .controls{grid-template-columns:1fr;} }
+.ctl label{display:flex; justify-content:space-between; align-items:baseline;
+  font-family:var(--font-ui); font-size:var(--text-sm);}
+.ctl .val{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm);}
+input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:18px;
+  background:transparent; margin:6px 0 0; cursor:pointer;}
+input[type=range]::-webkit-slider-runnable-track{height:2px; border-radius:1px;
+  background:var(--track, var(--gray-line));}
+input[type=range]::-moz-range-track{height:2px; background:var(--gray-line);}
+input[type=range]::-moz-range-progress{height:2px; background:var(--gold);}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; appearance:none;
+  width:18px; height:18px; margin-top:-8px; border-radius:50%; background:var(--gold); border:1px solid var(--ink);}
+input[type=range]::-moz-range-thumb{width:18px; height:18px; border-radius:50%; background:var(--gold); border:1px solid var(--ink);}
+.btn{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:1px solid var(--ink); padding:8px 14px; cursor:pointer; border-radius:2px;}
+.btn:hover{background:var(--gray-fill);}
+.seg{display:inline-flex; border:1px solid var(--ink); border-radius:2px; overflow:hidden; flex-wrap:wrap;}
+.seg button{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:0; border-left:1px solid var(--ink); padding:7px 12px; cursor:pointer;}
+.seg button:first-child{border-left:0;}
+.seg button[aria-pressed="true"]{background:var(--gold); color:#111111;}
+.foot{display:flex; align-items:center; gap:var(--space-3); margin-top:var(--space-5);
+  border-top:1px solid var(--gray-line); padding-top:var(--space-3); flex-wrap:wrap;}
+.foot .btn{margin-right:auto;}
+.hint{font-family:var(--font-ui); font-size:var(--text-sm); color:var(--gray-text);}
+.mathbox{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm);
+  background:var(--gray-fill); border-left:2px solid var(--gold); padding:var(--space-3);
+  margin:var(--space-3) 0; overflow-x:auto; white-space:pre; line-height:1.7;}
+.attach{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text);
+  border-top:1px dotted var(--gray-line); margin-top:var(--space-6); padding-top:var(--space-3);}
+.tag{display:inline-block; font-family:var(--font-ui); font-size:var(--text-xs);
+  border:1px solid var(--gray-line); border-radius:999px; padding:1px 8px; color:var(--gray-text); margin-left:6px;}
+.chips{display:flex; gap:var(--space-2); flex-wrap:wrap; margin:var(--space-2) 0;}
+.chips button{font-family:var(--font-ui); font-size:var(--text-xs); border:1px solid var(--gray-line);
+  background:var(--paper); color:var(--ink); border-radius:999px; padding:3px 10px; cursor:pointer;}
+.chips button[aria-pressed="true"]{border-color:var(--gold); background:var(--gold-soft);}
+.stepbar{display:flex; gap:var(--space-2); align-items:center; margin:var(--space-2) 0; flex-wrap:wrap;}
+.count{font-family:var(--font-mono); font-variant-numeric:tabular-nums; color:var(--gray-text); font-size:var(--text-sm);}
+.status{font-family:var(--font-ui); font-size:var(--text-sm); min-height:1.4em;}
+.duo{display:grid; grid-template-columns:2fr 1fr; gap:var(--space-3);}
+@media(max-width:680px){ .duo{grid-template-columns:1fr;} }
+</style>
+<script>
+try{var t=localStorage.getItem("m170-theme");if(t)document.documentElement.dataset.theme=t;}catch(e){}
+</script>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="eyebrow">MATH 170 · Derivatives, descent and learning · max/min &amp; the gradient example</div>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Color theme">◑ auto</button>
+  </div>
+
+  <h1 data-edit="title">Rolling downhill <span class="tag">gradient descent</span></h1>
+  <p class="prose muted" data-edit="intro">Read the slope where you stand; the gradient arrow points <strong>uphill</strong>;
+  step the other way; repeat. Step size matters, shallow valleys catch walkers — and this walk,
+  done on a loss, is how essentially every model trains.</p>
+
+  <div data-slot="notes-top"></div>
+
+
+  <!-- PINNED (python): quartic f = x⁴/16 − x³/6 − 5x²/8 + 3x/2; f' = x³/4 − x²/2 − 5x/4 + 3/2
+       = ¼(x−3)(x−1)(x+2). Critical pts: x=−2 (deep min, f=−3.167), x=1 (local max), x=3 (shallow
+       min, f=−0.5625). Start 3.4 @ rate .15 → x=3 (shallow). Start −0.5 @ .15 → x=−2 (deep).
+       Bowl f=½x²−2 (f'=x): diverges iff rate > 2 (x → x(1−r)); rate 2.2 visibly explodes.
+       Surface: fx = x³+x, fy = −2y; ∇f(1,0)=(2,0), ∇f(0,−1)=(0,2); descent with y≠0 runs away
+       (y ← y(1+2r)); y=0 starts settle at the origin. -->
+
+  <div class="stage">
+    <div class="seg" id="modeSeg" role="group" aria-label="Mode">
+      <button type="button" data-m="1d" aria-pressed="true">1-D curve</button>
+      <button type="button" data-m="2d" aria-pressed="false">2-D surface</button>
+    </div>
+    <div class="chips" id="chips"></div>
+    <div id="oneD">
+      <svg id="svg1" viewBox="0 0 680 360" aria-label="Curve and descent"></svg>
+    </div>
+    <div id="twoD" style="display:none">
+      <div class="duo">
+        <svg id="svg2" viewBox="0 0 440 360" aria-label="Contour map"></svg>
+        <canvas id="c3d" width="220" height="360" aria-label="3-D surface (drag to orbit)"></canvas>
+      </div>
+    </div>
+    <div class="stepbar">
+      <button class="btn" id="back" type="button">◂ Back</button>
+      <button class="btn" id="step" type="button">Step ▸</button>
+      <button class="btn" id="run" type="button">Run ▸▸</button>
+      <span class="count" id="count">step 0</span>
+      <span class="status" id="status" aria-live="polite">Tap the curve to place a start.</span>
+    </div>
+    <div class="mathbox" id="mathbox"></div>
+  </div>
+
+  <div class="controls">
+    <div class="ctl">
+      <label for="rate">Learning rate <span class="val" id="ratev">0.15</span></label>
+      <input type="range" id="rate" min="0.01" max="2.5" step="0.01" value="0.15">
+      <div class="hint" data-edit="hint-rate">tiny → crawl · big → bounce · past 2 on the bowl → runaway</div>
+    </div>
+    <div class="ctl" id="raceCtl">
+      <label>Two walkers (quartic)</label>
+      <button class="btn" id="race" type="button">Start both basins in lockstep</button>
+    </div>
+  </div>
+
+  <div data-slot="notes-bottom"></div>
+
+  <div class="foot">
+    <button class="btn" id="reset" type="button">Reset</button>
+    <span class="hint" data-edit="hint-try">Try: the default start (x = 3.4) settles in the <em>shallow</em> valley. Find a start that reaches the deep one. Then step three times and press Back — the arithmetic walks backwards with you.</span>
+  </div>
+
+</div>
+
+<script type="application/json" id="m170-config">
+{
+  "_v": 1,
+  "openMode": "1d",
+  "openCurve": "quartic (two valleys)",
+  "starts": {"quartic (two valleys)": 3.4, "bowl \u00bdx\u00b2\u22122": 3},
+  "start2d": [2.0, 0.9],
+  "rate": {"min": 0.01, "max": 2.5, "step": 0.01, "value": 0.15},
+  "race": {"a": 3.4, "b": -0.5},
+  "settleTolerance": 0.001,
+  "runawayAt": 25,
+  "maxRun": 200,
+  "_meta": {
+    "openMode": {"label": "Which view the page opens in", "kind": "choice", "options": ["1d", "2d"]},
+    "openCurve": {"label": "Curve selected at load", "kind": "choice",
+      "options": ["quartic (two valleys)", "bowl \u00bdx\u00b2\u22122"]},
+    "starts": {"label": "Where the walker starts on each curve",
+      "help": "3.4 on the quartic is chosen because it rolls into the SHALLOW valley at x = 3, not the deep one at x = \u22122 \u2014 that is the local-minimum beat."},
+    "start2d": {"label": "Where the 2-D walker starts", "kind": "list"},
+    "rate": {"label": "Learning-rate slider", "kind": "range-spec",
+      "help": "On the bowl f = \u00bdx\u00b2\u22122 the iteration is x \u2192 x(1\u2212r), so it diverges for any rate above 2. Keep the maximum above 2 or that lesson disappears."},
+    "race": {"label": "The two walkers' starting points", "kind": "table"},
+    "settleTolerance": {"label": "Called settled when |slope| is below this", "kind": "number"},
+    "runawayAt": {"label": "Called a runaway once |x| passes this", "kind": "number"},
+    "maxRun": {"label": "Safety cap on Run", "kind": "number"}
+  }
+}
+</script>
+
+<script>
+(function(){
+"use strict";
+var CFG=JSON.parse(document.getElementById("m170-config").textContent);
+function cnum(v,d){ v=+v; return isFinite(v)?v:d; }
+var root=document.documentElement, themeBtn=document.getElementById("themeBtn");
+function themeLabel(){var m=root.dataset.theme||"auto";
+  themeBtn.textContent=m==="dark"?"● dark":m==="light"?"○ light":"◑ auto";}
+themeBtn.addEventListener("click",function(){
+  var cur=root.dataset.theme||"auto",next=cur==="auto"?"light":cur==="light"?"dark":"auto";
+  if(next==="auto"){delete root.dataset.theme;try{localStorage.removeItem("m170-theme");}catch(e){}}
+  else{root.dataset.theme=next;try{localStorage.setItem("m170-theme",next);}catch(e){}}
+  themeLabel(); redraw();});
+themeLabel();
+
+function wireSlider(id,fmt,onInput){
+  var el=document.getElementById(id), out=document.getElementById(id+"v");
+  function paint(){ var p=(el.value-el.min)/(el.max-el.min)*100;
+    el.style.setProperty("--track","linear-gradient(to right, var(--gold) "+p+"%, var(--gray-line) "+p+"%)");
+    if(out) out.textContent=(+el.value).toFixed(2); }
+  el.addEventListener("input",function(){ paint(); onInput(); });
+  paint();
+  return {el:el,set:function(v){el.value=v;paint();}};
+}
+var rate=wireSlider("rate",null,function(){ redraw(); });
+
+var CURVES={
+ "quartic (two valleys)":{f:function(x){return x*x*x*x/16 - x*x*x/6 - 5*x*x/8 + 1.5*x;},
+   fp:function(x){return x*x*x/4 - x*x/2 - 1.25*x + 1.5;},
+   xmin:-4.6,xmax:5.2, note:"minima at x = −2 (deep) and x = 3 (shallow); local max at x = 1"},
+ "bowl ½x²−2":{f:function(x){return x*x/2-2;}, fp:function(x){return x;},
+   xmin:-5,xmax:5, note:"one minimum at x = 0; f' = x, so rates above 2 explode"}
+};
+var STARTS=CFG.starts||{}, S2=CFG.start2d||[2.0,0.9], RACE0=CFG.race||{a:3.4,b:-0.5};
+var TOL=Math.max(1e-9,cnum(CFG.settleTolerance,0.001));
+var RUNAWAY=Math.max(1,cnum(CFG.runawayAt,25));
+var MAXRUN=Math.max(1,Math.round(cnum(CFG.maxRun,200)));
+function startFor(name){ return cnum(STARTS[name], name==="quartic (two valleys)"?3.4:3); }
+var OPENCURVE=CURVES[CFG.openCurve]?CFG.openCurve:"quartic (two valleys)";
+var mode=CFG.openMode==="2d"?"2d":"1d", curCurve=OPENCURVE;
+var start=startFor(curCurve), hist=[start], race=null;
+var p2={x:cnum(S2[0],2.0),y:cnum(S2[1],0.9)}, hist2=[{x:cnum(S2[0],2.0),y:cnum(S2[1],0.9)}]; // 2-D walker
+/* BUGFIX 2026-07-27 (professor: "in show the math, the expression updates on forward
+   steps but not backward steps"). ROOT CAUSE: the math panel and the status line were
+   written from inside step1()/step2() only, so any state change that did not go through
+   a forward step — Back, tapping a new start, switching curve or mode, moving the rate
+   slider — left the previous step's arithmetic on screen. FIX: the panel is now derived
+   from state by mathText1()/mathText2() and painted by redraw(), which every one of
+   those actions already calls. rates[] / rates2[] remember the learning rate each step
+   was actually taken with, so a step described after the slider has moved is described
+   with the rate that produced it, not the current one. */
+var rates=[], rates2=[];      /* rates[i]: rate used to go from hist[i] to hist[i+1] */
+var flash="";                 /* transient guidance; state-derived status wins once cleared */
+var F2=function(x,y){ return x*x*x*x/4 + x*x/2 - y*y; };
+var FX=function(x){ return x*x*x + x; }, FY=function(y){ return -2*y; };
+var orbit={a:0.9,b:0.5,drag:false,px:0,py:0};
+
+function css(v){ return getComputedStyle(document.body).getPropertyValue(v).trim(); }
+function C(){ return CURVES[curCurve]; }
+
+/* ---------- 1-D ---------- */
+var W=680,H=360,padL=46,padR=16,padT=16,padB=34;
+function xr(){ var c=C(); return [c.xmin,c.xmax]; }
+function yr(){
+  var c=C(), lo=1e9, hi=-1e9;
+  for(var x=c.xmin;x<=c.xmax;x+=0.05){ var y=c.f(x); lo=Math.min(lo,y); hi=Math.max(hi,y); }
+  var m=(hi-lo)*0.12; return [lo-m,hi+m];
+}
+function sx(x){ var r=xr(); return padL+(x-r[0])/(r[1]-r[0])*(W-padL-padR); }
+function sy(y){ var r=yr(); return H-padB-(y-r[0])/(r[1]-r[0])*(H-padT-padB); }
+function draw1(){
+  var ink=css("--ink"), gold=css("--gold"), gray=css("--gray-text"), line=css("--gray-line");
+  var c=C(), out="";
+  out+='<line x1="'+padL+'" y1="'+sy(0)+'" x2="'+(W-padR)+'" y2="'+sy(0)+'" stroke="'+line+'"/>';
+  var pts=[];
+  for(var x=c.xmin;x<=c.xmax;x+=0.04) pts.push(sx(x)+" "+sy(c.f(x)));
+  out+='<path d="M'+pts.join(" L")+'" fill="none" stroke="'+ink+'" stroke-width="2"/>';
+  // breadcrumbs
+  hist.forEach(function(hx,i){
+    var age=hist.length-1-i;
+    if(i<hist.length-1)
+      out+='<circle cx="'+sx(hx)+'" cy="'+sy(c.f(hx))+'" r="4" fill="none" stroke="'+(age>6?line:gray)+'" stroke-width="1.5"/>';
+  });
+  // race walkers
+  if(race){
+    race.a.forEach(function(hx,i){ if(i<race.a.length-1)
+      out+='<circle cx="'+sx(hx)+'" cy="'+sy(c.f(hx))+'" r="3" fill="none" stroke="'+line+'"/>'; });
+    race.b.forEach(function(hx,i){ if(i<race.b.length-1)
+      out+='<rect x="'+(sx(hx)-3)+'" y="'+(sy(c.f(hx))-3)+'" width="6" height="6" fill="none" stroke="'+line+'"/>'; });
+    out+=walker(race.a[race.a.length-1],"circle");
+    out+=walker(race.b[race.b.length-1],"square");
+  }
+  // current point + uphill arrow
+  var xc=hist[hist.length-1], s=c.fp(xc);
+  var ax=sx(xc), ay=sy(c.f(xc));
+  // uphill direction: sign of slope (+ → uphill to the right)
+  var dir=s>0?1:s<0?-1:0;
+  if(dir!==0){
+    var bx=ax+40*dir, by=ay-28;
+    out+='<line x1="'+ax+'" y1="'+ay+'" x2="'+bx+'" y2="'+by+'" stroke="'+gold+'" stroke-width="2.5"/>';
+    out+='<path d="M'+bx+' '+by+' l'+(-8*dir)+' 1 l'+(2*dir)+' 7 Z" fill="'+gold+'"/>';
+    out+='<text x="'+(bx+6*dir)+'" y="'+(by-4)+'" font-size="10" fill="'+gold+'" text-anchor="'+(dir>0?"start":"end")+'">uphill</text>';
+  }
+  out+='<circle cx="'+ax+'" cy="'+ay+'" r="8" fill="'+gold+'" stroke="'+ink+'" stroke-width="1"/>';
+  out+='<text x="'+(W-padR)+'" y="'+(padT+10)+'" font-size="11" fill="'+gray+'" text-anchor="end" font-family="var(--font-mono)">x = '+xc.toFixed(3)+'   f = '+c.f(xc).toFixed(3)+'   slope = '+s.toFixed(3)+'</text>';
+  function walker(hx,shape){
+    var px2=sx(hx), py2=sy(c.f(hx));
+    return shape==="circle"
+      ? '<circle cx="'+px2+'" cy="'+py2+'" r="7" fill="'+gold+'" stroke="'+ink+'"/>'
+      : '<rect x="'+(px2-6)+'" y="'+(py2-6)+'" width="12" height="12" fill="none" stroke="'+gold+'" stroke-width="2.5"/>';
+  }
+  document.getElementById("svg1").innerHTML=out;
+}
+document.getElementById("svg1").addEventListener("click",function(ev){
+  var svg=document.getElementById("svg1");
+  var pt=svg.createSVGPoint(); pt.x=ev.clientX; pt.y=ev.clientY;
+  var q=pt.matrixTransform(svg.getScreenCTM().inverse());
+  var r=xr(), x=r[0]+(q.x-padL)/(W-padL-padR)*(r[1]-r[0]);
+  x=Math.max(r[0],Math.min(r[1],x));
+  start=x; hist=[x]; rates=[]; race=null;
+  flash="Start placed at x = "+x.toFixed(2)+".";
+  count(); redraw();
+});
+
+/* ---------- 2-D ---------- */
+function draw2(){
+  var ink=css("--ink"), gold=css("--gold"), gray=css("--gray-text"), line=css("--gray-line");
+  var svg=document.getElementById("svg2");
+  var Wc=440,Hc=360, xm=2.6, ym=2.2;
+  function px(x){ return (x+xm)/(2*xm)*Wc; }
+  function py(y){ return Hc-(y+ym)/(2*ym)*Hc; }
+  var out="";
+  // density shading by f value
+  var lo=-ym*ym, hi=F2(xm,0);
+  for(var i=0;i<44;i++) for(var j=0;j<36;j++){
+    var x=-xm+ (i+0.5)/44*2*xm, y=-ym+(j+0.5)/36*2*ym;
+    var t=(F2(x,y)-lo)/(hi-lo); t=Math.max(0,Math.min(1,t));
+    var g=Math.round(30+t*70); // 30..100% lightness-ish via opacity trick
+    out+='<rect x="'+(i/44*Wc)+'" y="'+(Hc-(j+1)/36*Hc)+'" width="'+(Wc/44+0.5)+'" height="'+(Hc/36+0.5)+'" fill="'+ink+'" opacity="'+((1-t)*0.28).toFixed(3)+'"/>';
+  }
+  out+='<line x1="0" y1="'+py(0)+'" x2="'+Wc+'" y2="'+py(0)+'" stroke="'+line+'"/>';
+  out+='<line x1="'+px(0)+'" y1="0" x2="'+px(0)+'" y2="'+Hc+'" stroke="'+line+'"/>';
+  // gradient field (sparse, uphill)
+  if(showField){
+    for(var gx=-2;gx<=2;gx+=1) for(var gy=-2;gy<=2;gy+=1){
+      var vx=FX(gx), vy=FY(gy), L2=Math.hypot(vx,vy);
+      if(L2<0.05) continue;
+      var s2=18/Math.max(L2,2);
+      var x1=px(gx), y1=py(gy), x2=px(gx)+vx*s2, y2=py(gy)-vy*s2;
+      out+='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+gray+'" stroke-width="1"/>';
+      out+='<circle cx="'+x2+'" cy="'+y2+'" r="1.6" fill="'+gray+'"/>';
+    }
+  }
+  // P and Q
+  [[1,0,"P","∇f = (2, 0)"],[0,-1,"Q","∇f = (0, 2)"]].forEach(function(pq){
+    out+='<circle cx="'+px(pq[0])+'" cy="'+py(pq[1])+'" r="4" fill="none" stroke="'+ink+'" stroke-width="1.5"/>';
+    out+='<text x="'+(px(pq[0])+7)+'" y="'+(py(pq[1])-6)+'" font-size="11" fill="'+ink+'">'+pq[2]+' <tspan fill="'+gray+'" font-size="9">'+pq[3]+'</tspan></text>';
+  });
+  // walker trail
+  hist2.forEach(function(p,i){
+    if(i<hist2.length-1)
+      out+='<circle cx="'+px(p.x)+'" cy="'+py(p.y)+'" r="3.5" fill="none" stroke="'+gray+'"/>';
+  });
+  var cp=hist2[hist2.length-1];
+  if(Math.abs(cp.x)<=xm&&Math.abs(cp.y)<=ym){
+    var gvx=FX(cp.x), gvy=FY(cp.y), gl=Math.hypot(gvx,gvy);
+    if(gl>0.02){
+      var sc=26/Math.max(gl,1.2);
+      out+='<line x1="'+px(cp.x)+'" y1="'+py(cp.y)+'" x2="'+(px(cp.x)+gvx*sc)+'" y2="'+(py(cp.y)-gvy*sc)+'" stroke="'+gold+'" stroke-width="2.5"/>';
+      out+='<text x="'+(px(cp.x)+gvx*sc+4)+'" y="'+(py(cp.y)-gvy*sc)+'" font-size="9" fill="'+gold+'">uphill</text>';
+    }
+    out+='<circle cx="'+px(cp.x)+'" cy="'+py(cp.y)+'" r="7" fill="'+gold+'" stroke="'+ink+'"/>';
+  }
+  svg.innerHTML=out;
+  svg.onclick=function(ev){
+    var pt=svg.createSVGPoint(); pt.x=ev.clientX; pt.y=ev.clientY;
+    var q=pt.matrixTransform(svg.getScreenCTM().inverse());
+    p2={x:q.x/Wc*2*xm-xm, y:(Hc-q.y)/Hc*2*ym-ym};
+    hist2=[{x:p2.x,y:p2.y}]; rates2=[];
+    flash="Start placed at ("+p2.x.toFixed(2)+", "+p2.y.toFixed(2)+").";
+    count(); redraw();
+  };
+  draw3d();
+}
+var showField=false;
+function draw3d(){
+  var cv=document.getElementById("c3d"), ctx=cv.getContext("2d");
+  var ink=css("--ink"), line=css("--gray-line"), gold=css("--gold");
+  ctx.clearRect(0,0,cv.width,cv.height);
+  var xm=2.2, ym=2.0, N=14;
+  function proj(x,y,z){
+    var ca=Math.cos(orbit.a), sa=Math.sin(orbit.a), cb=Math.cos(orbit.b), sb=Math.sin(orbit.b);
+    var X=x*ca+y*sa, Y=-x*sa*sb+y*ca*sb+z*cb*0.35;
+    return [110+X*38, 200-Y*38];
+  }
+  ctx.strokeStyle=line; ctx.lineWidth=0.7;
+  for(var i=0;i<=N;i++){
+    ctx.beginPath();
+    for(var j=0;j<=N;j++){
+      var x=-xm+2*xm*i/N, y=-ym+2*ym*j/N, z=F2(x,y)*0.35;
+      var p=proj(x,y,z);
+      if(j===0)ctx.moveTo(p[0],p[1]); else ctx.lineTo(p[0],p[1]);
+    }
+    ctx.stroke();
+    ctx.beginPath();
+    for(var j2=0;j2<=N;j2++){
+      var x2=-xm+2*xm*j2/N, y2=-ym+2*ym*i/N, z2=F2(x2,y2)*0.35;
+      var p2b=proj(x2,y2,z2);
+      if(j2===0)ctx.moveTo(p2b[0],p2b[1]); else ctx.lineTo(p2b[0],p2b[1]);
+    }
+    ctx.stroke();
+  }
+  var cp=hist2[hist2.length-1];
+  if(Math.abs(cp.x)<=xm&&Math.abs(cp.y)<=ym){
+    var pp=proj(cp.x,cp.y,F2(cp.x,cp.y)*0.35);
+    ctx.fillStyle=gold; ctx.beginPath(); ctx.arc(pp[0],pp[1],5,0,7); ctx.fill();
+    ctx.strokeStyle=ink; ctx.stroke();
+  }
+  ctx.fillStyle=css("--gray-text"); ctx.font="10px system-ui";
+  ctx.fillText("drag to orbit",8,14);
+}
+(function(){
+  var cv=document.getElementById("c3d");
+  cv.addEventListener("pointerdown",function(e){ orbit.drag=true; orbit.px=e.clientX; orbit.py=e.clientY; cv.setPointerCapture(e.pointerId); });
+  cv.addEventListener("pointermove",function(e){
+    if(!orbit.drag) return;
+    orbit.a+=(e.clientX-orbit.px)*0.01; orbit.b=Math.max(0.1,Math.min(1.4,orbit.b+(e.clientY-orbit.py)*0.01));
+    orbit.px=e.clientX; orbit.py=e.clientY; draw3d();
+  });
+  cv.addEventListener("pointerup",function(){ orbit.drag=false; });
+})();
+
+/* ---------- stepping ---------- */
+function step1(){
+  var c=C(), r=+rate.el.value, x=hist[hist.length-1], s=c.fp(x);
+  var nx=x-r*s;
+  hist.push(nx); rates.push(r);
+  if(race){
+    ["a","b"].forEach(function(k){
+      var xx=race[k][race[k].length-1];
+      race[k].push(xx - r*c.fp(xx));
+    });
+  }
+  flash="";
+}
+function step2(){
+  var r=+rate.el.value, p=hist2[hist2.length-1];
+  var gx=FX(p.x), gy=FY(p.y);
+  hist2.push({x:p.x-r*gx, y:p.y-r*gy}); rates2.push(r);
+  flash="";
+}
+
+/* ---------- the panel and the status line, derived from state ----------
+   Nothing below reads "which button was pressed". Everything is a function of
+   (mode, hist, rates, curve, slider), so Back reads exactly as Step does. */
+function mathText1(){
+  var c=C(), n=hist.length, L=[], x, nx, r, s;
+  if(n>=2){
+    x=hist[n-2]; nx=hist[n-1]; r=rates[n-2];
+    if(!isFinite(r)) r=+rate.el.value;
+    s=c.fp(x);
+    L.push("step "+(n-1)+" — the move that put the walker where it is now:");
+  } else {
+    x=hist[0]; r=+rate.el.value; s=c.fp(x); nx=x-r*s;
+    L.push("step 0 — nothing has moved yet. The next Step \u25b8 will do this:");
+  }
+  L.push("");
+  L.push("slope (uphill sign) at x = "+x.toFixed(3)+":  f' = "+s.toFixed(3));
+  L.push("x_next = "+x.toFixed(3)+" \u2212 "+r.toFixed(2)+"\u00b7("+s.toFixed(3)+") = "+nx.toFixed(3));
+  L.push("(arrow points uphill; the move subtracts \u2014 learning goes against the gradient)");
+  return L.join("\n");
+}
+function mathText2(){
+  var n=hist2.length, L=[], p, np, r;
+  if(n>=2){
+    p=hist2[n-2]; np=hist2[n-1]; r=rates2[n-2];
+    if(!isFinite(r)) r=+rate.el.value;
+    L.push("step "+(n-1)+" — the move that put the walker where it is now:");
+  } else {
+    p=hist2[0]; r=+rate.el.value;
+    np={x:p.x-r*FX(p.x), y:p.y-r*FY(p.y)};
+    L.push("step 0 — nothing has moved yet. The next Step \u25b8 will do this:");
+  }
+  var gx=FX(p.x), gy=FY(p.y);
+  L.push("");
+  L.push("gradient (uphill) at ("+p.x.toFixed(2)+", "+p.y.toFixed(2)+"):  \u2207f = ("+gx.toFixed(2)+", "+gy.toFixed(2)+")");
+  L.push("step the OTHER way:");
+  L.push("  x_next = "+p.x.toFixed(2)+" \u2212 "+r.toFixed(2)+"\u00b7("+gx.toFixed(2)+") = "+np.x.toFixed(3));
+  L.push("  y_next = "+p.y.toFixed(2)+" \u2212 "+r.toFixed(2)+"\u00b7("+gy.toFixed(2)+") = "+np.y.toFixed(3));
+  return L.join("\n");
+}
+function statusText(){
+  if(mode==="1d"){
+    var c=C(), n=hist.length, cur=hist[n-1];
+    if(Math.abs(cur)>RUNAWAY) return "Runaway — the steps grew instead of shrinking. Lower the rate.";
+    if(Math.abs(c.fp(cur))<TOL) return "Settled: |slope| < "+TOL+" at x = "+cur.toFixed(3)+".";
+    if(n>1 && c.f(cur)>c.f(hist[n-2])+1e-12) return "That step overshot and climbed — learning rate too big?";
+    return "";
+  }
+  var m=hist2.length, cp=hist2[m-1];
+  if(Math.abs(cp.y)>2.2) return "Still falling — this surface has no bottom in the y direction. (Honest worksheet surface!)";
+  if(Math.hypot(FX(cp.x),FY(cp.y))<TOL) return "Settled at ("+cp.x.toFixed(2)+", "+cp.y.toFixed(2)+").";
+  return "";
+}
+function renderPanels(){
+  document.getElementById("mathbox").textContent = mode==="1d" ? mathText1() : mathText2();
+  var d=statusText();
+  document.getElementById("status").textContent = flash || d;
+}
+document.getElementById("step").addEventListener("click",function(){
+  if(mode==="1d") step1(); else step2();
+  count(); redraw();
+});
+document.getElementById("run").addEventListener("click",function(){
+  for(var i=0;i<MAXRUN;i++){
+    if(mode==="1d"){
+      var c=C(), x=hist[hist.length-1];
+      if(Math.abs(c.fp(x))<TOL||Math.abs(x)>RUNAWAY) break;
+      step1();
+    } else {
+      var p=hist2[hist2.length-1];
+      if(Math.hypot(FX(p.x),FY(p.y))<TOL||Math.abs(p.y)>2.2) break;
+      step2();
+    }
+  }
+  count(); redraw();
+});
+document.getElementById("back").addEventListener("click",function(){
+  if(mode==="1d"){
+    if(hist.length>1){ hist.pop(); rates.pop(); if(race){race.a.pop();race.b.pop();} }
+  } else if(hist2.length>1){ hist2.pop(); rates2.pop(); }
+  flash="";
+  count(); redraw();          /* redraw() repaints the math panel from state */
+});
+function count(){
+  document.getElementById("count").textContent="step "+((mode==="1d"?hist.length:hist2.length)-1);
+}
+document.getElementById("race").addEventListener("click",function(){
+  if(mode!=="1d"||curCurve!=="quartic (two valleys)"){
+    flash="The race runs on the 1-D quartic (two basins).";
+    renderPanels();
+    return;
+  }
+  race={a:[cnum(RACE0.a,3.4)],b:[cnum(RACE0.b,-0.5)]};
+  flash="Two walkers, same rule, lockstep: ○ starts at "+cnum(RACE0.a,3.4)+
+        ", □ at "+String(cnum(RACE0.b,-0.5)).replace("-","−")+". Step them.";
+  redraw();
+});
+
+/* mode & chips */
+var chipsHost=document.getElementById("chips");
+function paintChips(){
+  chipsHost.innerHTML="";
+  if(mode==="1d"){
+    Object.keys(CURVES).forEach(function(name){
+      var b=document.createElement("button"); b.type="button"; b.textContent=name;
+      b.setAttribute("aria-pressed",String(name===curCurve));
+      b.addEventListener("click",function(){
+        curCurve=name; hist=[startFor(name)]; rates=[]; race=null;
+        flash=CURVES[name].note+".";
+        paintChips(); count(); redraw();
+      });
+      chipsHost.appendChild(b);
+    });
+  } else {
+    var b=document.createElement("button"); b.type="button";
+    b.textContent="show the uphill field";
+    b.setAttribute("aria-pressed",String(showField));
+    b.addEventListener("click",function(){ showField=!showField; b.setAttribute("aria-pressed",String(showField)); redraw(); });
+    chipsHost.appendChild(b);
+    [["start at P (1, 0)",1,0],["start at Q (0, −1)",0,-1],["start on the ridge (y = 0)",1.6,0]].forEach(function(o){
+      var c=document.createElement("button"); c.type="button"; c.textContent=o[0];
+      c.addEventListener("click",function(){ hist2=[{x:o[1],y:o[2]}]; rates2=[]; flash=""; count(); redraw(); });
+      chipsHost.appendChild(c);
+    });
+  }
+}
+document.getElementById("modeSeg").querySelectorAll("button").forEach(function(b){
+  b.addEventListener("click",function(){
+    mode=b.getAttribute("data-m");
+    document.getElementById("modeSeg").querySelectorAll("button").forEach(function(x){
+      x.setAttribute("aria-pressed",String(x===b));});
+    document.getElementById("oneD").style.display=mode==="1d"?"":"none";
+    document.getElementById("twoD").style.display=mode==="2d"?"":"none";
+    document.getElementById("raceCtl").style.display=mode==="1d"?"":"none";
+    flash = mode==="2d"
+      ? "Tap the map to place a start. Try P, Q — the worksheet's exact points."
+      : "Tap the curve to place a start.";
+    paintChips(); count(); redraw();
+  });
+});
+document.getElementById("reset").addEventListener("click",function(){
+  mode=CFG.openMode==="2d"?"2d":"1d"; curCurve=OPENCURVE; hist=[startFor(curCurve)]; rates=[]; race=null;
+  hist2=[{x:cnum(S2[0],2.0),y:cnum(S2[1],0.9)}]; rates2=[]; showField=false;
+  rate.set(cnum((CFG.rate||{}).value,0.15));
+  document.getElementById("modeSeg").querySelectorAll("button").forEach(function(x){
+    x.setAttribute("aria-pressed",String(x.getAttribute("data-m")===mode));});
+  document.getElementById("oneD").style.display=mode==="1d"?"":"none";
+  document.getElementById("twoD").style.display=mode==="2d"?"":"none";
+  document.getElementById("raceCtl").style.display=mode==="1d"?"":"none";
+  flash="Tap the curve to place a start. Default start 3.4 rolls into the SHALLOW valley.";
+  paintChips(); count(); redraw();
+});
+
+/* the single render-from-state entry point: every action ends here */
+function redraw(){
+  if(mode==="1d") draw1(); else draw2();
+  renderPanels();
+}
+(function(){
+  var spec=CFG.rate||{};
+  if(spec.min!=null) rate.el.min=spec.min;
+  if(spec.max!=null) rate.el.max=spec.max;
+  if(spec.step!=null) rate.el.step=spec.step;
+  rate.set(cnum(spec.value,0.15));
+  document.getElementById("modeSeg").querySelectorAll("button").forEach(function(x){
+    x.setAttribute("aria-pressed",String(x.getAttribute("data-m")===mode));});
+  document.getElementById("oneD").style.display=mode==="1d"?"":"none";
+  document.getElementById("twoD").style.display=mode==="2d"?"":"none";
+  document.getElementById("raceCtl").style.display=mode==="1d"?"":"none";
+})();
+paintChips();
+flash="Each step: read the slope, draw the uphill arrow, move the other way. Tap the curve to place a start.";
+count(); redraw();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,958 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grid digits, binary vectors &amp; the distance between · MATH 170</title>
+
+<!-- ================================================================
+     DESIGN-SYSTEM v2 TOKEN BLOCK — copied verbatim into every file.
+     A global tweak stays a find-replace across the set.
+     Copied unchanged from the exemplar (week-13-softmax.html).
+     ================================================================ -->
+<style>
+/* hidden must always win — author display rules on these classes would otherwise beat the attribute */
+[hidden]{display:none !important}
+
+:root{
+  /* color — light */
+  --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+  --gold-soft:rgba(218,165,32,.12);
+  --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  /* type */
+  --font-body: ui-serif, Georgia, "Times New Roman", serif;
+  --font-ui:   system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+  --text-xl:1.75rem; --text-lg:1.25rem; --text-base:1rem; --text-sm:.875rem; --text-xs:.75rem;
+  --leading-prose:1.6; --leading-ui:1.3;
+  /* spacing */
+  --space-1:4px; --space-2:8px; --space-3:16px; --space-4:24px; --space-5:32px; --space-6:48px;
+  /* motion */
+  --ease:cubic-bezier(0.16,1,0.3,1); --dur:200ms;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+    --gold-soft:rgba(227,179,65,.16);
+    --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+  --gold-soft:rgba(227,179,65,.16);
+  --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+}
+@media (prefers-reduced-motion: reduce){ :root{ --dur:0ms; } }
+@media print{
+  :root, :root[data-theme="dark"]{
+    --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+    --gold-soft:rgba(218,165,32,.12);
+    --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  }
+  .theme-btn{display:none}
+  .stage{break-inside:avoid}
+}
+
+/* ================= base skin (design-system §3–§4) ================= */
+*{box-sizing:border-box}
+html{color-scheme:light dark}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--font-body); font-size:var(--text-base); line-height:var(--leading-prose);
+  -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:820px; margin:0 auto; padding:var(--space-5) var(--space-4) var(--space-6);}
+.topbar{display:flex; align-items:baseline; justify-content:space-between; gap:var(--space-3);
+  border-bottom:1px solid var(--gray-line); padding-bottom:var(--space-2); margin-bottom:var(--space-4);}
+.eyebrow{font-family:var(--font-ui); font-size:var(--text-xs); letter-spacing:.08em; text-transform:uppercase; color:var(--gray-text);}
+h1{font-family:var(--font-body); font-weight:600; font-size:var(--text-xl); line-height:1.2; margin:.2em 0 .1em;}
+h2{font-family:var(--font-ui); font-weight:600; font-size:var(--text-lg); line-height:1.3; margin:var(--space-5) 0 var(--space-2);}
+p{margin:0 0 var(--space-3);}
+.prose{max-width:66ch;}
+.muted{color:var(--gray-text);}
+.mono,code{font-family:var(--font-mono); font-variant-numeric:tabular-nums;}
+a{color:inherit;}
+:focus-visible{outline:2px solid var(--ink); outline-offset:2px; box-shadow:0 0 0 5px var(--gold-soft);}
+
+.theme-btn{font-family:var(--font-ui); font-size:var(--text-xs); background:none;
+  border:1px solid var(--gray-line); color:var(--gray-text); padding:6px 10px; cursor:pointer; border-radius:2px;}
+.theme-btn:hover{background:var(--gray-fill);}
+
+/* spec header */
+details.spec{border:1px solid var(--gray-line); border-radius:2px; margin:0 0 var(--space-4); background:var(--gray-fill);}
+details.spec>summary{font-family:var(--font-ui); font-size:var(--text-sm); cursor:pointer;
+  padding:var(--space-2) var(--space-3); list-style:none; color:var(--gray-text);}
+details.spec>summary::-webkit-details-marker{display:none}
+details.spec>summary::before{content:"▸ "; color:var(--gold);}
+details.spec[open]>summary::before{content:"▾ ";}
+.spec-body{padding:0 var(--space-3) var(--space-3); font-family:var(--font-ui); font-size:var(--text-sm); line-height:1.5;}
+.spec-body dt{font-weight:600; margin-top:var(--space-2);}
+.spec-body dd{margin:0; color:var(--gray-text);}
+
+/* stage */
+.stage{margin:var(--space-4) 0; text-align:center;}
+svg{max-width:100%; height:auto; font-family:var(--font-ui);}
+figcaption{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); margin-top:var(--space-2);}
+
+/* controls */
+.controls{border-top:1px solid var(--gray-line); padding-top:var(--space-3); margin-top:var(--space-4);
+  display:grid; grid-template-columns:1fr 1fr; gap:var(--space-3) var(--space-4);}
+.controls .full{grid-column:1/-1;}
+@media(max-width:560px){ .controls{grid-template-columns:1fr;} }
+.ctl label{display:flex; justify-content:space-between; align-items:baseline;
+  font-family:var(--font-ui); font-size:var(--text-sm); line-height:var(--leading-ui);}
+.ctl .val{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm); color:var(--ink);}
+.ctl .val.gold{color:var(--gold); font-weight:600;}
+.ctl .note{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); margin-top:4px;}
+
+/* range slider — filled track works in ALL engines (design-system v2 fix):
+   wireSlider() paints the webkit track with a two-stop gradient on input. */
+input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:18px;
+  background:transparent; margin:6px 0 0; cursor:pointer;}
+input[type=range]::-webkit-slider-runnable-track{height:2px; border-radius:1px;
+  background:var(--track, var(--gray-line));}
+input[type=range]::-moz-range-track{height:2px; background:var(--gray-line);}
+input[type=range]::-moz-range-progress{height:2px; background:var(--gold);}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; appearance:none;
+  width:18px; height:18px; margin-top:-8px; border-radius:50%; background:var(--gold); border:1px solid var(--ink);}
+input[type=range]::-moz-range-thumb{width:18px; height:18px; border-radius:50%; background:var(--gold); border:1px solid var(--ink);}
+
+/* buttons + segmented + stepper */
+.btn{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:1px solid var(--ink); padding:8px 14px; cursor:pointer; border-radius:2px;}
+.btn:hover{background:var(--gray-fill);}
+.btn.primary{background:var(--gold); border-color:var(--gold); color:#111111;}
+.btn[disabled]{border-color:var(--gray-line); color:var(--gray-line); cursor:default; background:var(--paper);}
+.seg{display:inline-flex; border:1px solid var(--ink); border-radius:2px; overflow:hidden;}
+.seg button{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:0; border-left:1px solid var(--ink); padding:7px 12px; cursor:pointer;}
+.seg button:first-child{border-left:0;}
+.seg button[aria-pressed="true"]{background:var(--gold); color:#111111;}
+.stepper{display:inline-flex; align-items:center; gap:var(--space-2); font-family:var(--font-ui); font-size:var(--text-sm);}
+.stepper .count{font-family:var(--font-mono); font-variant-numeric:tabular-nums; color:var(--gray-text);}
+
+.foot{display:flex; align-items:center; gap:var(--space-3); margin-top:var(--space-5);
+  border-top:1px solid var(--gray-line); padding-top:var(--space-3); flex-wrap:wrap;}
+.foot .btn{margin-right:auto;}
+.hint{font-family:var(--font-ui); font-size:var(--text-sm); color:var(--gray-text);}
+
+/* math reveal */
+.mathbox{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm);
+  background:var(--gray-fill); border-left:2px solid var(--gold); padding:var(--space-3);
+  margin:var(--space-3) 0; overflow-x:auto; white-space:pre; line-height:1.7; text-align:left;}
+.attach{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text);
+  border-top:1px dotted var(--gray-line); margin-top:var(--space-6); padding-top:var(--space-3);}
+.tag{display:inline-block; font-family:var(--font-ui); font-size:var(--text-xs);
+  border:1px solid var(--gray-line); border-radius:999px; padding:1px 8px; color:var(--gray-text); margin-left:6px;}
+.callout{font-family:var(--font-ui); font-size:var(--text-sm); border:1px solid var(--gray-line);
+  border-left:2px solid var(--gold); padding:var(--space-2) var(--space-3); margin:var(--space-3) 0; background:var(--paper);}
+
+/* ============================================================
+   BESPOKE (week-03 digit grids) — below this line only.
+   Base skin above is untouched.
+   ============================================================ */
+.grids{display:flex; justify-content:center; align-items:flex-start; gap:var(--space-5); flex-wrap:wrap;}
+.gpanel{display:flex; flex-direction:column; align-items:center; gap:var(--space-2);}
+.glabel{font-family:var(--font-ui); font-size:var(--text-sm); line-height:var(--leading-ui);}
+.glabel b{font-family:var(--font-mono); font-weight:700;}
+.pixgrid{display:grid; grid-template-columns:repeat(3,44px); grid-auto-rows:44px; gap:4px;
+  padding:6px; border:1px solid var(--gray-line); border-radius:2px; background:var(--paper);}
+.cell{padding:0; border:1px solid var(--gray-line); border-radius:2px; background:var(--paper); cursor:pointer;}
+.cell[aria-pressed="true"]{background:var(--ink); border-color:var(--ink);}
+.cell:hover:not([disabled]){outline:1px solid var(--gold); outline-offset:1px;}
+.cell[disabled]{cursor:default;}
+.cell.cur{outline:3px solid var(--gold); outline-offset:1px;}
+.vecrow{font-family:var(--font-mono); font-size:var(--text-xs); font-variant-numeric:tabular-nums;
+  display:flex; align-items:center; white-space:nowrap;}
+.ve{display:inline-block; width:17px; text-align:center; border-radius:2px; transition:color var(--dur) var(--ease);}
+.ve.cur{background:var(--gold); color:#111111; font-weight:700;}
+.ve.pop{color:var(--gold); font-weight:700;}
+.sweepbox{margin-top:var(--space-4);}
+.termline{font-family:var(--font-mono); font-size:var(--text-sm); min-height:1.6em;}
+.runsum{font-family:var(--font-mono); font-size:var(--text-sm); color:var(--gray-text); min-height:1.6em;}
+.tallyrow{display:flex; justify-content:center; align-items:baseline; gap:var(--space-2); margin-top:var(--space-1);}
+.tally{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-xl);
+  font-weight:600; color:var(--gold);}
+.tlabel{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text);}
+.finale{font-family:var(--font-mono); font-size:var(--text-sm); margin-top:var(--space-2);
+  display:none; line-height:1.8;}
+.finale.show{display:block;}
+.finale .sig{color:var(--gray-text);}
+
+.ws{border:1px solid var(--gray-line); border-radius:2px; padding:var(--space-3);
+  margin:var(--space-4) 0; font-family:var(--font-ui); font-size:var(--text-sm); text-align:left;}
+.ws h3{font-family:var(--font-ui); font-size:var(--text-sm); font-weight:600; margin:0 0 var(--space-1);}
+.ws p{font-size:var(--text-xs); color:var(--gray-text); margin:0 0 var(--space-2);}
+.ws .exercise{margin-bottom:var(--space-4);}
+.ws .exercise:last-child{margin-bottom:0;}
+.dtable{border-collapse:collapse; margin:0 auto; font-family:var(--font-mono); font-variant-numeric:tabular-nums;}
+.dtable th,.dtable td{border:1px solid var(--gray-line); width:46px; height:38px; text-align:center; padding:0;}
+.dtable th{font-family:var(--font-ui); font-weight:600; color:var(--gray-text); background:var(--gray-fill); font-size:var(--text-xs);}
+.dtable td.diag{color:var(--gray-text); background:var(--gray-fill);}
+.dtable td button{width:100%; height:100%; border:0; background:var(--paper); color:var(--ink);
+  font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm); cursor:pointer;}
+.dtable td button:hover{background:var(--gray-fill);}
+.dtable td.target button{outline:2px solid var(--gold); outline-offset:-2px;}
+.normstrip{display:flex; gap:6px; flex-wrap:wrap; margin:var(--space-2) 0;}
+.slot{display:flex; flex-direction:column; align-items:center; gap:2px; min-width:34px;
+  border:1px solid var(--gray-line); border-radius:2px; background:var(--paper); color:var(--ink);
+  padding:4px 2px; cursor:pointer; font-family:var(--font-mono); font-variant-numeric:tabular-nums;}
+.slot:hover{background:var(--gray-fill);}
+.slot .d{font-size:var(--text-sm); font-weight:700;}
+.slot .n{font-size:var(--text-xs); color:var(--gray-text);}
+.slot.target{outline:2px solid var(--gold); outline-offset:-2px;}
+.wsrow{display:flex; align-items:center; gap:var(--space-2); flex-wrap:wrap; margin-top:var(--space-2);}
+.wsrow label{font-family:var(--font-ui); font-size:var(--text-sm);}
+select{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm);
+  background:var(--paper); color:var(--ink); border:1px solid var(--ink); border-radius:2px; padding:4px 6px;}
+.fb{font-family:var(--font-ui); font-size:var(--text-sm); min-height:1.4em;}
+.eqrow{border-left:2px solid transparent; padding-left:var(--space-2);}
+.eqrow.found{border-left-color:var(--gold); background:var(--gold-soft);}
+</style>
+
+<!-- theme boot: apply stored choice before first paint (no flash) -->
+<script>
+try{var t=localStorage.getItem("m170-theme");if(t)document.documentElement.dataset.theme=t;}catch(e){}
+</script>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="eyebrow">MATH 170 · Images become vectors · Grid Digits to Binary Vectors</div>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Color theme">◑ auto</button>
+  </div>
+
+  <h1 data-edit="title">Two pictures, fifteen tiny questions <span class="tag">L1 distance</span></h1>
+  <p class="prose muted" data-edit="intro">You are the AI. All you can store of a picture is a list of 0s and 1s —
+  no rows, no columns, no shape. Can you still tell which digits look alike? The scary distance
+  formula from class turns out to be nothing but <em>count the cells where two pictures disagree</em>,
+  one cell at a time.</p>
+
+  <div data-slot="notes-top"></div>
+
+
+  <figure class="stage">
+    <div class="grids">
+      <div class="gpanel">
+        <div class="glabel" id="labU"><b>u</b> — digit 1</div>
+        <div class="pixgrid" id="gridU" role="group" aria-label="Grid u, 5 rows by 3 columns. Space toggles a cell; arrow keys move."></div>
+        <div class="vecrow" id="vecU" aria-label="Vector u"></div>
+      </div>
+      <div class="gpanel">
+        <div class="glabel" id="labV"><b>v</b> — digit 3</div>
+        <div class="pixgrid" id="gridV" role="group" aria-label="Grid v, 5 rows by 3 columns. Space toggles a cell; arrow keys move."></div>
+        <div class="vecrow" id="vecV" aria-label="Vector v"></div>
+      </div>
+    </div>
+    <div class="sweepbox">
+      <div class="termline" id="termline">press Step ▸ to compare cell 1 of 15</div>
+      <div class="runsum" id="runsum"></div>
+      <div class="tallyrow">
+        <span class="tally" id="tally" aria-live="polite">–</span>
+        <span class="tlabel" id="tlabel">disagreements so far</span>
+      </div>
+      <div class="finale" id="finale"></div>
+    </div>
+    <figcaption data-edit="caption-reading-order">black cell = 1 · white cell = 0 · reading order: left→right, top→bottom — the same order everywhere on this page</figcaption>
+  </figure>
+
+  <!-- worksheet mode panel (hidden in free-draw mode) -->
+  <div class="ws" id="wsPanel" hidden>
+    <div class="exercise">
+      <h3 data-edit="ws-pairs-title">Exercises 1–2 · pairwise distances among 1, 3, 6, 8</h3>
+      <p data-edit="ws-pairs-help">Click an empty cell to load that pair of digits above, then Step or Run the sweep — the result is recorded here. Which two digits are closest? Closest in what sense?</p>
+      <table class="dtable" id="dtable" aria-label="Pairwise L1 distance table for digits 1, 3, 6, 8"></table>
+    </div>
+    <div class="exercise">
+      <h3 data-edit="ws-size-title">Exercises 3–4 · biggest and smallest digit in this metric</h3>
+      <p data-edit="ws-size-help">A digit's size here is its distance from the all-blank grid — sweep a digit against blank and you are just counting its filled cells. Click a digit to load it vs. blank.</p>
+      <div class="normstrip" id="normstrip"></div>
+      <div class="wsrow">
+        <label for="selBig">biggest digit:</label> <select id="selBig"></select>
+        <label for="selSmall">smallest digit:</label> <select id="selSmall"></select>
+      </div>
+      <div class="fb" id="fbSize" aria-live="polite"></div>
+    </div>
+    <div class="exercise">
+      <h3 data-edit="ws-eq-title">Exercise 5 · two different digits, the same distance from 8</h3>
+      <p data-edit="ws-eq-help">Pick two digits (neither of them 8). Their distances from 8 are computed the same way you have been sweeping.</p>
+      <div class="wsrow eqrow" id="eqrow">
+        <select id="selEqA" aria-label="first digit"></select>
+        <span>and</span>
+        <select id="selEqB" aria-label="second digit"></select>
+        <span class="fb mono" id="fbEq" aria-live="polite"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="full" style="display:flex; gap:var(--space-3); align-items:center; flex-wrap:wrap;">
+      <div class="seg" role="group" aria-label="Mode">
+        <button type="button" id="modeDraw" aria-pressed="true">free draw</button>
+        <button type="button" id="modeWs" aria-pressed="false">worksheet</button>
+      </div>
+      <span class="hint" id="modeHint">click cells to flip pixels, or load a digit below</span>
+    </div>
+    <div class="ctl" id="pickUwrap">
+      <label>load a digit into <span class="mono">u</span></label>
+      <div class="seg" id="pickU" role="group" aria-label="Load a digit into grid u" style="margin-top:6px;"></div>
+    </div>
+    <div class="ctl" id="pickVwrap">
+      <label>load a digit into <span class="mono">v</span></label>
+      <div class="seg" id="pickV" role="group" aria-label="Load a digit into grid v" style="margin-top:6px;"></div>
+    </div>
+    <div class="full stepper">
+      <button class="btn" id="backBtn" type="button" disabled>◂ Back</button>
+      <button class="btn" id="stepBtn" type="button">Step ▸</button>
+      <button class="btn" id="runBtn" type="button">Run ▸▸</button>
+      <span class="count" id="stepCount">cell – / 15</span>
+      <span class="hint" id="sweepStatus"></span>
+    </div>
+    <div class="full">
+      <button class="btn" id="mathToggle" type="button" aria-expanded="false">Show the math ▸</button>
+      <div id="mathReveal" hidden>
+        <div class="mathbox" id="mathbox"></div>
+        <p class="muted prose" style="font-family:var(--font-ui); font-size:var(--text-sm)" data-edit="math-sigma">
+          The Σ ("sigma") is nothing new — it is shorthand for the long sum you just watched
+          being built, one <em>same-or-different</em> question per cell. Fifteen tiny questions, added up.</p>
+      </div>
+    </div>
+  </div>
+
+  <div data-slot="notes-bottom"></div>
+
+  <div class="foot">
+    <button class="btn" id="reset" type="button">Reset</button>
+    <span class="hint" data-edit="hint-try">Try: Step through 1 vs 3 and predict each cell before you press.</span>
+  </div>
+
+</div>
+
+<!-- ==================================================================
+ INSTRUCTOR-FACING — pinned answers for the RECONSTRUCTED digit font.
+ The worksheet's bitmaps existed only as images; the canonical 5×3
+ pixel font below (the "digits" key of the DEFAULT config island) is our
+ stand-in. Swap the professor's originals into the island and re-verify.
+ Every number below holds for the DEFAULT config island only; all were
+ verified with python3 at build time (2026-07-03) against those bitmaps:
+
+   Exercise 2 — pairwise L1 distances among 1, 3, 6, 8:
+            1    3    6    8
+       1    0    9    8    9
+       3    9    0    3    2
+       6    8    3    0    1
+       8    9    2    1    0
+     (symmetric, zero diagonal; closest pair is 6 and 8 at distance 1)
+
+   Exercises 3–4 — L1 norms (filled-cell counts), digits 0–9:
+     0:12  1:8  2:11  3:11  4:9  5:11  6:12  7:7  8:13  9:12
+     Biggest digit in this metric: 8 (13 cells) — unique.
+     Smallest: 7 (7 cells) — unique.
+
+   Exercise 5 — distances from 8:
+     0:1  1:9  2:2  3:2  4:4  5:2  6:1  7:6  9:1
+     Equidistant-from-8 pairs (the checker accepts any of these):
+     (0,6) (0,9) (6,9) at distance 1;  (2,3) (2,5) (3,5) at distance 2.
+
+   Warm-up (worksheet, verbatim): u=[1,0,1,0], v=[1,1,0,0] → d = 2.
+   Initial teaching state: digit 1 vs digit 3 → d = 9 (unrun on load).
+ ================================================================== -->
+
+<script type="application/json" id="m170-config">
+{
+  "_v": 1,
+  "grid": {"rows": 5, "cols": 3},
+  "digits": {
+    "0": "111101101101111",
+    "1": "010110010010111",
+    "2": "111001111100111",
+    "3": "111001111001111",
+    "4": "101101111001001",
+    "5": "111100111001111",
+    "6": "111100111101111",
+    "7": "111001001001001",
+    "8": "111101111101111",
+    "9": "111101111001111"
+  },
+  "tableDigits": [1, 3, 6, 8],
+  "eqAnchor": 8,
+  "initial": {"u": 1, "v": 3},
+  "warmup": {"u": [1, 0, 1, 0], "v": [1, 1, 0, 0]},
+  "runMs": 350,
+  "unrollMs": 55,
+  "_meta": {
+    "grid": { "label": "Grid shape — rows by columns", "kind": "table",
+      "columns": ["rows", "cols"],
+      "help": "Every bitmap below must be rows×cols characters long; 5×3 gives the fifteen cells the page counts." },
+    "digits": { "label": "Digit bitmaps", "kind": "table", "regen": "binary-grid",
+      "help": "One row-major string of 0s and 1s per digit, read left→right, top→bottom. [RECONSTRUCT] — swap in the professor's own bitmaps and re-verify the pinned answers in the comment above." },
+    "tableDigits": { "label": "Digits in the pairwise-distance table", "kind": "list",
+      "help": "Exercises 1–2. The heading above the table names these digits in prose, so change both." },
+    "eqAnchor": { "label": "The digit exercise 5 measures distance from", "kind": "number",
+      "help": "Exercise 5 asks for two digits equidistant from this one; it is excluded from both pickers. Its heading names it in prose, so change both." },
+    "initial": { "label": "Digits loaded into u and v at Reset", "kind": "table",
+      "columns": ["u", "v"] },
+    "warmup": { "label": "The worksheet's own short example", "kind": "table",
+      "columns": ["u", "v"],
+      "help": "Two lists of the same length, shown under \"Show the math\" before the live grids. The worksheet's is u = [1,0,1,0], v = [1,1,0,0], distance 2." },
+    "runMs": { "label": "Milliseconds per cell while Run is going", "kind": "number" },
+    "unrollMs": { "label": "Milliseconds per entry in the unroll trace", "kind": "number" }
+  }
+}
+</script>
+
+<script>
+(function(){
+"use strict";
+
+/* [RECONSTRUCT] canonical 5×3 digit bitmaps and every other tunable live in
+   the config island above (see also the pinned-answers HTML comment). */
+var CFG = JSON.parse(document.getElementById("m170-config").textContent);
+function whole(v, d, lo, hi){
+  v = Math.round(+v);
+  if(!isFinite(v)) v = d;
+  return Math.min(hi, Math.max(lo, v));
+}
+var ROWS = whole((CFG.grid||{}).rows, 5, 1, 40);
+var COLS = whole((CFG.grid||{}).cols, 3, 1, 40);
+var N = ROWS * COLS;
+var FONT = {}, DIGITS = [];
+(function(){
+  var src = (CFG.digits && typeof CFG.digits==="object") ? CFG.digits : {};
+  Object.keys(src).forEach(function(k){
+    var d = +k; if(!isFinite(d)) return;
+    var s = String(src[k]).replace(/[^01]/g, "0").slice(0, N);
+    while(s.length < N) s += "0";          /* short bitmaps pad with blanks */
+    FONT[d] = s; DIGITS.push(d);
+  });
+  DIGITS.sort(function(a,b){ return a-b; });
+  if(!DIGITS.length){ FONT[0] = new Array(N+1).join("0"); DIGITS.push(0); }
+})();
+var TABLE_DIGITS = (function(){
+  var t = (Array.isArray(CFG.tableDigits) ? CFG.tableDigits : []).map(Number)
+            .filter(function(d){ return DIGITS.indexOf(d)>=0; });
+  return t.length ? t : DIGITS.slice(0, Math.min(4, DIGITS.length));
+})();
+var EQ_ANCHOR = DIGITS.indexOf(+CFG.eqAnchor)>=0 ? +CFG.eqAnchor : DIGITS[DIGITS.length-1];
+var DEFAULTS = (function(){
+  var i = CFG.initial || {};
+  function pick(v, k){ return DIGITS.indexOf(+v)>=0 ? +v : DIGITS[Math.min(k, DIGITS.length-1)]; }
+  return { u: pick(i.u, 0), v: pick(i.v, 1) };
+})();
+var RUN_MS = whole(CFG.runMs, 350, 1, 60000);      /* stepper grammar: Run animates 350ms/step */
+var UNROLL_MS = whole(CFG.unrollMs, 55, 1, 60000); /* unroll trace; >400ms total is spec'd ("animates once per load") */
+var WARM = (function(){
+  var w = CFG.warmup || {};
+  function list(a){ return (Array.isArray(a) ? a : []).map(function(x){ var n=+x; return isFinite(n)?n:0; }); }
+  var u = list(w.u), v = list(w.v), n = Math.min(u.length, v.length);
+  return { u: u.slice(0, n), v: v.slice(0, n), n: n };
+})();
+
+function blankCells(){ var z=[]; for(var i=0;i<N;i++) z.push(0); return z; }
+function bits(d){
+  var s = FONT[d];
+  return (typeof s === "string") ? s.split("").map(Number) : blankCells();
+}
+function l1(a,b){ var s=0; for(var i=0;i<N;i++) s += Math.abs(a[i]-b[i]); return s; }
+var NORMS = {}; DIGITS.forEach(function(nd){ NORMS[nd] = bits(nd).reduce(function(a,b){return a+b;},0); });
+function sub(n){ return String(n).replace(/\d/g, function(c){ return "₀₁₂₃₄₅₆₇₈₉"[+c]; }); }
+function reduced(){ return window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches; }
+function $(id){ return document.getElementById(id); }
+
+/* ---------- theme: auto → light → dark (design-system v2) ---------- */
+var root = document.documentElement, themeBtn = $("themeBtn");
+function themeLabel(){
+  var m = root.dataset.theme || "auto";
+  themeBtn.textContent = m==="dark" ? "● dark" : m==="light" ? "○ light" : "◑ auto";
+}
+themeBtn.addEventListener("click", function(){
+  var cur = root.dataset.theme || "auto";
+  var next = cur==="auto" ? "light" : cur==="light" ? "dark" : "auto";
+  if(next==="auto"){ delete root.dataset.theme; try{localStorage.removeItem("m170-theme");}catch(e){} }
+  else { root.dataset.theme = next; try{localStorage.setItem("m170-theme", next);}catch(e){} }
+  themeLabel();
+});
+themeLabel();
+/* all drawing is DOM + CSS custom properties, so a theme flip restyles itself */
+
+/* ---------- state ---------- */
+var state = {
+  mode: "draw",                       // "draw" | "worksheet"
+  u: { digit:1, cells: bits(1) },     // digit: 0–9 | "custom" | "blank"
+  v: { digit:3, cells: bits(3) },
+  sweep: { terms: [], done:false, timer:null },   // terms.length = cells compared so far
+  pending: null,                      // {kind:"pair",a,b} | {kind:"norm",d}
+  table: {},                          // "a,b" -> recorded distance
+  norms: {},                          // digit -> recorded norm
+  dirty: false                        // drawing edited or worksheet progress exists
+};
+var unrollToken = { u:0, v:0 };
+
+/* ---------- build the two grids + vector rows (once) ---------- */
+var gridEls = {}, vecEls = {};
+function buildSide(side){
+  var grid = $(side==="u" ? "gridU" : "gridV"), vec = $(side==="u" ? "vecU" : "vecV");
+  grid.style.gridTemplateColumns = "repeat("+COLS+",44px)";   /* island owns the shape, not the CSS */
+  gridEls[side] = []; vecEls[side] = [];
+  var i, b, s;
+  for(i=0;i<N;i++){
+    b = document.createElement("button");
+    b.type = "button"; b.className = "cell";
+    b.dataset.i = i;
+    b.title = "row "+(Math.floor(i/COLS)+1)+", column "+(i%COLS+1)+" → entry "+(i+1);
+    (function(idx){
+      b.addEventListener("click", function(){ toggleCell(side, idx); });
+    })(i);
+    grid.appendChild(b); gridEls[side].push(b);
+  }
+  grid.addEventListener("keydown", function(ev){ gridArrows(ev, side); });
+  var open = document.createElement("span"); open.textContent = "[";
+  vec.appendChild(open);
+  for(i=0;i<N;i++){
+    s = document.createElement("span"); s.className = "ve"; s.textContent = "·";
+    s.title = "entry "+(i+1)+" = row "+(Math.floor(i/COLS)+1)+", column "+(i%COLS+1);
+    vec.appendChild(s); vecEls[side].push(s);
+  }
+  var close = document.createElement("span"); close.textContent = "]";
+  vec.appendChild(close);
+}
+buildSide("u"); buildSide("v");
+
+function gridArrows(ev, side){
+  var t = ev.target; if(!t.classList || !t.classList.contains("cell")) return;
+  var i = +t.dataset.i, j = i;
+  if(ev.key==="ArrowRight") j = Math.min(N-1, i+1);
+  else if(ev.key==="ArrowLeft") j = Math.max(0, i-1);
+  else if(ev.key==="ArrowDown") j = Math.min(N-1, i+COLS);
+  else if(ev.key==="ArrowUp") j = Math.max(0, i-COLS);
+  else return;
+  ev.preventDefault();
+  gridEls[side][j].focus();
+}
+
+/* ---------- rendering ---------- */
+function sideName(side){
+  var d = state[side].digit;
+  return d==="custom" ? "your drawing" : d==="blank" ? "blank grid (all 0s)" : "digit "+d;
+}
+function renderLabels(){
+  $("labU").innerHTML = "<b>u</b> — " + sideName("u");
+  $("labV").innerHTML = "<b>v</b> — " + sideName("v");
+}
+function renderGrid(side){
+  var cells = state[side].cells, lock = state.mode==="worksheet";
+  var cur = curIndex();
+  for(var i=0;i<N;i++){
+    var el = gridEls[side][i];
+    el.setAttribute("aria-pressed", cells[i] ? "true" : "false");
+    el.setAttribute("aria-label", "row "+(Math.floor(i/COLS)+1)+", column "+(i%COLS+1)+", "+(cells[i]?"filled":"empty"));
+    el.disabled = lock;
+    el.classList.toggle("cur", i===cur);
+  }
+}
+function renderVec(side, upTo){ /* upTo: entries revealed (unroll); default all */
+  var cells = state[side].cells, cur = curIndex();
+  var k = (upTo===undefined) ? N : upTo;
+  for(var i=0;i<N;i++){
+    var el = vecEls[side][i];
+    el.textContent = i<k ? String(cells[i]) : "·";
+    el.classList.toggle("cur", i===cur);
+  }
+}
+function curIndex(){ /* the cell the sweep is currently pointing at (last compared) */
+  var k = state.sweep.terms.length;
+  return k>0 ? k-1 : -1;
+}
+function renderPickers(){
+  ["u","v"].forEach(function(side){
+    var box = $(side==="u" ? "pickU" : "pickV");
+    var btns = box.querySelectorAll("button");
+    for(var i=0;i<btns.length;i++)
+      btns[i].setAttribute("aria-pressed", String(state[side].digit === +btns[i].textContent));
+  });
+}
+function renderSweep(){
+  var sw = state.sweep, k = sw.terms.length;
+  var term = $("termline"), run = $("runsum"), tally = $("tally"), fin = $("finale");
+  $("stepCount").textContent = sw.done ? "cell "+N+" / "+N+" — done" : (k ? "cell "+k+" / "+N : "cell – / "+N);
+  $("backBtn").disabled = (k===0);
+  $("stepBtn").disabled = sw.done || !!sw.timer;
+  $("runBtn").disabled = sw.done;
+  $("runBtn").textContent = sw.timer ? "Pause ‖" : "Run ▸▸";
+  if(k===0){
+    term.textContent = "press Step ▸ to compare cell 1 of "+N;
+    run.textContent = "";
+    tally.textContent = "–";
+    $("tlabel").textContent = "disagreements so far";
+  } else {
+    var i = k-1, a = state.u.cells[i], b = state.v.cells[i], d = Math.abs(a-b);
+    term.textContent = "cell "+k+":  u"+sub(k)+" = "+a+",  v"+sub(k)+" = "+b+
+      "  →  |"+a+"−"+b+"| = "+d+"  →  "+(d ? "different (+1)" : "same (+0)");
+    run.textContent = "terms so far:  " + sw.terms.join(" + ");
+    tally.textContent = String(sw.terms.reduce(function(x,y){return x+y;},0));
+    $("tlabel").textContent = "disagreements so far";
+  }
+  if(sw.done){
+    var total = sw.terms.reduce(function(x,y){return x+y;},0);
+    var parts = [];
+    for(var q=0;q<N;q++) parts.push("|"+state.u.cells[q]+"−"+state.v.cells[q]+"|");
+    /* long sums elide the middle (the default 15-cell grid always does) */
+    var expr = (N>3) ? (parts[0]+" + "+parts[1]+" + … + "+parts[N-1]) : parts.join(" + ");
+    fin.textContent =
+      "d(u,v) = "+expr+" = "+total+"\n" +
+      "written with Σ:  d(u,v) = Σᵢ|uᵢ−vᵢ| = "+total;
+    fin.style.whiteSpace = "pre-line";
+    fin.classList.add("show");
+    $("tlabel").textContent = "disagreements in total — that is the L1 distance";
+  } else {
+    fin.classList.remove("show");
+  }
+  renderGrid("u"); renderGrid("v"); renderVec("u"); renderVec("v");
+}
+function renderWorksheet(){
+  /* 4×4 table values + gold outline on the loaded pair */
+  var tds = $("dtable").querySelectorAll("td[data-pair]");
+  for(var i=0;i<tds.length;i++){
+    var td = tds[i], key = td.dataset.pair, btn = td.firstChild;
+    btn.textContent = (key in state.table) ? String(state.table[key]) : "·";
+    var p = state.pending;
+    var isTarget = p && p.kind==="pair" &&
+      (key === p.a+","+p.b || key === p.b+","+p.a);
+    td.classList.toggle("target", !!isTarget);
+  }
+  var slots = $("normstrip").querySelectorAll(".slot");
+  for(var j=0;j<slots.length;j++){
+    var d = +slots[j].dataset.d;
+    slots[j].querySelector(".n").textContent = (d in state.norms) ? String(state.norms[d]) : "?";
+    slots[j].classList.toggle("target", !!(state.pending && state.pending.kind==="norm" && state.pending.d===d));
+  }
+}
+function renderMath(){
+  var u = state.u.cells, v = state.v.cells, i;
+  var terms = [], vals = [];
+  for(i=0;i<N;i++){ terms.push("|"+u[i]+"−"+v[i]+"|"); vals.push(Math.abs(u[i]-v[i])); }
+  var total = vals.reduce(function(a,b){return a+b;},0);
+  var L = [];
+  if(WARM.n){                       /* the worksheet's short example, from the island */
+    var wt = [], wv = [], wtot = 0, j;
+    for(j=0;j<WARM.n;j++){
+      wt.push("|"+WARM.u[j]+"−"+WARM.v[j]+"|");
+      wv.push(Math.abs(WARM.u[j]-WARM.v[j]));
+      wtot += Math.abs(WARM.u[j]-WARM.v[j]);
+    }
+    L.push("warm-up — the worksheet's own "+WARM.n+"-entry example:");
+    L.push("");
+    L.push("  u = ["+WARM.u.join(", ")+"]");
+    L.push("  v = ["+WARM.v.join(", ")+"]");
+    L.push("        "+WARM.u.map(function(x,k){ return x===WARM.v[k] ? "same" : "diff"; }).join("   "));
+    L.push("  d(u,v) = "+wt.join(" + "));
+    L.push("         ="+wv.map(function(x){ return "   "+x; }).join("   +"));
+    L.push("         = "+wtot);
+    L.push("");
+    L.push("  the same sum written compactly:  d(u,v) = Σᵢ|uᵢ−vᵢ| = "+wtot);
+    L.push("");
+  }
+  L.push("your grids right now (u = "+sideName("u")+", v = "+sideName("v")+"):");
+  L.push("");
+  L.push("  u = ["+u.join(",")+"]");
+  L.push("  v = ["+v.join(",")+"]");
+  L.push("");
+  L.push("  d(u,v) = "+terms.join(" + "));
+  L.push("         = "+vals.join(" + "));
+  L.push("         = "+total);
+  $("mathbox").textContent = L.join("\n");
+}
+function renderAll(){
+  renderLabels(); renderPickers(); renderSweep(); renderWorksheet(); renderMath();
+}
+
+/* ---------- unroll animation (once per load; gold trace, row-major) ---------- */
+function unroll(side){
+  var token = ++unrollToken[side];
+  var cells = gridEls[side];
+  if(reduced()){ renderVec(side); return; }
+  renderVec(side, 0);
+  var i = 0;
+  (function tick(){
+    if(token !== unrollToken[side]) return;         // superseded by a newer load
+    if(i>0) cells[i-1].classList.remove("cur");
+    if(i>=N){ renderVec(side); return; }
+    cells[i].classList.add("cur");
+    renderVec(side, i+1);
+    vecEls[side][i].classList.add("pop");
+    (function(k){ setTimeout(function(){ vecEls[side][k].classList.remove("pop"); }, 300); })(i);
+    i++;
+    setTimeout(tick, UNROLL_MS);
+  })();
+}
+function finishUnrolls(){
+  unrollToken.u++; unrollToken.v++;
+  gridEls.u.concat(gridEls.v).forEach(function(el){ el.classList.remove("cur"); });
+  renderVec("u"); renderVec("v");
+}
+
+/* ---------- loading & editing ---------- */
+function loadInto(side, digit, animate){
+  stopRun();
+  state[side].digit = digit;
+  state[side].cells = digit==="blank" ? blankCells() : bits(digit);
+  sweepReset();
+  renderAll();
+  if(animate) unroll(side);
+}
+function toggleCell(side, i){
+  if(state.mode==="worksheet") return;
+  stopRun(); finishUnrolls();
+  state[side].cells[i] = state[side].cells[i] ? 0 : 1;
+  state[side].digit = "custom";
+  state.dirty = true;
+  sweepReset();
+  renderAll();
+  vecEls[side][i].classList.add("pop");      // flash the matching vector entry
+  (function(el){ setTimeout(function(){ el.classList.remove("pop"); }, 300); })(vecEls[side][i]);
+}
+
+/* ---------- the sweep (Step / Run / Back — shared stepper grammar) ---------- */
+function sweepReset(){
+  stopRun();
+  state.sweep.terms = []; state.sweep.done = false;
+}
+function sweepStep(){
+  var sw = state.sweep;
+  if(sw.done) return;
+  finishUnrolls();
+  var i = sw.terms.length;
+  sw.terms.push(Math.abs(state.u.cells[i] - state.v.cells[i]));
+  if(sw.terms.length===N){ sw.done = true; onSweepDone(); }
+  renderSweep(); renderWorksheet();
+}
+function sweepBack(){
+  var sw = state.sweep;
+  if(!sw.terms.length) return;
+  stopRun();
+  sw.terms.pop(); sw.done = false;
+  $("sweepStatus").textContent = "";
+  renderSweep();
+}
+function stopRun(){
+  if(state.sweep.timer){ clearInterval(state.sweep.timer); state.sweep.timer = null; }
+  $("runBtn").textContent = "Run ▸▸";
+}
+function runToggle(){
+  var sw = state.sweep;
+  if(sw.timer){ stopRun(); renderSweep(); return; }
+  if(sw.done) return;
+  finishUnrolls();
+  sw.timer = setInterval(function(){
+    sweepStep();
+    if(state.sweep.done) stopRun();
+  }, reduced() ? 0 : RUN_MS);
+  renderSweep();
+}
+function onSweepDone(){
+  var total = state.sweep.terms.reduce(function(a,b){return a+b;},0);
+  var why = "stopped — all "+N+" cells compared. d(u,v) = "+total+".";
+  var p = state.pending;
+  if(state.mode==="worksheet" && p){
+    if(p.kind==="pair"){
+      state.table[p.a+","+p.b] = total;
+      state.table[p.b+","+p.a] = total;   // distance is symmetric — record both cells
+      why += "  recorded d("+p.a+","+p.b+") in the table, both ways (distance is symmetric).";
+    } else if(p.kind==="norm"){
+      state.norms[p.d] = total;
+      why += "  recorded ‖"+p.d+"‖ = "+total+" — its filled-cell count.";
+    }
+    state.dirty = true;
+  }
+  $("sweepStatus").textContent = why;
+}
+
+/* ---------- pickers (0–9 into u and into v) ---------- */
+["u","v"].forEach(function(side){
+  var box = $(side==="u" ? "pickU" : "pickV");
+  DIGITS.forEach(function(d){
+    var b = document.createElement("button");
+    b.type = "button"; b.textContent = String(d);
+    b.style.padding = "7px 0"; b.style.width = "10%"; b.style.minWidth = "24px";
+    b.setAttribute("aria-pressed", "false");
+    (function(dd){ b.addEventListener("click", function(){
+      loadInto(side, dd, true);
+      $("sweepStatus").textContent = "";
+    }); })(d);
+    box.appendChild(b);
+  });
+  box.style.display = "flex"; box.style.width = "100%";
+});
+
+/* ---------- worksheet panel ---------- */
+(function buildTable(){
+  var tb = $("dtable"), tr = document.createElement("tr"), th = document.createElement("th");
+  th.textContent = "d"; tr.appendChild(th);
+  TABLE_DIGITS.forEach(function(c){
+    var h = document.createElement("th"); h.scope = "col"; h.textContent = String(c); tr.appendChild(h);
+  });
+  tb.appendChild(tr);
+  TABLE_DIGITS.forEach(function(r){
+    var row = document.createElement("tr");
+    var h = document.createElement("th"); h.scope = "row"; h.textContent = String(r); row.appendChild(h);
+    TABLE_DIGITS.forEach(function(c){
+      var td = document.createElement("td");
+      if(r===c){
+        td.className = "diag"; td.textContent = "0";
+        td.title = "a digit never disagrees with itself";
+      } else {
+        td.dataset.pair = r+","+c;
+        var b = document.createElement("button");
+        b.type = "button"; b.textContent = "·";
+        b.setAttribute("aria-label", "distance between "+r+" and "+c+" — click to load this pair");
+        b.addEventListener("click", function(){
+          state.pending = { kind:"pair", a:r, b:c };
+          loadInto("u", r, true); loadInto("v", c, true);
+          state.pending = { kind:"pair", a:r, b:c };   // loadInto cleared nothing, but be explicit
+          $("sweepStatus").textContent = "loaded "+r+" vs "+c+" — sweep to record the distance.";
+          renderWorksheet();
+        });
+        td.appendChild(b);
+      }
+      row.appendChild(td);
+    });
+    tb.appendChild(row);
+  });
+})();
+(function buildNorms(){
+  var strip = $("normstrip");
+  DIGITS.forEach(function(d){
+    var b = document.createElement("button");
+    b.type = "button"; b.className = "slot"; b.dataset.d = d;
+    b.innerHTML = '<span class="d">'+d+'</span><span class="n">?</span>';
+    b.setAttribute("aria-label", "digit "+d+" — click to load it against the blank grid");
+    (function(dd){ b.addEventListener("click", function(){
+      state.pending = { kind:"norm", d:dd };
+      loadInto("u", dd, true); loadInto("v", "blank", true);
+      state.pending = { kind:"norm", d:dd };
+      $("sweepStatus").textContent = "loaded "+dd+" vs blank — sweep to count its filled cells.";
+      renderWorksheet();
+    }); })(d);
+    strip.appendChild(b);
+  });
+})();
+(function buildSelects(){
+  function fill(sel, skipAnchor){
+    var o = document.createElement("option"); o.value=""; o.textContent="–"; sel.appendChild(o);
+    DIGITS.forEach(function(d){
+      if(skipAnchor && d===EQ_ANCHOR) return;
+      var op = document.createElement("option"); op.value = d; op.textContent = String(d);
+      sel.appendChild(op);
+    });
+  }
+  fill($("selBig")); fill($("selSmall")); fill($("selEqA"), true); fill($("selEqB"), true);
+})();
+
+/* answers computed from FONT at runtime, so the UI can never drift from the bitmaps */
+var BIGGEST = DIGITS[0], SMALLEST = DIGITS[0];   // 8 and 7 for the default font — see pinned comment
+(function(){ var mx=-1, mn=Infinity;
+  DIGITS.forEach(function(d){ if(NORMS[d]>mx){mx=NORMS[d];BIGGEST=d;} if(NORMS[d]<mn){mn=NORMS[d];SMALLEST=d;} });
+})();
+function checkSize(){
+  var big = $("selBig").value, small = $("selSmall").value, msgs = [];
+  if(big!==""){
+    state.dirty = true;
+    msgs.push(+big===BIGGEST
+      ? "✓ biggest: "+BIGGEST+" fills "+NORMS[BIGGEST]+" of "+N+" cells — more than any other digit."
+      : "✗ digit "+big+" fills "+NORMS[+big]+" cells — another digit fills more. Sweep more digits vs. blank.");
+  }
+  if(small!==""){
+    state.dirty = true;
+    msgs.push(+small===SMALLEST
+      ? "✓ smallest: "+SMALLEST+" fills only "+NORMS[SMALLEST]+" cells — the least ink of any digit."
+      : "✗ digit "+small+" fills "+NORMS[+small]+" cells — another digit fills fewer.");
+  }
+  $("fbSize").textContent = msgs.join("  ");
+}
+$("selBig").addEventListener("change", checkSize);
+$("selSmall").addEventListener("change", checkSize);
+
+function checkEq(){
+  var a = $("selEqA").value, b = $("selEqB").value, out = $("fbEq"), row = $("eqrow");
+  row.classList.remove("found");
+  if(a==="" || b===""){ out.textContent = ""; return; }
+  state.dirty = true;
+  a = +a; b = +b;
+  if(a===b){ out.textContent = "pick two different digits"; return; }
+  var anchor = bits(EQ_ANCHOR);
+  var da = l1(bits(a), anchor),
+      db = l1(bits(b), anchor);
+  if(da===db){
+    row.classList.add("found");
+    out.textContent = "d("+a+","+EQ_ANCHOR+") = "+da+"  and  d("+b+","+EQ_ANCHOR+") = "+db+"  →  equidistant ✓";
+  } else {
+    out.textContent = "d("+a+","+EQ_ANCHOR+") = "+da+"  but  d("+b+","+EQ_ANCHOR+") = "+db+"  →  not equal — keep hunting";
+  }
+}
+$("selEqA").addEventListener("change", checkEq);
+$("selEqB").addEventListener("change", checkEq);
+
+/* ---------- mode switch ---------- */
+function setMode(m){
+  state.mode = m;
+  state.pending = null;
+  $("modeDraw").setAttribute("aria-pressed", String(m==="draw"));
+  $("modeWs").setAttribute("aria-pressed", String(m==="worksheet"));
+  $("wsPanel").hidden = (m!=="worksheet");
+  $("pickUwrap").style.display = (m==="draw") ? "" : "none";
+  $("pickVwrap").style.display = (m==="draw") ? "" : "none";
+  $("modeHint").textContent = m==="draw"
+    ? "click cells to flip pixels, or load a digit below"
+    : "grids are read-only here — the exercises above load them";
+  $("sweepStatus").textContent = "";
+  renderAll();
+}
+$("modeDraw").addEventListener("click", function(){ setMode("draw"); });
+$("modeWs").addEventListener("click", function(){ setMode("worksheet"); });
+
+/* ---------- stepper buttons ---------- */
+$("stepBtn").addEventListener("click", sweepStep);
+$("backBtn").addEventListener("click", sweepBack);
+$("runBtn").addEventListener("click", runToggle);
+
+/* ---------- show the math ---------- */
+var mt = $("mathToggle"), mr = $("mathReveal");
+mt.addEventListener("click", function(){
+  var open = mr.hidden; mr.hidden = !open;
+  mt.setAttribute("aria-expanded", String(open));
+  mt.textContent = open ? "Hide the math ▾" : "Show the math ▸";
+});
+
+/* ---------- reset (two-press confirm when student data would be lost) ---------- */
+var resetBtn = $("reset"), resetArmed = null;
+function doReset(){
+  stopRun();
+  state.table = {}; state.norms = {}; state.pending = null; state.dirty = false;
+  $("selBig").value = ""; $("selSmall").value = ""; $("selEqA").value = ""; $("selEqB").value = "";
+  $("fbSize").textContent = ""; $("fbEq").textContent = ""; $("eqrow").classList.remove("found");
+  $("sweepStatus").textContent = "";
+  setMode("draw");
+  /* initial teaching state: digits 1 vs 3 loaded, tally not yet run */
+  loadInto("u", DEFAULTS.u, true);
+  loadInto("v", DEFAULTS.v, true);
+}
+resetBtn.addEventListener("click", function(){
+  if(!state.dirty || resetArmed){
+    if(resetArmed){ clearTimeout(resetArmed); resetArmed = null; }
+    resetBtn.textContent = "Reset";
+    doReset();
+    return;
+  }
+  resetBtn.textContent = "Really reset?";
+  resetArmed = setTimeout(function(){
+    resetArmed = null; resetBtn.textContent = "Reset";
+  }, 2000);
+});
+
+/* ---------- boot: the initial teaching state ---------- */
+loadInto("u", DEFAULTS.u, true);
+loadInto("v", DEFAULTS.v, true);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,713 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clustering what you can't plot · MATH 170</title>
+
+<!-- ================================================================
+     DESIGN-SYSTEM v2 TOKEN BLOCK — copied verbatim into every file.
+     A global tweak stays a find-replace across the set.
+     Copied UNCHANGED from the exemplar (week-13-softmax.html).
+     ================================================================ -->
+<style>
+/* hidden must always win over any author display rule */
+[hidden]{display:none !important}
+
+:root{
+  /* color — light */
+  --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+  --gold-soft:rgba(218,165,32,.12);
+  --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  /* type */
+  --font-body: ui-serif, Georgia, "Times New Roman", serif;
+  --font-ui:   system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+  --text-xl:1.75rem; --text-lg:1.25rem; --text-base:1rem; --text-sm:.875rem; --text-xs:.75rem;
+  --leading-prose:1.6; --leading-ui:1.3;
+  /* spacing */
+  --space-1:4px; --space-2:8px; --space-3:16px; --space-4:24px; --space-5:32px; --space-6:48px;
+  /* motion */
+  --ease:cubic-bezier(0.16,1,0.3,1); --dur:200ms;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+    --gold-soft:rgba(227,179,65,.16);
+    --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+  --gold-soft:rgba(227,179,65,.16);
+  --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+}
+@media (prefers-reduced-motion: reduce){ :root{ --dur:0ms; } }
+@media print{
+  :root, :root[data-theme="dark"]{
+    --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+    --gold-soft:rgba(218,165,32,.12);
+    --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  }
+  .theme-btn{display:none}
+  .stage{break-inside:avoid}
+}
+
+/* ================= base skin (design-system §3–§4) ================= */
+*{box-sizing:border-box}
+html{color-scheme:light dark}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--font-body); font-size:var(--text-base); line-height:var(--leading-prose);
+  -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:820px; margin:0 auto; padding:var(--space-5) var(--space-4) var(--space-6);}
+.topbar{display:flex; align-items:baseline; justify-content:space-between; gap:var(--space-3);
+  border-bottom:1px solid var(--gray-line); padding-bottom:var(--space-2); margin-bottom:var(--space-4);}
+.eyebrow{font-family:var(--font-ui); font-size:var(--text-xs); letter-spacing:.08em; text-transform:uppercase; color:var(--gray-text);}
+h1{font-family:var(--font-body); font-weight:600; font-size:var(--text-xl); line-height:1.2; margin:.2em 0 .1em;}
+h2{font-family:var(--font-ui); font-weight:600; font-size:var(--text-lg); line-height:1.3; margin:var(--space-5) 0 var(--space-2);}
+p{margin:0 0 var(--space-3);}
+.prose{max-width:66ch;}
+.muted{color:var(--gray-text);}
+.mono,code{font-family:var(--font-mono); font-variant-numeric:tabular-nums;}
+a{color:inherit;}
+:focus-visible{outline:2px solid var(--ink); outline-offset:2px; box-shadow:0 0 0 5px var(--gold-soft);}
+
+.theme-btn{font-family:var(--font-ui); font-size:var(--text-xs); background:none;
+  border:1px solid var(--gray-line); color:var(--gray-text); padding:6px 10px; cursor:pointer; border-radius:2px;}
+.theme-btn:hover{background:var(--gray-fill);}
+
+/* spec header */
+details.spec{border:1px solid var(--gray-line); border-radius:2px; margin:0 0 var(--space-4); background:var(--gray-fill);}
+details.spec>summary{font-family:var(--font-ui); font-size:var(--text-sm); cursor:pointer;
+  padding:var(--space-2) var(--space-3); list-style:none; color:var(--gray-text);}
+details.spec>summary::-webkit-details-marker{display:none}
+details.spec>summary::before{content:"▸ "; color:var(--gold);}
+details.spec[open]>summary::before{content:"▾ ";}
+.spec-body{padding:0 var(--space-3) var(--space-3); font-family:var(--font-ui); font-size:var(--text-sm); line-height:1.5;}
+.spec-body dt{font-weight:600; margin-top:var(--space-2);}
+.spec-body dd{margin:0; color:var(--gray-text);}
+
+/* stage */
+.stage{margin:var(--space-4) 0; text-align:center;}
+svg{max-width:100%; height:auto; font-family:var(--font-ui);}
+figcaption{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); margin-top:var(--space-2);}
+
+/* controls */
+.controls{border-top:1px solid var(--gray-line); padding-top:var(--space-3); margin-top:var(--space-4);
+  display:grid; grid-template-columns:1fr 1fr; gap:var(--space-3) var(--space-4);}
+.controls .full{grid-column:1/-1;}
+@media(max-width:560px){ .controls{grid-template-columns:1fr;} }
+.ctl label{display:flex; justify-content:space-between; align-items:baseline;
+  font-family:var(--font-ui); font-size:var(--text-sm); line-height:var(--leading-ui);}
+.ctl .val{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm); color:var(--ink);}
+.ctl .val.gold{color:var(--gold); font-weight:600;}
+.ctl .note{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); margin-top:4px;}
+
+/* range slider — filled track works in ALL engines (design-system v2 fix):
+   wireSlider() paints the webkit track with a two-stop gradient on input. */
+input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:18px;
+  background:transparent; margin:6px 0 0; cursor:pointer;}
+input[type=range]::-webkit-slider-runnable-track{height:2px; border-radius:1px;
+  background:var(--track, var(--gray-line));}
+input[type=range]::-moz-range-track{height:2px; background:var(--gray-line);}
+input[type=range]::-moz-range-progress{height:2px; background:var(--gold);}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; appearance:none;
+  width:18px; height:18px; margin-top:-8px; border-radius:50%; background:var(--gold); border:1px solid var(--ink);}
+input[type=range]::-moz-range-thumb{width:18px; height:18px; border-radius:50%; background:var(--gold); border:1px solid var(--ink);}
+
+/* buttons + segmented + stepper */
+.btn{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:1px solid var(--ink); padding:8px 14px; cursor:pointer; border-radius:2px;}
+.btn:hover{background:var(--gray-fill);}
+.btn.primary{background:var(--gold); border-color:var(--gold); color:#111111;}
+.btn[disabled]{border-color:var(--gray-line); color:var(--gray-line); cursor:default; background:var(--paper);}
+.seg{display:inline-flex; border:1px solid var(--ink); border-radius:2px; overflow:hidden;}
+.seg button{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:0; border-left:1px solid var(--ink); padding:7px 12px; cursor:pointer;}
+.seg button:first-child{border-left:0;}
+.seg button[aria-pressed="true"]{background:var(--gold); color:#111111;}
+.stepper{display:inline-flex; align-items:center; gap:var(--space-2); font-family:var(--font-ui); font-size:var(--text-sm);}
+.stepper .count{font-family:var(--font-mono); font-variant-numeric:tabular-nums; color:var(--gray-text);}
+
+.foot{display:flex; align-items:center; gap:var(--space-3); margin-top:var(--space-5);
+  border-top:1px solid var(--gray-line); padding-top:var(--space-3); flex-wrap:wrap;}
+.foot .btn{margin-right:auto;}
+.hint{font-family:var(--font-ui); font-size:var(--text-sm); color:var(--gray-text);}
+
+/* math reveal */
+.mathbox{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm);
+  background:var(--gray-fill); border-left:2px solid var(--gold); padding:var(--space-3);
+  margin:var(--space-3) 0; overflow-x:auto; white-space:pre; line-height:1.7; text-align:left;}
+.attach{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text);
+  border-top:1px dotted var(--gray-line); margin-top:var(--space-6); padding-top:var(--space-3);}
+.tag{display:inline-block; font-family:var(--font-ui); font-size:var(--text-xs);
+  border:1px solid var(--gray-line); border-radius:999px; padding:1px 8px; color:var(--gray-text); margin-left:6px;}
+.callout{font-family:var(--font-ui); font-size:var(--text-sm); border:1px solid var(--gray-line);
+  border-left:2px solid var(--gold); padding:var(--space-2) var(--space-3); margin:var(--space-3) 0; background:var(--paper);}
+</style>
+
+<!-- ============ page-specific styles (DOM tables — no plot) ============ -->
+<style>
+/* rating panel: one tri-state segmented control per movie */
+.rate-grid{display:grid; grid-template-columns:1fr 1fr; gap:var(--space-3) var(--space-4);
+  border-top:1px solid var(--gray-line); padding-top:var(--space-3); margin-top:var(--space-3);}
+@media(max-width:620px){ .rate-grid{grid-template-columns:1fr;} }
+.rate-item{display:flex; align-items:center; justify-content:space-between; gap:var(--space-2);}
+.rate-item .mtitle{font-family:var(--font-ui); font-size:var(--text-sm); line-height:var(--leading-ui);}
+.seg.tri button{min-width:44px; padding:7px 8px;}
+.seg.tri button .sub{display:block; font-size:.62rem; color:inherit; opacity:.75; line-height:1.1;}
+
+/* your-vector strip */
+.vecstrip{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm);
+  background:var(--gray-fill); border-left:2px solid var(--gold); padding:var(--space-2) var(--space-3);
+  margin:var(--space-3) 0; overflow-x:auto; white-space:nowrap; text-align:left;}
+.vecstrip b{color:var(--gold);}
+
+/* action row */
+.actions{display:flex; align-items:center; gap:var(--space-3); flex-wrap:wrap; margin:var(--space-3) 0;}
+
+/* distance / roster / refit tables — plain DOM tables, deliberately */
+.scrollx{overflow-x:auto; margin:var(--space-2) 0;}
+table.dt{border-collapse:collapse; font-family:var(--font-mono); font-variant-numeric:tabular-nums;
+  font-size:var(--text-sm); margin:0 auto;}
+table.dt th{font-family:var(--font-ui); font-weight:400; font-size:var(--text-xs); color:var(--gray-text);
+  padding:4px 8px; border-bottom:1px solid var(--gray-line); max-width:5.5em; overflow-wrap:break-word; vertical-align:bottom;}
+table.dt td{padding:4px 10px; text-align:center; border-bottom:1px solid var(--gray-line);}
+/* 16 movies = 17 columns: the row label pins to the left edge of the scroll
+   container so a scrolled-out row still says whose numbers these are. */
+table.dt td.rowlab, table.dt th.rowlab{font-family:var(--font-ui); font-size:var(--text-xs);
+  color:var(--gray-text); text-align:right; max-width:none; white-space:nowrap;
+  position:sticky; left:0; background:var(--paper); z-index:1;}
+table.dt tr.emph td{font-weight:600;}
+table.dt td.moved{background:var(--gold-soft); font-weight:600;}
+table.dt td.you{color:var(--gold); font-weight:600;}
+
+.pcard{border:1px solid var(--gray-line); border-radius:2px; padding:var(--space-3); margin:var(--space-3) 0;}
+.pcard.nearest{border:2px solid var(--gold);}
+.pcard-head{font-family:var(--font-ui); font-size:var(--text-sm); font-weight:600; display:flex;
+  align-items:baseline; gap:var(--space-2); flex-wrap:wrap; margin-bottom:var(--space-1);}
+.pcard-head .chip{font-family:var(--font-ui); font-size:var(--text-xs); font-weight:400;
+  border:1px solid var(--gold); border-radius:999px; padding:1px 8px; color:var(--ink); background:var(--gold-soft);}
+.distline{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm);
+  margin-top:var(--space-2); overflow-x:auto; white-space:nowrap;}
+.placeholder{font-family:var(--font-ui); font-size:var(--text-sm); color:var(--gray-text);
+  border:1px dashed var(--gray-line); border-radius:2px; padding:var(--space-3); margin:var(--space-3) 0;}
+section.block{margin:var(--space-4) 0; text-align:left;}
+.result{font-family:var(--font-ui); font-size:var(--text-sm); margin:var(--space-2) 0;}
+.fnote{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); margin-top:var(--space-1);}
+@media print{ .pcard, .placeholder{break-inside:avoid;}
+  table.dt td.rowlab, table.dt th.rowlab{position:static; background:transparent;}
+  .scrollx{overflow-x:visible;} }
+</style>
+
+<!-- theme boot: apply stored choice before first paint (no flash) -->
+<script>
+try{var t=localStorage.getItem("m170-theme");if(t)document.documentElement.dataset.theme=t;}catch(e){}
+</script>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="eyebrow">MATH 170 · Clustering · Movie Preferences for k-Means</div>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Color theme">◑ auto</button>
+  </div>
+
+  <h1 data-edit="title">Clustering what you can't plot <span class="tag">k-means · L1</span></h1>
+  <p class="prose muted" data-edit="intro">You are the data point. Rate sixteen movies and your whole taste
+  becomes a list of sixteen numbers — a vector with no picture. Then run one loop of
+  k-means on yourself: <strong>assign</strong> (which taste-cluster are you nearest?)
+  and <strong>update</strong> (your joining moves the cluster's center).</p>
+
+  <div data-slot="notes-top"></div>
+
+
+  <div class="callout" data-edit="note-no-plot"><strong>No scatterplot on this page — that's the point.</strong>
+  Two movies you could draw. Sixteen movies means sixteen axes: nowhere to draw them,
+  and nothing stops the math. Every number below comes from the same L1 recipe you
+  met with the digit grids: distance = |u<sub>1</sub>−v<sub>1</sub>| + |u<sub>2</sub>−v<sub>2</sub>| + … + |u<sub>16</sub>−v<sub>16</sub>|.</div>
+
+  <div class="stage" style="text-align:left;">
+
+    <h2 data-edit="h2-rate">1 · Rate the movies</h2>
+    <p class="prose muted" id="ratePrompt" data-edit="rate-prompt" style="font-family:var(--font-ui); font-size:var(--text-sm);">
+      Rate the movies — pick 0 if you haven't seen it.</p>
+    <div class="rate-grid" id="rateGrid"></div>
+    <div class="vecstrip" id="vecStrip" aria-live="polite"></div>
+
+    <h2 data-edit="h2-assign">2 · Assign — which persona are you nearest?</h2>
+    <p class="prose muted" data-edit="assign-prompt" style="font-family:var(--font-ui); font-size:var(--text-sm);">
+      Three taste-personas act as the k=3 starting centroids. "Place me" runs one
+      assign step: your disagreement with each persona, movie by movie, summed left to right.</p>
+    <div class="actions">
+      <button class="btn" id="placeBtn" type="button">Place me ▸</button>
+      <button class="btn" id="refitBtn" type="button" disabled>Refit step ▸</button>
+      <span class="stepper"><span class="count" id="stepLabel">step 0 — rate</span></span>
+    </div>
+    <div class="result" id="placeResult" aria-live="polite"></div>
+    <div id="assignOut"><div class="placeholder">Rate above, then press <strong>Place me ▸</strong> to run the assign step.</div></div>
+
+    <section class="block" id="rosterBlock" hidden>
+      <h2 data-edit="h2-roster">3 · The roster — nearest and farthest classmate</h2>
+      <p class="prose muted" data-edit="roster-prompt" style="font-family:var(--font-ui); font-size:var(--text-sm);">
+        Six classmates already rated the same movies. Every distance below is the same
+        left-to-right sum — no plot needed to say who's near you.</p>
+      <div id="rosterOut"></div>
+    </section>
+
+    <section class="block" id="refitBlock" hidden>
+      <h2 data-edit="h2-refit">4 · Update — the refit step</h2>
+      <p class="prose muted" data-edit="refit-prompt" style="font-family:var(--font-ui); font-size:var(--text-sm);">
+        The other half of the k-means loop: each cluster's centroid becomes the
+        per-movie <em>average</em> of everyone assigned to it — including you.</p>
+      <div id="refitOut"></div>
+    </section>
+
+  </div>
+
+  <div class="callout" data-edit="note-multiuser"><strong>Want to do this with your whole class
+  instead of six fictional students?</strong> The Shared Plane — the classroom app — has a
+  <em>rate &amp; cluster movies</em> mode. Everyone rates the movie list on their own
+  device, the instructor locks the ratings and steps k-means in every dimension at once, and
+  the projector shows the clusters as named lists with each cluster's mean rating underneath.
+  Still no scatterplot, for the same reason as here: there is nowhere to draw that many axes, and
+  nothing stops the math. One difference worth saying out loud: the room version still runs on the
+  original <strong>eight</strong> titles — the first eight in the list above — because its copy of the
+  list has not been extended yet.</div>
+
+  <div data-slot="notes-bottom"></div>
+
+  <div class="foot">
+    <button class="btn" id="reset" type="button">Reset</button>
+    <span class="hint" data-edit="hint-try">Try: place yourself, then flip one rating from +1 to −1 — each persona distance changes by at most 2, so from an all-zero row it takes at least three changed ratings to join a different cluster.</span>
+  </div>
+
+</div>
+
+<script type="application/json" id="m170-config">
+{
+  "_v": 1,
+  "movies": ["The Avengers", "The Notebook", "Get Out", "Frozen",
+             "Oppenheimer", "Mean Girls", "Dune", "Paddington 2",
+             "Barbie", "Everything Everywhere All At Once", "Parasite", "Moonlight",
+             "The Social Network", "Kung Fu Panda", "Zootopia", "Shrek"],
+  "scale": [
+    {"value": -1, "label": "−1", "sub": "disliked", "aria": "disliked it"},
+    {"value": 0,  "label": "0",  "sub": "haven’t seen", "aria": "haven’t seen / neutral"},
+    {"value": 1,  "label": "+1", "sub": "liked", "aria": "liked it"}
+  ],
+  "initialRating": 0,
+  "personas": [
+    {"name": "Blockbuster Barb", "v": [ 1,  0,  0,  1,  1,  0,  1,  0,   1,  0,  0,  0,  0,  1,  1,  1]},
+    {"name": "Arthouse Ash",     "v": [-1, -1,  1, -1,  1,  0,  1,  0,   0,  1,  1,  1,  1, -1, -1, -1]},
+    {"name": "Cozy Cameron",     "v": [ 0,  1, -1,  1, -1,  1, -1,  1,   1, -1, -1, -1, -1,  1,  1,  1]}
+  ],
+  "classmates": [
+    {"name": "Sam",    "v": [ 1,  0,  1,  1,  1,  0,  1,  0,   1,  1,  1,  0,  1,  1,  1,  1]},
+    {"name": "Riley",  "v": [-1, -1,  1,  0,  1,  0,  1, -1,   0,  1,  1,  1,  1, -1,  0, -1]},
+    {"name": "Jordan", "v": [ 0,  1, -1,  1,  0,  1,  0,  1,   1,  0, -1,  0, -1,  1,  1,  1]},
+    {"name": "Alex",   "v": [ 1,  0,  0,  1,  1,  1,  0,  0,   1,  0,  0,  0,  1,  1,  1,  1]},
+    {"name": "Casey",  "v": [ 0, -1,  1, -1,  1, -1,  1,  0,  -1,  1,  1,  1,  1, -1, -1,  0]},
+    {"name": "Morgan", "v": [ 0,  1,  0,  1, -1,  1, -1,  1,   1, -1, -1,  0, -1,  1,  1,  1]}
+  ],
+  "resetConfirmMs": 2000,
+  "_meta": {
+    "movies": { "label": "The movie list (16 titles)", "kind": "list", "regen": "labeled-table",
+      "help": "Titles 1–8 are [RECONSTRUCT] — the worksheet's real ones are not in the repo. Titles 9–15 were named by the professor; title 16 (Shrek) was chosen by the project team to fill the eighth slot the note asked for — swap it freely. Replace any title and every table below follows; the persona and classmate rows must stay the same length as this list." },
+    "scale": { "label": "Rating buttons", "kind": "table",
+      "columns": ["value", "label", "sub", "aria"],
+      "help": "One button per row: the number stored, the big label, the small caption under it, and what a screen reader says." },
+    "initialRating": { "label": "Rating every movie starts at", "kind": "number",
+      "help": "Must be one of the scale values, or nothing is pre-selected." },
+    "personas": { "label": "Persona centroids (k = however many rows)", "kind": "table",
+      "columns": ["name", "v"], "regen": "ratings-table",
+      "help": "The k starting centroids, one rating per movie (16 numbers). Keep them at least 3 apart in L1 so most rows have a single nearest persona; the DEFAULT three are 17 (Barb–Ash), 13 (Barb–Cameron) and 28 (Ash–Cameron) apart." },
+    "classmates": { "label": "The built-in roster", "kind": "table",
+      "columns": ["name", "v"], "regen": "ratings-table",
+      "help": "The fictional classmates used for the nearest/farthest questions and the refit step; one rating per movie (16 numbers). The DEFAULT six split two per persona: Sam & Alex → Barb, Riley & Casey → Ash, Jordan & Morgan → Cameron." },
+    "resetConfirmMs": { "label": "How long \"Really reset?\" stays armed (ms)", "kind": "number" }
+  }
+}
+</script>
+
+<script>
+(function(){
+"use strict";
+
+/* ==================================================================
+   [RECONSTRUCT] — SWAPPABLE DATA now lives in the config island just
+   above this script. The worksheet's real movie list is not in the
+   repo. Professor: replace the 16 titles there (and, if you like, the
+   persona/classmate rating rows) and the whole page follows.
+   Titles 9-15 come from the round-2 note; title 16 (Shrek) was chosen
+   by the project team to fill the eighth slot the note asked for.
+   Ratings use the worksheet scale: -1 dislike · 0 haven't seen /
+   neutral · +1 like. Keep every row the same length as "movies".
+   Pinned build checks, for the DEFAULT config island (re-verify if
+   you edit rows; all recomputed in Python against the 16-movie data):
+     persona pairwise L1 distances = 17 (Barb-Ash), 13 (Barb-Cameron),
+     28 (Ash-Cameron) — all >= 3, so most rows have a unique nearest
+     persona;
+     the all-zeros Reset row sits at 8 · 13 · 15 from Barb · Ash ·
+     Cameron (nearest = Barb, unique), and needs at least 3 changed
+     ratings before any other persona wins;
+     each classmate's nearest persona is unique: Sam(4),Alex(3) -> Barb;
+     Riley(3),Casey(4) -> Ash; Jordan(4),Morgan(2) -> Cameron.
+   ================================================================== */
+var CFG = JSON.parse(document.getElementById("m170-config").textContent);
+
+function strList(a, dflt){
+  var out = (Array.isArray(a) ? a : []).map(String);
+  return out.length ? out : dflt.slice();
+}
+var MOVIES = strList(CFG.movies, ["The Avengers","The Notebook","Get Out","Frozen",
+                                  "Oppenheimer","Mean Girls","Dune","Paddington 2",
+                                  "Barbie","Everything Everywhere All At Once","Parasite","Moonlight",
+                                  "The Social Network","Kung Fu Panda","Zootopia","Shrek"]);
+var N = MOVIES.length;
+
+/* every rating row is coerced to exactly N finite numbers */
+function row(v){
+  var out = [];
+  for(var i=0;i<N;i++){ var x = Array.isArray(v) ? +v[i] : NaN; out.push(isFinite(x) ? x : 0); }
+  return out;
+}
+function people(a, dflt){
+  var out = (Array.isArray(a) ? a : []).map(function(p, i){
+    p = p || {};
+    return { name: String(p.name == null ? ("row " + (i+1)) : p.name), v: row(p.v) };
+  });
+  return out.length ? out : dflt;
+}
+
+/* the rating buttons: value + the three bits of text each one carries */
+var SCALE = (function(){
+  var s = (Array.isArray(CFG.scale) ? CFG.scale : []).filter(function(o){
+    return o && isFinite(+o.value);
+  }).map(function(o){
+    return { value:+o.value,
+             label: String(o.label == null ? o.value : o.label),
+             sub:   String(o.sub == null ? "" : o.sub),
+             aria:  String(o.aria == null ? o.value : o.aria) };
+  });
+  return s.length ? s : [{value:-1,label:"−1",sub:"disliked",aria:"disliked it"},
+                         {value:0,label:"0",sub:"haven’t seen",aria:"haven’t seen / neutral"},
+                         {value:1,label:"+1",sub:"liked",aria:"liked it"}];
+})();
+var INIT_RATING = isFinite(+CFG.initialRating) ? +CFG.initialRating : 0;
+
+var PERSONAS = people(CFG.personas, [ /* the k=3 starting centroids, named by taste */
+  { name:"Blockbuster Barb", v:row([ 1, 0, 0, 1, 1, 0, 1, 0,  1, 0, 0, 0, 0, 1, 1, 1]) },
+  { name:"Arthouse Ash",     v:row([-1,-1, 1,-1, 1, 0, 1, 0,  0, 1, 1, 1, 1,-1,-1,-1]) },
+  { name:"Cozy Cameron",     v:row([ 0, 1,-1, 1,-1, 1,-1, 1,  1,-1,-1,-1,-1, 1, 1, 1]) }
+]);
+
+var CLASSMATES = people(CFG.classmates, []);   /* built-in rows, distances verified at build */
+
+var RESET_MS = Math.max(200, +CFG.resetConfirmMs || 2000);
+
+/* ---------- theme: auto → light → dark (design-system v2) ---------- */
+var root = document.documentElement, themeBtn = document.getElementById("themeBtn");
+function themeLabel(){
+  var m = root.dataset.theme || "auto";
+  themeBtn.textContent = m==="dark" ? "● dark" : m==="light" ? "○ light" : "◑ auto";
+}
+themeBtn.addEventListener("click", function(){
+  var cur = root.dataset.theme || "auto";
+  var next = cur==="auto" ? "light" : cur==="light" ? "dark" : "auto";
+  if(next==="auto"){ delete root.dataset.theme; try{localStorage.removeItem("m170-theme");}catch(e){} }
+  else { root.dataset.theme = next; try{localStorage.setItem("m170-theme", next);}catch(e){} }
+  themeLabel();
+});
+themeLabel();
+
+/* ---------- helpers ---------- */
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+function fmt(v){ return v>0 ? "+"+v : v<0 ? "−"+Math.abs(v) : "0"; }   /* signed display, unicode minus */
+function fmtMean(m){
+  var s = (Math.round(m*100)/100).toFixed(2).replace("-","−");
+  return s;
+}
+function L1(a,b){
+  var s=0; for(var i=0;i<a.length;i++) s += Math.abs(a[i]-b[i]);
+  return s;
+}
+/* round a mean to the nearest rating step; ±0.5 rounds away from 0 (stated in footnote) */
+function roundStep(m){
+  var r = Math.round(Math.abs(m));
+  return m<0 ? -r : r;
+}
+
+/* ---------- state ---------- */
+var ratings = MOVIES.map(function(){ return INIT_RATING; });   /* initial teaching state: all 0s */
+var placed = false;
+var segButtons = [];   /* segButtons[i][k] — one button per SCALE entry */
+
+/* ---------- build the rating controls (one tri-state seg per movie) ---------- */
+var rateGrid = document.getElementById("rateGrid");
+(function buildRatings(){
+  var html = "";
+  for(var i=0;i<N;i++){
+    html += '<div class="rate-item">'+
+      '<span class="mtitle">'+esc(MOVIES[i])+'</span>'+
+      '<span class="seg tri" role="group" aria-label="Your rating for '+esc(MOVIES[i])+'">';
+    for(var k=0;k<SCALE.length;k++){
+      var o = SCALE[k];
+      html +=
+        '<button type="button" data-m="'+i+'" data-v="'+o.value+'" '+
+          'aria-pressed="'+(o.value===INIT_RATING ? "true" : "false")+'" '+
+          'aria-label="'+esc(MOVIES[i])+': '+esc(o.aria)+'">'+esc(o.label)+
+          '<span class="sub">'+esc(o.sub)+'</span></button>';
+    }
+    html += '</span></div>';
+  }
+  rateGrid.innerHTML = html;
+  var items = rateGrid.querySelectorAll(".rate-item");
+  Array.prototype.forEach.call(items, function(item){
+    var bs = Array.prototype.slice.call(item.querySelectorAll("button"));
+    segButtons.push(bs);
+    bs.forEach(function(b){
+      b.addEventListener("click", function(){
+        setRating(+b.dataset.m, +b.dataset.v);
+      });
+    });
+  });
+})();
+
+function setRating(i, v){
+  ratings[i] = v;
+  for(var k=0;k<SCALE.length;k++)
+    segButtons[i][k].setAttribute("aria-pressed", String(SCALE[k].value===v));
+  invalidate();          /* changing data un-runs the assign step */
+  renderVector();
+}
+
+/* ---------- your-vector strip ---------- */
+function renderVector(){
+  var parts = ratings.map(function(v){ return "<b>"+fmt(v)+"</b>"; }).join(", ");
+  document.getElementById("vecStrip").innerHTML =
+    "you = [ "+parts+" ] &nbsp;—&nbsp; "+N+" numbers. Nowhere to draw them; nothing stops the math.";
+}
+
+/* ---------- assign step ("Place me") ---------- */
+var placeBtn  = document.getElementById("placeBtn");
+var refitBtn  = document.getElementById("refitBtn");
+var stepLabel = document.getElementById("stepLabel");
+var assignOut = document.getElementById("assignOut");
+var placeResult = document.getElementById("placeResult");
+var rosterBlock = document.getElementById("rosterBlock");
+var refitBlock  = document.getElementById("refitBlock");
+
+function movieHeaderRow(firstLabel){
+  var h = '<tr><th class="rowlab">'+esc(firstLabel||"")+'</th>';
+  for(var i=0;i<N;i++) h += "<th>"+esc(MOVIES[i])+"</th>";
+  return h;
+}
+
+function personaCard(p, isNearest){
+  var diffs = [], run = [], acc = 0;
+  for(var i=0;i<N;i++){
+    var d = Math.abs(ratings[i]-p.v[i]);
+    diffs.push(d); acc += d; run.push(acc);
+  }
+  var html = '<div class="pcard'+(isNearest?' nearest':'')+'">';
+  html += '<div class="pcard-head">'+esc(p.name);
+  if(isNearest) html += '<span class="chip">nearest — you join this cluster</span>';
+  html += '</div><div class="scrollx"><table class="dt">';
+  html += '<thead>'+movieHeaderRow("")+'</thead><tbody>';
+  html += '<tr><td class="rowlab">you</td>';
+  for(var a=0;a<N;a++) html += '<td class="you">'+fmt(ratings[a])+'</td>';
+  html += '</tr><tr><td class="rowlab">'+esc(p.name.split(" ")[1]||p.name)+'</td>';
+  for(var b=0;b<N;b++) html += '<td>'+fmt(p.v[b])+'</td>';
+  html += '</tr><tr class="emph"><td class="rowlab">disagreement |you−them|</td>';
+  for(var c=0;c<N;c++) html += '<td>'+diffs[c]+'</td>';
+  html += '</tr><tr><td class="rowlab">running total →</td>';
+  for(var e=0;e<N;e++) html += '<td>'+run[e]+'</td>';
+  html += '</tr></tbody></table></div>';
+  html += '<div class="distline">L1 distance = '+diffs.join(" + ")+" = <strong>"+acc+"</strong></div>";
+  html += '</div>';
+  return html;
+}
+
+function nearestPersonaIndex(v){
+  var best = 0, bd = L1(v, PERSONAS[0].v);
+  for(var i=1;i<PERSONAS.length;i++){
+    var d = L1(v, PERSONAS[i].v);
+    if(d < bd){ bd = d; best = i; }
+  }
+  return best;
+}
+
+placeBtn.addEventListener("click", function(){
+  placed = true;
+  var dists = PERSONAS.map(function(p){ return L1(ratings, p.v); });
+  var minD = Math.min.apply(null, dists);
+  var winners = [];
+  for(var i=0;i<PERSONAS.length;i++) if(dists[i]===minD) winners.push(i);
+  var win = winners[0];   /* tie-break: first listed (surfaced below) */
+
+  var html = "";
+  for(var j=0;j<PERSONAS.length;j++) html += personaCard(PERSONAS[j], j===win);
+  assignOut.innerHTML = html;
+
+  var msg = "You join <strong>"+esc(PERSONAS[win].name)+"</strong> — distance "+minD+
+    " ("+PERSONAS.map(function(p,k){ return esc(p.name.split(" ")[1]||p.name)+" "+dists[k]; }).join(" · ")+").";
+  if(winners.length>1){
+    msg += ' <span class="muted">Exact tie with '+
+      winners.slice(1).map(function(k){ return esc(PERSONAS[k].name); }).join(", ")+
+      " — every k-means implementation must break ties somehow; ours picks the first listed.</span>";
+  }
+  placeResult.innerHTML = msg;
+
+  stepLabel.textContent = "step 1 — assign";
+  refitBtn.disabled = false;
+  rosterBlock.hidden = false;
+  renderRoster();
+  refitBlock.hidden = true;
+  document.getElementById("refitOut").innerHTML = "";
+});
+
+/* ---------- roster view (worksheet Q3/Q4: nearest & farthest classmate) ---------- */
+function renderRoster(){
+  var myIdx = nearestPersonaIndex(ratings);
+  var rows = CLASSMATES.map(function(c){
+    return { name:c.name, v:c.v, d:L1(ratings,c.v), cluster:PERSONAS[nearestPersonaIndex(c.v)].name };
+  });
+  var minD = Math.min.apply(null, rows.map(function(r){ return r.d; }));
+  var maxD = Math.max.apply(null, rows.map(function(r){ return r.d; }));
+  var nearNames = rows.filter(function(r){ return r.d===minD; }).map(function(r){ return r.name; });
+  var farNames  = rows.filter(function(r){ return r.d===maxD; }).map(function(r){ return r.name; });
+
+  var html = '<div class="scrollx"><table class="dt">';
+  html += '<thead><tr><th class="rowlab">who</th><th>rating row</th><th>L1 distance to you</th><th>joins</th></tr></thead><tbody>';
+  html += '<tr><td class="rowlab">you</td><td class="you" style="text-align:left;">[ '+
+          ratings.map(fmt).join(", ")+' ]</td><td class="you">—</td><td class="you">'+
+          esc(PERSONAS[myIdx].name)+'</td></tr>';
+  rows.forEach(function(r){
+    var mark = (r.d===minD) ? " ← nearest" : (r.d===maxD) ? " ← farthest" : "";
+    html += '<tr><td class="rowlab">'+esc(r.name)+'</td><td style="text-align:left;">[ '+
+            r.v.map(fmt).join(", ")+' ]</td><td'+((r.d===minD||r.d===maxD)?' style="font-weight:600;"':'')+'>'+
+            r.d+esc(mark)+'</td><td>'+esc(r.cluster)+'</td></tr>';
+  });
+  html += '</tbody></table></div>';
+
+  if(rows.length) html += '<div class="callout">Nearest classmate: <strong>'+nearNames.map(esc).join(" & ")+
+    '</strong>, distance '+minD+' — you disagree by '+minD+' rating-step'+(minD===1?"":"s")+
+    ' in total across all '+N+' movies. Farthest: <strong>'+farNames.map(esc).join(" & ")+
+    '</strong>, distance '+maxD+'.</div>';
+  document.getElementById("rosterOut").innerHTML = html;
+}
+
+/* ---------- refit step (the update half of k-means) ---------- */
+refitBtn.addEventListener("click", function(){
+  /* session-local roster: 6 built-in classmates + you, each assigned to the
+     nearest of the ORIGINAL persona centroids (that was the assign step). */
+  var myIdx = nearestPersonaIndex(ratings);
+  var clusters = PERSONAS.map(function(p){ return { p:p, members:[] }; });
+  CLASSMATES.forEach(function(c){
+    clusters[nearestPersonaIndex(c.v)].members.push({ name:c.name, v:c.v, you:false });
+  });
+  clusters[myIdx].members.push({ name:"you", v:ratings.slice(), you:true });
+
+  var html = "", exampleNote = "";
+  clusters.forEach(function(cl){
+    var m = cl.members, k = m.length;
+    var means = [], rounded = [], movedAny = false;
+    for(var i=0;i<N;i++){
+      var s = 0;
+      for(var j=0;j<k;j++) s += m[j].v[i];
+      var mean = k ? s / k : cl.p.v[i];   /* empty cluster: centroid stays put */
+      means.push(mean); rounded.push(roundStep(mean));
+      if(!exampleNote && Math.abs(mean - Math.round(mean)) > 1e-9){
+        exampleNote = "the true mean for “"+esc(MOVIES[i])+"” in "+esc(cl.p.name)+
+          "’s cluster is "+fmtMean(mean);
+      }
+    }
+    html += '<div class="pcard'+(cl.members.some(function(x){return x.you;})?' nearest':'')+'">';
+    html += '<div class="pcard-head">'+esc(cl.p.name)+"’s cluster — "+k+" member"+(k===1?"":"s");
+    if(cl.members.some(function(x){return x.you;})) html += '<span class="chip">includes you</span>';
+    html += '</div><div class="scrollx"><table class="dt">';
+    html += '<thead>'+movieHeaderRow("")+'</thead><tbody>';
+    m.forEach(function(mem){
+      html += '<tr><td class="rowlab">'+esc(mem.name)+'</td>';
+      for(var a=0;a<N;a++) html += '<td'+(mem.you?' class="you"':'')+'>'+fmt(mem.v[a])+'</td>';
+      html += '</tr>';
+    });
+    html += '<tr><td class="rowlab">old centroid ('+esc(cl.p.name.split(" ")[0])+')</td>';
+    for(var b=0;b<N;b++) html += '<td>'+fmt(cl.p.v[b])+'</td>';
+    html += '</tr><tr><td class="rowlab">true mean</td>';
+    for(var c=0;c<N;c++) html += '<td class="muted">'+fmtMean(means[c])+'</td>';
+    html += '</tr><tr class="emph"><td class="rowlab">new centroid (rounded)</td>';
+    for(var e=0;e<N;e++){
+      var moved = rounded[e] !== cl.p.v[e];
+      if(moved) movedAny = true;
+      html += '<td'+(moved?' class="moved"':'')+'>'+
+              (moved ? fmt(cl.p.v[e])+"→"+fmt(rounded[e]) : fmt(rounded[e]))+'</td>';
+    }
+    html += '</tr></tbody></table></div>';
+    html += '<div class="fnote">'+(movedAny
+      ? "Highlighted cells moved: the average shifted because of who is in the cluster now."
+      : "No cell moved after rounding — the true means still shifted (see the row above).")+'</div>';
+    html += '</div>';
+  });
+
+  html += '<div class="fnote">Centroids may sit <em>between</em> ratings — '+
+    (exampleNote || "a mean like 0.33 is fine")+
+    '. The display rounds to the nearest rating step (±0.5 rounds away from 0); '+
+    'real k-means keeps the un-rounded mean.</div>';
+
+  document.getElementById("refitOut").innerHTML = html;
+  refitBlock.hidden = false;
+  stepLabel.textContent = "step 2 — update";
+  refitBtn.disabled = true;   /* one iteration is the worksheet's scope */
+});
+
+/* ---------- invalidation: editing ratings un-runs the algorithm ---------- */
+function invalidate(){
+  if(!placed) return;
+  placed = false;
+  stepLabel.textContent = "step 0 — rate";
+  assignOut.innerHTML = '<div class="placeholder">Ratings changed — press <strong>Place me ▸</strong> to re-run the assign step.</div>';
+  placeResult.innerHTML = "";
+  rosterBlock.hidden = true;
+  refitBlock.hidden = true;
+  document.getElementById("rosterOut").innerHTML = "";
+  document.getElementById("refitOut").innerHTML = "";
+  refitBtn.disabled = true;
+}
+
+/* ---------- Reset (two-press confirm: ratings are data, not parameters) ---------- */
+var resetBtn = document.getElementById("reset"), resetArmed = null;
+resetBtn.addEventListener("click", function(){
+  if(resetArmed){
+    clearTimeout(resetArmed); resetArmed = null;
+    resetBtn.textContent = "Reset";
+    for(var i=0;i<N;i++){
+      ratings[i] = INIT_RATING;
+      for(var k=0;k<SCALE.length;k++)
+        segButtons[i][k].setAttribute("aria-pressed", String(SCALE[k].value===INIT_RATING));
+    }
+    placed = false;
+    stepLabel.textContent = "step 0 — rate";
+    assignOut.innerHTML = '<div class="placeholder">Rate above, then press <strong>Place me ▸</strong> to run the assign step.</div>';
+    placeResult.innerHTML = "";
+    rosterBlock.hidden = true; refitBlock.hidden = true;
+    document.getElementById("rosterOut").innerHTML = "";
+    document.getElementById("refitOut").innerHTML = "";
+    refitBtn.disabled = true;
+    renderVector();
+  } else {
+    resetBtn.textContent = "Really reset?";
+    resetArmed = setTimeout(function(){
+      resetArmed = null; resetBtn.textContent = "Reset";
+    }, RESET_MS);
+  }
+});
+
+/* ---------- initial teaching state: all 0s, nothing placed ---------- */
+renderVector();
+})();
+</script>
+</body>
+</html>

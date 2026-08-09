@@ -1,0 +1,824 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Which type of learning is it? · MATH 170</title>
+
+<!-- ================================================================
+     DESIGN-SYSTEM v2 TOKEN BLOCK — copied verbatim into every file.
+     A global tweak stays a find-replace across the set.
+     Copied unchanged from the exemplar (week-13-softmax.html).
+     ================================================================ -->
+<style>
+/* hidden must always win over any author display rule */
+[hidden]{display:none !important}
+
+:root{
+  /* color — light */
+  --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+  --gold-soft:rgba(218,165,32,.12);
+  --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  /* type */
+  --font-body: ui-serif, Georgia, "Times New Roman", serif;
+  --font-ui:   system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+  --text-xl:1.75rem; --text-lg:1.25rem; --text-base:1rem; --text-sm:.875rem; --text-xs:.75rem;
+  --leading-prose:1.6; --leading-ui:1.3;
+  /* spacing */
+  --space-1:4px; --space-2:8px; --space-3:16px; --space-4:24px; --space-5:32px; --space-6:48px;
+  /* motion */
+  --ease:cubic-bezier(0.16,1,0.3,1); --dur:200ms;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+    --gold-soft:rgba(227,179,65,.16);
+    --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+  --gold-soft:rgba(227,179,65,.16);
+  --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+}
+@media (prefers-reduced-motion: reduce){ :root{ --dur:0ms; } }
+@media print{
+  :root, :root[data-theme="dark"]{
+    --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+    --gold-soft:rgba(218,165,32,.12);
+    --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  }
+  .theme-btn{display:none}
+  .stage{break-inside:avoid}
+}
+
+/* ================= base skin (design-system §3–§4) ================= */
+*{box-sizing:border-box}
+html{color-scheme:light dark}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--font-body); font-size:var(--text-base); line-height:var(--leading-prose);
+  -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:820px; margin:0 auto; padding:var(--space-5) var(--space-4) var(--space-6);}
+.topbar{display:flex; align-items:baseline; justify-content:space-between; gap:var(--space-3);
+  border-bottom:1px solid var(--gray-line); padding-bottom:var(--space-2); margin-bottom:var(--space-4);}
+.eyebrow{font-family:var(--font-ui); font-size:var(--text-xs); letter-spacing:.08em; text-transform:uppercase; color:var(--gray-text);}
+h1{font-family:var(--font-body); font-weight:600; font-size:var(--text-xl); line-height:1.2; margin:.2em 0 .1em;}
+h2{font-family:var(--font-ui); font-weight:600; font-size:var(--text-lg); line-height:1.3; margin:var(--space-5) 0 var(--space-2);}
+p{margin:0 0 var(--space-3);}
+.prose{max-width:66ch;}
+.muted{color:var(--gray-text);}
+.mono,code{font-family:var(--font-mono); font-variant-numeric:tabular-nums;}
+a{color:inherit;}
+:focus-visible{outline:2px solid var(--ink); outline-offset:2px; box-shadow:0 0 0 5px var(--gold-soft);}
+
+.theme-btn{font-family:var(--font-ui); font-size:var(--text-xs); background:none;
+  border:1px solid var(--gray-line); color:var(--gray-text); padding:6px 10px; cursor:pointer; border-radius:2px;}
+.theme-btn:hover{background:var(--gray-fill);}
+
+/* spec header */
+details.spec{border:1px solid var(--gray-line); border-radius:2px; margin:0 0 var(--space-4); background:var(--gray-fill);}
+details.spec>summary{font-family:var(--font-ui); font-size:var(--text-sm); cursor:pointer;
+  padding:var(--space-2) var(--space-3); list-style:none; color:var(--gray-text);}
+details.spec>summary::-webkit-details-marker{display:none}
+details.spec>summary::before{content:"▸ "; color:var(--gold);}
+details.spec[open]>summary::before{content:"▾ ";}
+.spec-body{padding:0 var(--space-3) var(--space-3); font-family:var(--font-ui); font-size:var(--text-sm); line-height:1.5;}
+.spec-body dt{font-weight:600; margin-top:var(--space-2);}
+.spec-body dd{margin:0; color:var(--gray-text);}
+
+/* stage */
+.stage{margin:var(--space-4) 0; text-align:center;}
+svg{max-width:100%; height:auto; font-family:var(--font-ui);}
+figcaption{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); margin-top:var(--space-2);}
+
+/* controls */
+.controls{border-top:1px solid var(--gray-line); padding-top:var(--space-3); margin-top:var(--space-4);
+  display:grid; grid-template-columns:1fr 1fr; gap:var(--space-3) var(--space-4);}
+.controls .full{grid-column:1/-1;}
+@media(max-width:560px){ .controls{grid-template-columns:1fr;} }
+.ctl label{display:flex; justify-content:space-between; align-items:baseline;
+  font-family:var(--font-ui); font-size:var(--text-sm); line-height:var(--leading-ui);}
+.ctl .val{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm); color:var(--ink);}
+.ctl .val.gold{color:var(--gold); font-weight:600;}
+.ctl .note{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); margin-top:4px;}
+
+/* range slider — filled track works in ALL engines (design-system v2 fix):
+   wireSlider() paints the webkit track with a two-stop gradient on input. */
+input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:18px;
+  background:transparent; margin:6px 0 0; cursor:pointer;}
+input[type=range]::-webkit-slider-runnable-track{height:2px; border-radius:1px;
+  background:var(--track, var(--gray-line));}
+input[type=range]::-moz-range-track{height:2px; background:var(--gray-line);}
+input[type=range]::-moz-range-progress{height:2px; background:var(--gold);}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; appearance:none;
+  width:18px; height:18px; margin-top:-8px; border-radius:50%; background:var(--gold); border:1px solid var(--ink);}
+input[type=range]::-moz-range-thumb{width:18px; height:18px; border-radius:50%; background:var(--gold); border:1px solid var(--ink);}
+
+/* buttons + segmented + stepper */
+.btn{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:1px solid var(--ink); padding:8px 14px; cursor:pointer; border-radius:2px;}
+.btn:hover{background:var(--gray-fill);}
+.btn.primary{background:var(--gold); border-color:var(--gold); color:#111111;}
+.btn[disabled]{border-color:var(--gray-line); color:var(--gray-line); cursor:default; background:var(--paper);}
+.seg{display:inline-flex; border:1px solid var(--ink); border-radius:2px; overflow:hidden;}
+.seg button{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:0; border-left:1px solid var(--ink); padding:7px 12px; cursor:pointer;}
+.seg button:first-child{border-left:0;}
+.seg button[aria-pressed="true"]{background:var(--gold); color:#111111;}
+.stepper{display:inline-flex; align-items:center; gap:var(--space-2); font-family:var(--font-ui); font-size:var(--text-sm);}
+.stepper .count{font-family:var(--font-mono); font-variant-numeric:tabular-nums; color:var(--gray-text);}
+
+.foot{display:flex; align-items:center; gap:var(--space-3); margin-top:var(--space-5);
+  border-top:1px solid var(--gray-line); padding-top:var(--space-3); flex-wrap:wrap;}
+.foot .btn{margin-right:auto;}
+.hint{font-family:var(--font-ui); font-size:var(--text-sm); color:var(--gray-text);}
+
+/* math reveal */
+.mathbox{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm);
+  background:var(--gray-fill); border-left:2px solid var(--gold); padding:var(--space-3);
+  margin:var(--space-3) 0; overflow-x:auto; white-space:pre; line-height:1.7; text-align:left;}
+.attach{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text);
+  border-top:1px dotted var(--gray-line); margin-top:var(--space-6); padding-top:var(--space-3);}
+.tag{display:inline-block; font-family:var(--font-ui); font-size:var(--text-xs);
+  border:1px solid var(--gray-line); border-radius:999px; padding:1px 8px; color:var(--gray-text); margin-left:6px;}
+.callout{font-family:var(--font-ui); font-size:var(--text-sm); border:1px solid var(--gray-line);
+  border-left:2px solid var(--gold); padding:var(--space-2) var(--space-3); margin:var(--space-3) 0; background:var(--paper);}
+
+/* ================================================================
+   Component CSS — Learning-Type Sorter only (added after the skin;
+   the shared chrome above is untouched).
+   ================================================================ */
+.sorter{text-align:left; font-family:var(--font-ui);}
+.zone-label{font-size:var(--text-xs); color:var(--gray-text); letter-spacing:.04em;
+  text-transform:uppercase; margin:0 0 var(--space-1);}
+.tray{display:flex; flex-wrap:wrap; gap:var(--space-2); align-content:flex-start;
+  min-height:56px; padding:var(--space-2); border:1px dashed var(--gray-line); border-radius:2px;}
+
+/* card chips */
+.cardchip{font-family:var(--font-ui); font-size:var(--text-sm); line-height:var(--leading-ui);
+  background:var(--paper); color:var(--ink); border:1px solid var(--ink); border-radius:2px;
+  padding:6px 10px; text-align:left; cursor:grab; touch-action:none;
+  -webkit-user-select:none; user-select:none;}
+.cardchip:hover{background:var(--gray-fill);}
+.cardchip .chip-title{display:block;}
+.cardchip[aria-pressed="true"]{box-shadow:0 0 0 2px var(--gold);}
+.cardchip[aria-pressed="true"] .chip-title{font-weight:600;}
+.cardchip.resort{border-style:dashed; border-color:var(--gold);}
+.cardchip.resort .chip-title::after{content:" ↷"; color:var(--gold); font-weight:600;}
+.cardchip.dragging{cursor:grabbing; pointer-events:none; z-index:10;
+  box-shadow:0 0 0 2px var(--gold), 0 3px 10px rgba(0,0,0,.25);}
+@keyframes chipwobble{
+  0%{transform:translateX(0)} 20%{transform:translateX(-6px) rotate(-2deg)}
+  40%{transform:translateX(5px) rotate(2deg)} 60%{transform:translateX(-4px)}
+  80%{transform:translateX(3px)} 100%{transform:translateX(0)}}
+.cardchip.wobble{animation:chipwobble 380ms ease-out;}
+@keyframes chipsettle{from{transform:scale(1.06)} to{transform:scale(1)}}
+.cardchip.settle{animation:chipsettle 180ms var(--ease);}
+@media (prefers-reduced-motion: reduce){
+  .cardchip.wobble,.cardchip.settle{animation:none;}
+}
+
+/* reading pane — the one active (gold-ringed) card, in full */
+.pane{border:1px solid var(--gray-line); border-left:2px solid var(--gold); border-radius:2px;
+  margin:var(--space-3) 0; padding:var(--space-2) var(--space-3) var(--space-3);}
+.pane-top{display:flex; justify-content:space-between; align-items:baseline; gap:var(--space-3); flex-wrap:wrap;}
+.pane-title{font-size:var(--text-sm); font-weight:600;}
+.pane-status{font-family:var(--font-mono); font-variant-numeric:tabular-nums;
+  font-size:var(--text-xs); color:var(--gray-text);}
+.pane-text{font-family:var(--font-body); font-size:var(--text-base); line-height:var(--leading-prose);
+  max-width:66ch; margin:var(--space-2) 0 0;}
+.pane-text .mut{transition:color var(--dur) var(--ease);}
+.pane-text .mut.rw{color:var(--gold); font-style:italic; font-weight:600;}
+.feedback{font-size:var(--text-sm); margin-top:var(--space-2); min-height:1.4em;}
+.feedback .lead{font-weight:600;}
+.feedback.plain{color:var(--gray-text);}
+.argue{font-size:var(--text-xs); color:var(--gray-text); margin-top:var(--space-2);
+  border-top:1px dotted var(--gray-line); padding-top:var(--space-2); max-width:66ch;}
+.argue strong{color:var(--ink);}
+
+/* bins */
+.bins{display:grid; grid-template-columns:repeat(3,1fr); gap:var(--space-3);}
+@media(max-width:560px){ .bins{grid-template-columns:1fr;} }
+.bin{border:1px solid var(--ink); border-radius:2px; display:flex; flex-direction:column; min-height:170px;}
+.bin.over{background:var(--gold-soft);}
+.bin-head{padding:6px 10px 8px; border-bottom:1px solid var(--gray-line);}
+.bin-key{font-family:var(--font-mono); font-size:var(--text-xs); color:var(--gray-text);
+  border:1px solid var(--gray-line); border-radius:2px; padding:0 5px; margin-right:6px;}
+.bin-name{font-size:var(--text-sm); font-weight:600;}
+.bin-sub{font-size:var(--text-xs); color:var(--gray-text); margin-top:2px;}
+.bin-drop{flex:1; display:flex; flex-wrap:wrap; gap:var(--space-2); align-content:flex-start;
+  padding:var(--space-2);}
+.bin-marker{font-size:var(--text-xs); font-weight:600; color:var(--gold);
+  padding:2px 10px 8px; visibility:hidden;}
+.bin-marker.on{visibility:visible;}
+</style>
+
+<!-- theme boot: apply stored choice before first paint (no flash) -->
+<script>
+try{var t=localStorage.getItem("m170-theme");if(t)document.documentElement.dataset.theme=t;}catch(e){}
+</script>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="eyebrow">MATH 170 · What type of learning is it?</div>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Color theme">◑ auto</button>
+  </div>
+
+  <h1 data-edit="title">Which type of learning is it? <span class="tag">learning-type sorter</span></h1>
+  <p class="prose muted" data-edit="intro">In every story below, a machine is learning. Let’s
+  investigate the feedback that the learner gets — the answers, nothing, or a reward? Sort
+  each card, then flip its “what if” and watch the same story change learning type.</p>
+
+  <div data-slot="notes-top"></div>
+
+
+  <figure class="stage sorter">
+    <div class="zone-label" id="trayLabel" data-edit="tray-label">Card tray — click a card to read it</div>
+    <div class="tray" id="tray" role="group" aria-labelledby="trayLabel"></div>
+
+    <div class="pane">
+      <div class="pane-top">
+        <span class="pane-title" id="paneTitle"></span>
+        <span class="pane-status" id="paneStatus"></span>
+      </div>
+      <p class="pane-text" id="paneText"></p>
+      <div class="feedback" id="feedback" aria-live="polite"></div>
+      <div class="argue" id="argue" hidden></div>
+    </div>
+
+    <div class="bins" id="bins" role="group" aria-label="The three learning-type bins"></div>
+
+    <figcaption data-edit="caption">Click a card to read it here. Drag it into a bin — or, with the card selected, press
+    <span class="mono">1</span>, <span class="mono">2</span>, or <span class="mono">3</span>.
+    The tool keeps no score; the class does the arguing.</figcaption>
+  </figure>
+
+  <div class="controls">
+    <div class="ctl full">
+      <label id="whatifLabel">What-if switch — experiments on: <span class="val gold" id="whatifCard"></span></label>
+      <div class="seg" role="group" aria-labelledby="whatifLabel" style="margin-top:6px;">
+        <button type="button" id="segOrig" aria-pressed="true">original story</button>
+        <button type="button" id="segAlt" aria-pressed="false"></button>
+      </div>
+      <div class="note" id="whatifNote"></div>
+    </div>
+  </div>
+
+  <div data-slot="notes-bottom"></div>
+
+  <div class="foot">
+    <button class="btn" id="reset" type="button">Reset</button>
+    <span class="hint" data-edit="hint-try">Try: sort the Spam Filter, then flip “remove the labels”.</span>
+  </div>
+
+</div>
+
+<script type="application/json" id="m170-config">
+{
+  "_v": 1,
+  "bins": [
+    {
+      "id": "sup",
+      "key": "1",
+      "name": "Supervised",
+      "sub": "shown the answer for each example"
+    },
+    {
+      "id": "uns",
+      "key": "2",
+      "name": "Unsupervised",
+      "sub": "no feedback — finds structure on its own"
+    },
+    {
+      "id": "rl",
+      "key": "3",
+      "name": "Reinforcement",
+      "sub": "rewards and demerits for its actions"
+    }
+  ],
+  "cards": [
+    {
+      "id": "spam",
+      "title": "Spam Filter",
+      "pre": "You’re given 1,000 emails, and ",
+      "mid": "each one is labeled “Spam” or “Not Spam.”",
+      "midAlt": "every one of those labels has been deleted.",
+      "post": " Your goal is to build a system that can decide if new emails are spam based on what it learned from the examples.",
+      "baseBin": "sup",
+      "altBin": "uns",
+      "whatIf": "remove the labels",
+      "becauseBase": "the emails come pre-labeled — the machine is shown the answer for every example.",
+      "becauseAlt": "same emails, but nobody shows it an answer anymore — all it can do is group ones that look alike."
+    },
+    {
+      "id": "rocks",
+      "title": "Rock Collection",
+      "pre": "A child picks up 30 rocks on a walk and dumps them on the table and asks you ‘make pretty collections.’ ",
+      "mid": "You create three or four piles based on appearance and feel.",
+      "midAlt": "You try a pile, and the child cheers or groans at every pile you try.",
+      "post": "",
+      "baseBin": "uns",
+      "altBin": "rl",
+      "whatIf": "add a reward signal",
+      "becauseBase": "nobody says right or wrong and nothing is labeled — you just find structure by appearance and feel.",
+      "becauseAlt": "every attempt now earns a cheer (reward) or a groan (demerit) — you rearrange to earn more cheers."
+    },
+    {
+      "id": "roomba",
+      "title": "Roomba Learns a Room",
+      "pre": "A robot vacuum starts cleaning your house. ",
+      "mid": "Every time it bumps into something, it remembers not to go that way next time. If it finishes cleaning a room quickly, it receives additional battery life. Over time, it figures out the best path to clean efficiently without hitting obstacles.",
+      "midAlt": "Nothing penalizes a bump and nothing rewards a fast finish — it only records where it has driven, and over time it groups the stretches of floor that look alike.",
+      "post": "",
+      "baseBin": "rl",
+      "altBin": "uns",
+      "whatIf": "stop telling it right/wrong",
+      "becauseBase": "bumps act as demerits and battery life as a reward — it learns from the consequences of its own actions.",
+      "becauseAlt": "no reward, no penalty, no labels — it can only find structure in where it has been."
+    },
+    {
+      "id": "playlist",
+      "title": "Playlist Recommender",
+      "pre": "You build a music app that learns from how users rate different songs. Each song has a set of features (like tempo, genre, and artist), and ",
+      "mid": "users say whether they liked or disliked it.",
+      "midAlt": "nobody rates anything — the app just earns credit whenever a suggestion is played all the way to the end.",
+      "post": " Your model uses this data to suggest new songs that each user might enjoy.",
+      "baseBin": "sup",
+      "altBin": "rl",
+      "whatIf": "swap the labels for a reward",
+      "becauseBase": "liked/disliked are labels attached to examples — the model is shown the answer for each song.",
+      "becauseAlt": "no labeled songs anymore — just a reward when a suggestion lands, so it learns by trying.",
+      "argue": "Worth arguing — the worksheet accepts Supervised, since liked/disliked are labels. But what would make this reinforcement instead? Flip the what-if switch below and see how little the story has to change."
+    },
+    {
+      "id": "thermo",
+      "title": "Self-Tuning Thermostat",
+      "pre": "A smart thermostat tries a new temperature schedule each day",
+      "mid": ", and each evening the household gives it a comfort score",
+      "midAlt": ", and nobody scores anything — it just logs each day’s temperature readings",
+      "post": ".",
+      "baseBin": "rl",
+      "altBin": "uns",
+      "whatIf": "stop the comfort score",
+      "becauseBase": "the comfort score is a reward for the day’s schedule — it adjusts to score higher tomorrow.",
+      "becauseAlt": "with no score and no labels, all it can do is notice which days look alike."
+    },
+    {
+      "id": "faces",
+      "title": "Photo App Faces",
+      "pre": "A photo app sorts the faces in your camera roll into groups",
+      "mid": " — it has no idea who anyone is",
+      "midAlt": " — after you first tag 200 photos with your friends’ names",
+      "post": ".",
+      "baseBin": "uns",
+      "altBin": "sup",
+      "whatIf": "add the labels",
+      "becauseBase": "no names, no ratings, no rewards — it just clusters faces that look similar.",
+      "becauseAlt": "the tagged photos are labeled examples — now it is shown whose face is whose."
+    },
+    {
+      "id": "typos",
+      "title": "Spelling Autocorrect",
+      "pre": "Spelling autocorrect learns from millions of real typos",
+      "mid": ", each saved with the correction the writer chose",
+      "midAlt": ", with no record of what the writer actually meant",
+      "post": ".",
+      "baseBin": "sup",
+      "altBin": "uns",
+      "whatIf": "remove the corrections",
+      "becauseBase": "every typo comes with its correction — a labeled right answer for each example.",
+      "becauseAlt": "typos with no corrections are just unlabeled text — it can only find patterns in the mistakes."
+    },
+    {
+      "id": "chess",
+      "title": "Chess Program",
+      "pre": "A chess program ",
+      "mid": "plays thousands of games against itself, learning only from the win or loss at the end",
+      "midAlt": "studies a book of grandmaster games where every position is marked with the best move",
+      "post": ".",
+      "baseBin": "rl",
+      "altBin": "sup",
+      "whatIf": "swap the games for labeled examples",
+      "becauseBase": "the only feedback is win (reward) or loss (demerit), long after the moves — trial and error.",
+      "becauseAlt": "every position now comes with the right answer written beside it — it is shown the answers."
+    }
+  ],
+  "hints": {
+    "sup": "supervised means it is shown the answers. Where in this story does anyone hand over an answer?",
+    "uns": "unsupervised means no feedback at all. Read it again — is this learner really told nothing?",
+    "rl": "reinforcement needs a reward or penalty for actions. Who tells the system it was right, and when?"
+  },
+  "_meta": {
+    "bins": {
+      "label": "The three bins",
+      "kind": "table",
+      "columns": [
+        "id",
+        "key",
+        "name",
+        "sub"
+      ],
+      "help": "One row per bin. 'id' is referenced by each card's baseBin/altBin; 'key' is the keyboard shortcut."
+    },
+    "cards": {
+      "label": "Scenario cards",
+      "kind": "table",
+      "columns": [
+        "id",
+        "title",
+        "pre",
+        "mid",
+        "midAlt",
+        "post",
+        "baseBin",
+        "altBin",
+        "whatIf",
+        "becauseBase",
+        "becauseAlt",
+        "argue"
+      ],
+      "help": "Story = pre + mid + post. The what-if switch swaps mid for midAlt (shown in gold) and the right answer moves from baseBin to altBin. Cards 1–4 quote the “Which type of learning is it?” worksheet verbatim — edit those with care."
+    },
+    "hints": {
+      "label": "Nudge for a wrong bin",
+      "kind": "text",
+      "help": "Shown when a card is dropped in a bin that contradicts the story. Asks a question; never reveals the answer."
+    }
+  }
+}
+</script>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- theme: auto → light → dark (design-system v2) ---------- */
+var root = document.documentElement, themeBtn = document.getElementById("themeBtn");
+function render(){ /* all drawing is DOM styled by CSS custom properties —
+                      a theme flip restyles automatically; nothing to redraw */ }
+function themeLabel(){
+  var m = root.dataset.theme || "auto";
+  themeBtn.textContent = m==="dark" ? "● dark" : m==="light" ? "○ light" : "◑ auto";
+}
+themeBtn.addEventListener("click", function(){
+  var cur = root.dataset.theme || "auto";
+  var next = cur==="auto" ? "light" : cur==="light" ? "dark" : "auto";
+  if(next==="auto"){ delete root.dataset.theme; try{localStorage.removeItem("m170-theme");}catch(e){} }
+  else { root.dataset.theme = next; try{localStorage.setItem("m170-theme", next);}catch(e){} }
+  themeLabel(); render();
+});
+if(window.matchMedia){ window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function(){ render(); }); }
+themeLabel();
+
+/* ---------- data: everything tunable comes from the config island ---------- */
+var CFG = JSON.parse(document.getElementById("m170-config").textContent);
+var BINS = (CFG.bins || []).slice(0, 3);
+function binName(id){ for(var i=0;i<BINS.length;i++) if(BINS[i].id===id) return BINS[i].name; return id; }
+/* Keyboard placement reads the bin's own "key" from the island, so re-keying the
+   bins there re-keys the page (the old code hard-wired 1/2/3 by position). */
+function binIdForKey(k){ for(var i=0;i<BINS.length;i++) if(String(BINS[i].key)===k) return BINS[i].id; return null; }
+function keyList(){ return BINS.map(function(b){ return b.key; }).join(", "); }
+
+/* Scenario text = pre + [mutable segment] + post. In the original story the three
+   parts concatenate to the worksheet's wording verbatim ("What Type of Learning").
+   The what-if switch swaps only the mutable segment (rendered in gold). */
+var CARDS = (CFG.cards || []).map(function(c){ return c; });
+
+/* Wrong placement never reveals: the hint is a question about the chosen bin. */
+var HINTS = CFG.hints || {};
+
+/* ---------- state & DOM ---------- */
+var cardById = {};
+CARDS.forEach(function(c){ cardById[c.id] = c; c.st = { switched:false, placedBin:null, everSorted:false }; });
+var activeId = CARDS[0].id;
+
+var tray = document.getElementById("tray");
+var binsWrap = document.getElementById("bins");
+var paneTitle = document.getElementById("paneTitle");
+var paneStatus = document.getElementById("paneStatus");
+var paneText = document.getElementById("paneText");
+var feedbackEl = document.getElementById("feedback");
+var argueEl = document.getElementById("argue");
+var segOrig = document.getElementById("segOrig");
+var segAlt = document.getElementById("segAlt");
+var whatifCard = document.getElementById("whatifCard");
+var whatifNote = document.getElementById("whatifNote");
+
+function el(tag, cls, txt){
+  var n = document.createElement(tag);
+  if(cls) n.className = cls;
+  if(txt != null) n.textContent = txt;
+  return n;
+}
+
+/* bins */
+var drops = {}, markers = {};
+BINS.forEach(function(b){
+  var bin = el("div","bin");
+  bin.dataset.bin = b.id;
+  bin.setAttribute("role","group");
+  bin.setAttribute("aria-label", b.name + " bin — press " + b.key);
+  var head = el("div","bin-head");
+  var line = el("div");
+  line.appendChild(el("span","bin-key", b.key));
+  line.appendChild(el("span","bin-name", b.name));
+  head.appendChild(line);
+  head.appendChild(el("div","bin-sub", b.sub));
+  bin.appendChild(head);
+  var drop = el("div","bin-drop");
+  bin.appendChild(drop);
+  var marker = el("div","bin-marker","▲ belongs here now");
+  bin.appendChild(marker);
+  binsWrap.appendChild(bin);
+  drops[b.id] = drop; markers[b.id] = marker;
+});
+
+/* card chips
+   Selection and focus are ONE thing: whatever chip has focus is the card the
+   reading pane shows and the card the number keys act on. (They used to be two
+   things — a card could be "selected" while a different chip held focus, so a
+   number key placed the wrong card and the selected one appeared stuck.) */
+var chips = {};
+CARDS.forEach(function(card){
+  var chip = el("button","cardchip");
+  chip.type = "button";
+  chip.appendChild(el("span","chip-title", card.title));
+  /* Pointer selection happens on pointerup (endDrag) so it cannot depend on a
+     click event that a drag may swallow. This click listener therefore only has
+     to catch NON-pointer activation — Enter/Space and assistive tech, which
+     report detail === 0. No "ignore the next click" flag exists to go stale. */
+  chip.addEventListener("click", function(e){ if(!e.detail) selectCard(card.id); });
+  chip.addEventListener("focus", function(){ selectCard(card.id); });
+  chip.addEventListener("keydown", function(e){ chipKey(e, card); });
+  chip.addEventListener("pointerdown", function(e){ chipDown(e, card); });
+  chip.addEventListener("animationend", function(){
+    chip.classList.remove("wobble"); chip.classList.remove("settle");
+  });
+  chips[card.id] = chip;
+  tray.appendChild(chip);
+});
+
+/* ---------- model helpers ---------- */
+function correctBin(card){ return card.st.switched ? card.altBin : card.baseBin; }
+
+function statusText(card){
+  if(!card.st.placedBin)
+    return card.st.switched ? "in the tray — story rewritten" : "in the tray";
+  if(card.st.placedBin === correctBin(card))
+    return "sorted: " + binName(card.st.placedBin);
+  return "in " + binName(card.st.placedBin) + " — story changed, re-sort it";
+}
+
+function derivedFeedback(card){
+  if(card.st.placedBin){
+    if(card.st.placedBin === correctBin(card))
+      return { kind:"because", text: card.st.switched ? card.becauseAlt : card.becauseBase };
+    return { kind:"think", text:"the story changed — the gold words are the new feedback. Which bin fits now?" };
+  }
+  if(card.st.switched)
+    return { kind:"think", text:"read the rewritten story, then sort it — drag it, or press " + keyList() + "." };
+  return { kind:"note", text:"Drag this card into a bin — or, with the card selected, press " + keyList() + "." };
+}
+
+/* ---------- rendering ---------- */
+function renderAll(feedbackOverride){
+  var card = cardById[activeId];
+
+  /* reading pane */
+  paneTitle.textContent = card.title;
+  paneStatus.textContent = statusText(card);
+  paneText.textContent = "";
+  if(card.pre) paneText.appendChild(document.createTextNode(card.pre));
+  var mut = el("span","mut" + (card.st.switched ? " rw" : ""),
+               card.st.switched ? card.midAlt : card.mid);
+  paneText.appendChild(mut);
+  if(card.post) paneText.appendChild(document.createTextNode(card.post));
+
+  /* feedback line ("Because —" names the feedback type; "Think —" only asks) */
+  var fb = feedbackOverride || derivedFeedback(card);
+  feedbackEl.textContent = "";
+  feedbackEl.className = "feedback" + (fb.kind==="note" ? " plain" : "");
+  if(fb.kind === "because") feedbackEl.appendChild(el("span","lead","Because — "));
+  if(fb.kind === "think")   feedbackEl.appendChild(el("span","lead","Think — "));
+  feedbackEl.appendChild(document.createTextNode(fb.text));
+
+  /* the designed argument-starter (Playlist Recommender) */
+  var showArgue = !!card.argue && !card.st.switched && card.st.placedBin === card.baseBin;
+  argueEl.hidden = !showArgue;
+  if(showArgue){
+    argueEl.textContent = "";
+    argueEl.appendChild(el("strong",null,"Worth arguing — "));
+    argueEl.appendChild(document.createTextNode(card.argue.replace(/^Worth arguing — /,"")));
+  }
+
+  /* what-if switch (gated: sort the card first, so the marker can't pre-reveal) */
+  whatifCard.textContent = card.title;
+  segAlt.textContent = card.whatIf;
+  var locked = !card.st.everSorted;
+  segOrig.disabled = locked; segAlt.disabled = locked;
+  segOrig.setAttribute("aria-pressed", String(!card.st.switched));
+  segAlt.setAttribute("aria-pressed", String(card.st.switched));
+  whatifNote.textContent = locked
+    ? "Sort this card into a bin first — then experiment on it."
+    : "Flipping it rewrites the story (changed words in gold) and moves the “belongs here now” marker.";
+
+  /* chips: active ring, re-sort state, spoken status */
+  CARDS.forEach(function(c){
+    var chip = chips[c.id];
+    chip.setAttribute("aria-pressed", String(c.id === activeId));
+    chip.classList.toggle("resort", !!c.st.placedBin && c.st.placedBin !== correctBin(c));
+    chip.setAttribute("aria-label",
+      c.title + ", " + statusText(c));
+  });
+
+  /* bin markers — only for the active card, only after its story changed */
+  BINS.forEach(function(b){ markers[b.id].classList.remove("on"); });
+  if(card.st.placedBin && card.st.placedBin !== correctBin(card))
+    markers[correctBin(card)].classList.add("on");
+}
+
+function setActive(id){
+  activeId = id;
+  renderAll();
+}
+/* Guarded form: used by every focus/click/pointer path. Re-selecting the card
+   that is already active must NOT re-render, or a stray focus event would wipe
+   the "Because —" line or the wrong-bin question that placeCard just wrote. */
+function selectCard(id){
+  if(id === activeId) return;
+  setActive(id);
+}
+function focusChip(chip){
+  try{ chip.focus({ preventScroll:true }); }catch(err){ chip.focus(); }
+}
+
+/* ---------- placement — ONE routine, both paths ----------
+   Drag-and-drop and the number keys both come through here, so both run exactly
+   the same state cleanup. Before the chip is re-parented, any drag involving it
+   is ended and its drag styling is stripped: a chip can never be moved into a bin
+   while something still believes it is being dragged (that is what left a card
+   pinned to the page, unclickable, until a reload). */
+function placeCard(card, binId){
+  var chip = chips[card.id];
+  if(drag && drag.chip === chip) endDrag(false);
+  clearDragStyles(chip);
+  var hadFocus = document.activeElement === chip;
+  activeId = card.id;
+  chip.classList.remove("wobble"); chip.classList.remove("settle");
+  if(binId === correctBin(card)){
+    card.st.placedBin = binId;
+    card.st.everSorted = true;
+    drops[binId].appendChild(chip);          /* the card settles — no red X exists */
+    if(hadFocus) focusChip(chip);            /* re-parenting drops focus; put it back */
+    void chip.offsetWidth;
+    chip.classList.add("settle");
+    renderAll({ kind:"because",
+                text: card.st.switched ? card.becauseAlt : card.becauseBase });
+  } else {
+    /* contradiction: wobble in place, ask a question, reveal nothing */
+    void chip.offsetWidth;
+    chip.classList.add("wobble");
+    renderAll({ kind:"think",
+                text: HINTS[binId] || "read the story again — what feedback does this learner actually get?" });
+  }
+}
+
+/* ---------- keyboard placement ---------- */
+function chipKey(e, card){
+  if(e.metaKey || e.ctrlKey || e.altKey) return;   /* ⌘1 means "switch tab", not "bin 1" */
+  var binId = binIdForKey(e.key);
+  if(!binId) return;
+  e.preventDefault();
+  placeCard(card, binId);
+}
+
+/* ---------- drag (pointer events; chips stay real buttons) ----------
+   Every move/up/cancel is listened for on the window, not on the chip. A chip
+   that is mid-drag carries pointer-events:none, and re-parenting it drops any
+   pointer capture, so chip-bound listeners can silently stop receiving the end of
+   the gesture — which used to strand `drag` and leave the chip fixed-positioned
+   forever. The window always hears it. */
+var drag = null;
+
+function clearDragStyles(chip){
+  chip.classList.remove("dragging");
+  chip.style.position = ""; chip.style.width = "";
+  chip.style.left = ""; chip.style.top = ""; chip.style.margin = "";
+}
+
+function chipDown(e, card){
+  if(e.button !== undefined && e.button !== 0) return;
+  if(drag) endDrag(false);                   /* a second finger never strands the first chip */
+  var chip = chips[card.id];
+  clearDragStyles(chip);                     /* never start a drag from stale styling */
+  drag = { card:card, chip:chip, pointerId:e.pointerId,
+           x0:e.clientX, y0:e.clientY,
+           rect:chip.getBoundingClientRect(), moved:false, hover:null };
+  try{ chip.setPointerCapture(e.pointerId); }catch(err){}
+}
+
+function chipMove(e){
+  if(!drag || e.pointerId !== drag.pointerId) return;
+  /* A mouse/pen that is not pressed cannot be dragging. If an "up" ever escapes us,
+     the next hover move ends the gesture instead of flinging the chip. (Touch has no
+     hover state and always gets a pointerup/pointercancel, so it is left alone.) */
+  if(e.buttons === 0 && e.pointerType !== "touch"){ endDrag(false); return; }
+  var dx = e.clientX - drag.x0, dy = e.clientY - drag.y0;
+  if(!drag.moved){
+    if(Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+    drag.moved = true;
+    var c = drag.chip;
+    c.classList.add("dragging");
+    c.style.position = "fixed";
+    c.style.width = drag.rect.width + "px";
+    c.style.left = drag.rect.left + "px";
+    c.style.top = drag.rect.top + "px";
+    c.style.margin = "0";
+    selectCard(drag.card.id);                /* the pane follows the card in hand */
+  }
+  drag.chip.style.left = (drag.rect.left + dx) + "px";
+  drag.chip.style.top  = (drag.rect.top + dy) + "px";
+  var under = document.elementFromPoint(e.clientX, e.clientY);
+  var bin = under && under.closest ? under.closest(".bin") : null;
+  if(drag.hover && drag.hover !== bin) drag.hover.classList.remove("over");
+  if(bin) bin.classList.add("over");
+  drag.hover = bin;
+  e.preventDefault();
+}
+
+/* The one exit from a drag, whatever ends it: up, cancel, Escape, Reset, a
+   placement, or a second pointer. Always leaves the chip visually clean. */
+function endDrag(place){
+  var d = drag; drag = null;
+  if(!d) return;
+  if(d.hover) d.hover.classList.remove("over");
+  try{ if(d.chip.hasPointerCapture && d.chip.hasPointerCapture(d.pointerId))
+         d.chip.releasePointerCapture(d.pointerId); }catch(err){}
+  clearDragStyles(d.chip);
+  if(!d.moved){
+    /* a press that never moved is a selection — and it focuses the chip, so the
+       number keys act on the card the student just picked up (Safari does not
+       focus a button on click by itself) */
+    if(place){ selectCard(d.card.id); focusChip(d.chip); }
+    return;
+  }
+  if(place && d.hover) placeCard(d.card, d.hover.dataset.bin);
+}
+
+window.addEventListener("pointermove", chipMove);
+window.addEventListener("pointerup", function(e){
+  if(drag && e.pointerId === drag.pointerId) endDrag(true);
+});
+window.addEventListener("pointercancel", function(e){
+  if(drag && e.pointerId === drag.pointerId) endDrag(false);
+});
+window.addEventListener("blur", function(){ endDrag(false); });
+window.addEventListener("keydown", function(e){
+  if(e.key === "Escape" && drag){ endDrag(false); return; }   /* put the card back, no placement */
+  /* Number keys with nothing focused (fresh load, after a mouse drop, after Reset)
+     act on the card the pane is showing — the promise the caption makes. A focused
+     chip handles its own keys, so this never double-fires. */
+  if(e.target && e.target !== document.body) return;
+  if(e.metaKey || e.ctrlKey || e.altKey) return;
+  var binId = binIdForKey(e.key);
+  if(!binId) return;
+  e.preventDefault();
+  placeCard(cardById[activeId], binId);
+});
+
+/* ---------- what-if switch ---------- */
+function setSwitch(on){
+  var card = cardById[activeId];
+  if(!card.st.everSorted) return;
+  if(card.st.switched === on) return;
+  card.st.switched = on;
+  renderAll();
+}
+segOrig.addEventListener("click", function(){ setSwitch(false); });
+segAlt.addEventListener("click", function(){ setSwitch(true); });
+
+/* ---------- Reset — the initial teaching state ----------
+   All cards back in the tray, worksheet order, switches off. */
+document.getElementById("reset").addEventListener("click", function(){
+  endDrag(false);                            /* a Reset mid-drag leaves nothing behind */
+  CARDS.forEach(function(c){
+    c.st = { switched:false, placedBin:null, everSorted:false };
+    var chip = chips[c.id];
+    chip.classList.remove("wobble"); chip.classList.remove("settle"); chip.classList.remove("resort");
+    clearDragStyles(chip);                   /* Reset really does restore the page */
+    tray.appendChild(chip);                  /* CARDS order = worksheet order */
+  });
+  BINS.forEach(function(b){ markers[b.id].classList.remove("on"); });
+  setActive(CARDS[0].id);
+});
+
+/* initial teaching state: tray full, worksheet order, first card active */
+setActive(CARDS[0].id);
+})();
+</script>
+</body>
+</html>

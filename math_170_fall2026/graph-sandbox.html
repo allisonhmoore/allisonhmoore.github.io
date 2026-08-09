@@ -1,0 +1,1246 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Build me this graph — special graphs · MATH 170</title>
+
+<!-- ================================================================
+     DESIGN-SYSTEM v2 TOKEN BLOCK — copied verbatim into every file.
+     A global tweak stays a find-replace across the set.
+     This file is the EXEMPLAR: builders copy its <style> and skeleton.
+     ================================================================ -->
+<style>
+/* hidden must always win — author display rules on these classes would otherwise beat
+   the attribute. (2026-08-03: this line used to sit INSIDE the comment above, where it
+   was never parsed as CSS. Same defect in truth-tables, softmax, word2vec, tangent.) */
+[hidden]{display:none !important}
+:root{
+  /* color — light */
+  --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+  --gold-soft:rgba(218,165,32,.12);
+  --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  /* type */
+  --font-body: ui-serif, Georgia, "Times New Roman", serif;
+  --font-ui:   system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+  --text-xl:1.75rem; --text-lg:1.25rem; --text-base:1rem; --text-sm:.875rem; --text-xs:.75rem;
+  --leading-prose:1.6; --leading-ui:1.3;
+  /* spacing */
+  --space-1:4px; --space-2:8px; --space-3:16px; --space-4:24px; --space-5:32px; --space-6:48px;
+  /* motion */
+  --ease:cubic-bezier(0.16,1,0.3,1); --dur:200ms;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+    --gold-soft:rgba(227,179,65,.16);
+    --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+  --gold-soft:rgba(227,179,65,.16);
+  --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+}
+@media (prefers-reduced-motion: reduce){ :root{ --dur:0ms; } }
+@media print{
+  :root, :root[data-theme="dark"]{
+    --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+    --gold-soft:rgba(218,165,32,.12);
+    --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  }
+  .theme-btn{display:none}
+  .stage{break-inside:avoid}
+}
+
+/* ================= base skin (design-system §3–§4) ================= */
+*{box-sizing:border-box}
+html{color-scheme:light dark}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--font-body); font-size:var(--text-base); line-height:var(--leading-prose);
+  -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:820px; margin:0 auto; padding:var(--space-5) var(--space-4) var(--space-6);}
+.topbar{display:flex; align-items:baseline; justify-content:space-between; gap:var(--space-3);
+  border-bottom:1px solid var(--gray-line); padding-bottom:var(--space-2); margin-bottom:var(--space-4);}
+.eyebrow{font-family:var(--font-ui); font-size:var(--text-xs); letter-spacing:.08em; text-transform:uppercase; color:var(--gray-text);}
+h1{font-family:var(--font-body); font-weight:600; font-size:var(--text-xl); line-height:1.2; margin:.2em 0 .1em;}
+h2{font-family:var(--font-ui); font-weight:600; font-size:var(--text-lg); line-height:1.3; margin:var(--space-5) 0 var(--space-2);}
+p{margin:0 0 var(--space-3);}
+.prose{max-width:66ch;}
+.muted{color:var(--gray-text);}
+.mono,code{font-family:var(--font-mono); font-variant-numeric:tabular-nums;}
+a{color:inherit;}
+:focus-visible{outline:2px solid var(--ink); outline-offset:2px; box-shadow:0 0 0 5px var(--gold-soft);}
+
+.theme-btn{font-family:var(--font-ui); font-size:var(--text-xs); background:none;
+  border:1px solid var(--gray-line); color:var(--gray-text); padding:6px 10px; cursor:pointer; border-radius:2px;}
+.theme-btn:hover{background:var(--gray-fill);}
+
+/* spec header */
+details.spec{border:1px solid var(--gray-line); border-radius:2px; margin:0 0 var(--space-4); background:var(--gray-fill);}
+details.spec>summary{font-family:var(--font-ui); font-size:var(--text-sm); cursor:pointer;
+  padding:var(--space-2) var(--space-3); list-style:none; color:var(--gray-text);}
+details.spec>summary::-webkit-details-marker{display:none}
+details.spec>summary::before{content:"▸ "; color:var(--gold);}
+details.spec[open]>summary::before{content:"▾ ";}
+.spec-body{padding:0 var(--space-3) var(--space-3); font-family:var(--font-ui); font-size:var(--text-sm); line-height:1.5;}
+.spec-body dt{font-weight:600; margin-top:var(--space-2);}
+.spec-body dd{margin:0; color:var(--gray-text);}
+
+/* stage */
+.stage{margin:var(--space-4) 0; text-align:center;}
+svg{max-width:100%; height:auto; font-family:var(--font-ui);}
+figcaption{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); margin-top:var(--space-2);}
+
+/* controls */
+.controls{border-top:1px solid var(--gray-line); padding-top:var(--space-3); margin-top:var(--space-4);
+  display:grid; grid-template-columns:1fr 1fr; gap:var(--space-3) var(--space-4);}
+.controls .full{grid-column:1/-1;}
+@media(max-width:560px){ .controls{grid-template-columns:1fr;} }
+.ctl label{display:flex; justify-content:space-between; align-items:baseline;
+  font-family:var(--font-ui); font-size:var(--text-sm); line-height:var(--leading-ui);}
+.ctl .val{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm); color:var(--ink);}
+.ctl .val.gold{color:var(--gold); font-weight:600;}
+.ctl .note{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); margin-top:4px;}
+
+/* range slider — filled track works in ALL engines (design-system v2 fix):
+   wireSlider() paints the webkit track with a two-stop gradient on input. */
+input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:18px;
+  background:transparent; margin:6px 0 0; cursor:pointer;}
+input[type=range]::-webkit-slider-runnable-track{height:2px; border-radius:1px;
+  background:var(--track, var(--gray-line));}
+input[type=range]::-moz-range-track{height:2px; background:var(--gray-line);}
+input[type=range]::-moz-range-progress{height:2px; background:var(--gold);}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; appearance:none;
+  width:18px; height:18px; margin-top:-8px; border-radius:50%; background:var(--gold); border:1px solid var(--ink);}
+input[type=range]::-moz-range-thumb{width:18px; height:18px; border-radius:50%; background:var(--gold); border:1px solid var(--ink);}
+
+/* buttons + segmented + stepper */
+.btn{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:1px solid var(--ink); padding:8px 14px; cursor:pointer; border-radius:2px;}
+.btn:hover{background:var(--gray-fill);}
+.btn.primary{background:var(--gold); border-color:var(--gold); color:#111111;}
+.btn[disabled]{border-color:var(--gray-line); color:var(--gray-line); cursor:default; background:var(--paper);}
+.seg{display:inline-flex; border:1px solid var(--ink); border-radius:2px; overflow:hidden;}
+.seg button{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:0; border-left:1px solid var(--ink); padding:7px 12px; cursor:pointer;}
+.seg button:first-child{border-left:0;}
+.seg button[aria-pressed="true"]{background:var(--gold); color:#111111;}
+.stepper{display:inline-flex; align-items:center; gap:var(--space-2); font-family:var(--font-ui); font-size:var(--text-sm);}
+.stepper .count{font-family:var(--font-mono); font-variant-numeric:tabular-nums; color:var(--gray-text);}
+
+.foot{display:flex; align-items:center; gap:var(--space-3); margin-top:var(--space-5);
+  border-top:1px solid var(--gray-line); padding-top:var(--space-3); flex-wrap:wrap;}
+.foot .btn{margin-right:auto;}
+.hint{font-family:var(--font-ui); font-size:var(--text-sm); color:var(--gray-text);}
+
+/* math reveal */
+.mathbox{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm);
+  background:var(--gray-fill); border-left:2px solid var(--gold); padding:var(--space-3);
+  margin:var(--space-3) 0; overflow-x:auto; white-space:pre; line-height:1.7; text-align:left;}
+.attach{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text);
+  border-top:1px dotted var(--gray-line); margin-top:var(--space-6); padding-top:var(--space-3);}
+.tag{display:inline-block; font-family:var(--font-ui); font-size:var(--text-xs);
+  border:1px solid var(--gray-line); border-radius:999px; padding:1px 8px; color:var(--gray-text); margin-left:6px;}
+.callout{font-family:var(--font-ui); font-size:var(--text-sm); border:1px solid var(--gray-line);
+  border-left:2px solid var(--gold); padding:var(--space-2) var(--space-3); margin:var(--space-3) 0; background:var(--paper);}
+</style>
+
+<!-- theme boot: apply stored choice before first paint (no flash) -->
+<script>
+try{var t=localStorage.getItem("m170-theme");if(t)document.documentElement.dataset.theme=t;}catch(e){}
+</script>
+
+<!-- ============ bespoke styles for this manipulative only ============ -->
+<style>
+/* the board never states a count. This strip carries only what the student did on
+   purpose — a loop or a repeated edge — and never a number they owe. */
+.notsimple{font-family:var(--font-ui); font-size:var(--text-sm); color:var(--gray-text);
+  border:1px dashed var(--gray-line); border-radius:2px; padding:var(--space-1) var(--space-3);
+  margin:var(--space-2) 0 0; text-align:left; min-height:1.9em; line-height:1.7;}
+.notsimple:empty{border-color:transparent;}   /* a simple graph says nothing, quietly */
+#board{touch-action:none;}
+
+/* ---- the reading: five boxes the STUDENT fills in (round 3) ---- */
+.claim{border-top:1px solid var(--gray-line); margin-top:var(--space-4); padding-top:var(--space-3); text-align:left;}
+.claim h2{margin-top:0;}
+.claimhint{font-family:var(--font-ui); font-size:var(--text-sm); color:var(--gray-text); max-width:66ch;}
+.fields{display:grid; grid-template-columns:1fr 1fr; gap:var(--space-2) var(--space-4); margin:var(--space-3) 0;}
+@media(max-width:560px){ .fields{grid-template-columns:1fr;} }
+.field{display:flex; align-items:baseline; gap:var(--space-2); flex-wrap:wrap;}
+.field.wide{grid-column:1/-1;}
+.field > label{font-family:var(--font-ui); font-size:var(--text-sm); line-height:var(--leading-ui); flex:1 1 11em;}
+.field .claimin{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm);
+  color:var(--ink); background:var(--paper); border:1px solid var(--gray-line); border-radius:2px;
+  padding:5px 8px; width:4.5em; text-align:center;}
+.field.wide .claimin{width:16em; text-align:left;}
+.field .claimin::placeholder{color:var(--gray-line);}
+.field.ok .claimin{background:var(--gold-soft); border:1px solid var(--gold); font-weight:700;}
+.field.bad .claimin{border:2px dashed var(--ink); background:var(--paper);}
+/* an unfilled box is not wrong — it is unanswered. A light dashed prompt, no ✗. */
+.field.todo .claimin{border:1px dashed var(--gray-line); background:var(--paper);}
+.field .stat{display:inline-block; width:1.1em; font-family:var(--font-mono); font-weight:700;
+  font-size:var(--text-sm); color:var(--gray-text);}
+.field.ok .stat, .field.bad .stat{color:var(--ink);}
+.field .why{flex:1 1 100%; font-family:var(--font-ui); font-size:var(--text-xs);
+  color:var(--gray-text); margin:2px 0 0;}
+.claimbar{display:flex; align-items:center; gap:var(--space-3); flex-wrap:wrap;}
+.claimbar .tally2{font-family:var(--font-mono); font-variant-numeric:tabular-nums;
+  font-size:var(--text-sm); color:var(--gray-text);}
+.feedback{font-family:var(--font-ui); font-size:var(--text-sm); text-align:left;
+  max-width:66ch; margin:var(--space-3) 0 0; min-height:1.6em;}
+.feedback .sym{font-family:var(--font-mono); font-weight:700; margin-right:6px;}
+.feedback.good{border-left:2px solid var(--gold); background:var(--gold-soft);
+  padding:var(--space-2) var(--space-3);}
+.feedback.bad{border-left:2px dashed var(--ink); padding:var(--space-2) var(--space-3);}
+
+/* the commission: what to build, and how many you have earned */
+.commission{border:1px solid var(--ink); border-radius:2px; padding:var(--space-3);
+  margin:0 0 var(--space-3); text-align:left;}
+.commission .ask{font-family:var(--font-body); font-size:var(--text-lg); line-height:1.35; margin:0;}
+.commission .sub{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text);
+  letter-spacing:.08em; text-transform:uppercase; margin:0 0 var(--space-1);}
+.tally{display:flex; align-items:center; gap:var(--space-2); flex-wrap:wrap;
+  font-family:var(--font-ui); font-size:var(--text-sm); color:var(--gray-text);
+  margin-top:var(--space-2);}
+.tally .score{font-family:var(--font-mono); font-variant-numeric:tabular-nums;
+  font-weight:600; color:var(--ink);}
+.pips{display:inline-flex; gap:3px;}
+.pips i{display:inline-block; width:12px; height:12px; border:1px solid var(--ink);
+  border-radius:2px; background:var(--paper); font-style:normal;}
+.pips i.won{background:var(--gold);}
+.pips i.now{border-width:2px; border-style:dashed;}
+
+/* the verdict on the GRAPH, after Check my work */
+.verdict{font-family:var(--font-ui); font-size:var(--text-sm); text-align:left;
+  margin:var(--space-3) 0 0; padding:var(--space-2) var(--space-3); min-height:1.6em;}
+.verdict .sym{font-family:var(--font-mono); font-weight:700; margin-right:6px;}
+.verdict.pass{border-left:2px solid var(--gold); background:var(--gold-soft);}
+.verdict.fail{border-left:2px dashed var(--ink);}
+.verdict.done{border-left:2px solid var(--gold); background:var(--gold-soft);}
+/* the construction is right and the reading is not: half the work, so half the mark */
+.verdict.half{border-left:2px dashed var(--gold);}
+svg .vgrab{cursor:pointer;}
+svg .egrab{cursor:pointer;}
+@media print{ .notsimple{border-color:#CCCCCC;} .field .claimin{border-color:#CCCCCC;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="eyebrow">MATH 170 · Graphs · Special graphs</div>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Color theme">◑ auto</button>
+  </div>
+
+  <h1 data-edit="title">Build me this graph <span class="tag">special graphs</span></h1>
+  <p class="prose muted" data-edit="intro">A graph is vertices plus edges — nothing else. You will be
+  asked for a particular graph by name. Build it on the board: tap empty space for a vertex, drag from
+  one vertex to another for an edge. It also asks you to <em>read</em> what you drew — order, size, Δ,
+  δ and the degree sequence are yours to count, not the board's to announce. When you think both are
+  right, press <strong>Check my work</strong> at the bottom: it judges the graph and your five numbers
+  in one go, it does not accept near misses, and the point needs both.</p>
+
+  <div data-slot="notes-top"></div>
+
+
+  <div class="commission">
+    <p class="sub" id="commissionSub">commission 1 of 10</p>
+    <p class="ask" id="ask" aria-live="polite"></p>
+    <div class="tally">
+      <span class="score" id="score">0</span> points earned
+      <span class="pips" id="pips" aria-hidden="true"></span>
+      <span id="tallyNote"></span>
+    </div>
+  </div>
+
+  <figure class="stage" style="margin-left:0;margin-right:0;">
+    <svg id="board" viewBox="0 0 640 420" role="application" tabindex="0"
+         aria-label="Graph drawing board. Tap empty space to add a vertex; drag between vertices to add an edge. With the board focused, press N to add a vertex; Tab reaches each vertex and edge."></svg>
+    <div class="notsimple" id="notsimple" aria-live="polite"></div>
+    <figcaption id="caption" data-edit="caption">Tap empty space for a vertex · drag vertex→vertex for an edge · double-tap a vertex for a loop · select something and press Delete to remove it. Keyboard: with the board focused press <code>N</code> for a new vertex; Tab reaches each vertex and edge; arrows move a vertex (Shift for a big step); <code>Enter</code> on one vertex then <code>Enter</code> on another draws an edge, and <code>L</code> — or <code>Enter</code> twice on the same vertex — makes a loop.</figcaption>
+  </figure>
+
+  <p class="verdict" id="verdict" aria-live="polite"></p>
+
+  <div class="controls">
+    <div class="full" style="display:flex; gap:var(--space-3); flex-wrap:wrap; align-items:center;">
+      <button class="btn" id="delSel" type="button" disabled>delete selected</button>
+      <button class="btn" id="clearBoard" type="button">clear the board</button>
+      <button class="btn" id="skip" type="button">skip this one — no point ▸</button>
+    </div>
+  </div>
+
+  <div class="claim">
+    <h2 data-edit="h2-claim">Read your own graph</h2>
+    <p class="claimhint" data-edit="claim-hint">The board will not tell you any of these. Count them off the
+    picture you drew, type them in, and check yourself. A right box turns gold; a wrong one goes dashed and
+    tells you what to count — never the number; an empty one waits, dotted, until you fill it. They are marked
+    against the graph <em>you drew</em>, so you can read a wrong graph correctly. Change the board and the
+    marks clear, because the answers did.</p>
+    <div class="fields" id="fields"></div>
+    <p class="claimhint" data-edit="claim-rule">Write the degree sequence with a comma or a space between the
+    numbers, one number for every vertex. Order does not matter — it is compared <strong>sorted, largest
+    first</strong>, which is how the worksheets write it.</p>
+    <div class="claimbar">
+      <button class="btn primary" id="checkWork" type="button">Check my work</button>
+      <button class="btn" id="clearStats" type="button">Clear my numbers</button>
+      <span class="tally2" id="claimScore" aria-hidden="true"></span>
+    </div>
+    <div class="feedback" id="statsFeedback" aria-live="polite"></div>
+  </div>
+
+  <div data-slot="notes-bottom"></div>
+
+  <div class="foot">
+    <button class="btn" id="reset" type="button">Reset</button>
+    <span class="hint" id="footHint" data-edit="hint-try">Try: build the graph, fill in all five boxes, then press Check my work — one press marks both. If your degree sequence and the commission's disagree, the graph is wrong — not the boxes.</span>
+  </div>
+
+</div>
+
+<script type="application/json" id="m170-config">
+{
+  "_v": 1,
+  "boardVertexCap": 8,
+  "prompts": [
+    {"id": "k3", "name": "K₃",
+     "ask": "Build the complete graph K₃.",
+     "kind": "iso", "n": 3, "edges": [[0,1],[0,2],[1,2]]},
+    {"id": "p4", "name": "P₄",
+     "ask": "Build the path graph P₄.",
+     "kind": "iso", "n": 4, "edges": [[0,1],[1,2],[2,3]]},
+    {"id": "e4", "name": "E₄",
+     "ask": "Build the empty graph E₄.",
+     "kind": "empty", "n": 4},
+    {"id": "c4", "name": "C₄",
+     "ask": "Build the cycle graph C₄.",
+     "kind": "iso", "n": 4, "edges": [[0,1],[1,2],[2,3],[3,0]]},
+    {"id": "k4", "name": "K₄",
+     "ask": "Build the complete graph K₄.",
+     "kind": "iso", "n": 4, "edges": [[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]]},
+    {"id": "star4", "name": "the star S₄ = K₁,₄",
+     "ask": "Build the star S₄, also written K₁,₄.",
+     "kind": "iso", "n": 5, "edges": [[0,1],[0,2],[0,3],[0,4]]},
+    {"id": "k5", "name": "K₅",
+     "ask": "Build the complete graph K₅.",
+     "kind": "iso", "n": 5,
+     "edges": [[0,1],[0,2],[0,3],[0,4],[1,2],[1,3],[1,4],[2,3],[2,4],[3,4]]},
+    {"id": "tree6", "name": "a tree on 6 vertices",
+     "ask": "Build a tree on six vertices.",
+     "kind": "tree", "n": 6},
+    {"id": "c6", "name": "C₆",
+     "ask": "Build the cycle graph C₆.",
+     "kind": "iso", "n": 6, "edges": [[0,1],[1,2],[2,3],[3,4],[4,5],[5,0]]},
+    {"id": "reg3", "name": "a regular graph of degree 3 on 6 vertices",
+     "ask": "Build a regular graph of degree 3 on six vertices.",
+     "kind": "regular", "n": 6, "k": 3}
+  ],
+  "stats": [
+    {"id": "order", "label": "order |G|", "kind": "number",
+     "why": "Count the circles on the board — one per vertex."},
+    {"id": "size", "label": "size", "kind": "number",
+     "why": "Count the lines on the board. A loop is one edge; two lines between the same pair are two edges."},
+    {"id": "maxdeg", "label": "max degree Δ(G)", "kind": "number",
+     "why": "Find the busiest vertex and count the edge-ends meeting it. A loop puts two ends at its own vertex."},
+    {"id": "mindeg", "label": "min degree δ(G)", "kind": "number",
+     "why": "Find the quietest vertex the same way. A vertex with nothing attached has degree 0."},
+    {"id": "seq", "label": "degree sequence", "kind": "list",
+     "why": "One degree for every vertex, all of them, separated by commas. It is compared sorted, largest first, so any order you write is fine."}
+  ],
+  "praise": [
+    "Accepted. That is the graph.",
+    "Accepted — built from the definition, not copied.",
+    "Accepted. Order, size and shape all agree.",
+    "Accepted. Next commission.",
+    "Accepted — nicely done."
+  ],
+  "messages": {
+    "graphIncorrect": "Incorrect graph. {msg}",
+    "graphRightOnly": "The graph is correct. The reading below is not right yet — the point is earned when both are.",
+    "bothRight": "{praise} All {right} right — the graph invariants are correct too. Point earned.",
+    "wrongVertices": "This one needs {need} vertices; your board has {have}.",
+    "notSimple": "This one has to be a simple graph — no loops, no repeated edges between the same pair. Yours has {what}.",
+    "wrongEdges": "The vertex count is right. This one has {need} edges; yours has {have}.",
+    "wrongDegrees": "Right number of vertices and right number of edges, but the degrees are wrong — yours read ({seq}). Count how many edges should meet at each vertex of the graph you were asked for.",
+    "notConnected": "The counts are right, but your graph falls into {parts} separate pieces, and this one has to be all in one piece.",
+    "notIsomorphic": "Every count matches — {n} vertices, {m} edges, degrees ({seq}) — and it is still not this graph. Two different graphs can have identical degree sequences. Compare yours against the definition of the one you were asked for.",
+    "allDone": "All {n} commissions approved. Reset to run them again.",
+    "skipped": "Skipped — no point for that one. Here is the next commission.",
+    "statsAllRight": "All {right} right. The graph invariants are correct.",
+    "statsSomeWrong": "{right} of {total} right. The dashed boxes are still open — the line under each one says what to count.",
+    "statsOnlyBlanks": "{right} of {total} right so far. {blank} still empty — fill every box, then check again.",
+    "statsNoneFilled": "The five boxes are still empty. Read the graph you drew and fill them in — the point needs the numbers as well as the picture.",
+    "statsBlanks": "{blank} still empty.",
+    "statsEmptyBoard": "The board is empty. Draw a graph first, then read it.",
+    "statsStale": "The board changed, so the marks are cleared. Read it again and check.",
+    "statsBadNumber": "Whole numbers only — that box needs a count.",
+    "statsBadSeq": "That is not a list of degrees. Write one whole number for each vertex, separated by commas.",
+    "symPass": "✓",
+    "symFail": "✗",
+    "symTodo": "·"
+  },
+  "_meta": {
+    "boardVertexCap": {"label": "Most vertices the board will hold", "kind": "number",
+      "help": "Eight is enough for every commission and keeps the isomorphism check instant (it is at most n! vertex maps, pruned)."},
+    "prompts": {"label": "The sequence of commissions", "kind": "table",
+      "help": "kind = \"iso\" (must be isomorphic to the graph given by n and edges — use this whenever exactly one shape is correct), \"empty\" (n vertices, no edges), \"tree\" (n vertices, connected, no cycles — any tree accepted), or \"regular\" (n vertices, every degree exactly k, simple — every correct answer accepted). Edge endpoints are zero-based. Prefer \"iso\" over degree checks: two triangles and C₆ have the same degree sequence, and only the isomorphism check tells them apart."},
+    "stats": {"label": "The five boxes the student fills in", "kind": "table",
+      "help": "The student counts these; the page never prints them. The id of each row is fixed — order, size, maxdeg, mindeg, seq — because the page computes the answer from it; label and why are yours to reword. \"why\" is shown after that box is marked wrong or left empty, and must say WHAT TO COUNT, never the number. kind \"list\" marks the degree-sequence box; anything else is a whole number. Dropping a row removes that box; adding a row with an unknown id is ignored."},
+    "praise": {"label": "What approval says, cycled in order", "kind": "list"},
+    "messages": {"label": "Refusal and marking wording", "kind": "text",
+      "help": "One button, \"Check my work\", judges both halves and writes two lines. The graph line is graphIncorrect (which wraps one refusal in {msg}), graphRightOnly, or bothRight (which wraps a praise line in {praise}); the reading line is one of the stats* messages. Placeholders: {need} {have} {what} {seq} {n} {m} {parts} for refusals; {right} {total} {blank} for the marking lines. None of these messages may describe the construction or state a count the student owes — they name the property that is off and stop."}
+  }
+}
+</script>
+
+<script>
+(function(){
+"use strict";
+
+/* ROUND 2 (professor, 2026-07-27): "'Trace' and 'Euler' are confusing out of context;
+   remove them. Instead: prompt the user to create the graphs from 'special graphs'.
+   User builds the graph, clicks submit for approval, gains a point, sandbox resets,
+   next prompt. Point tally."
+   Trace mode, Euler mode, the preset bar, Königsberg and both Euler practice graphs
+   are gone. What survives is the build editor and the live invariant strip.
+
+   ROUND 3 (professor, 2026-08-03), six items, all handled here:
+   1 "Double clicking a vertex to add a loop does not work" · 2 "Selecting/deleting a
+   vertex does not work" · 4 "Delete selected is buggy – needs to be selected twice".
+   One cause underneath all three: the old code re-rendered the board (svg.innerHTML =
+   …) inside pointerup and then relied on the click/dblclick event that arrives AFTER
+   that, whose target element no longer exists — plus a global `suppressClick` flag,
+   armed on every drag and disarmed only by a click that may never come (release the
+   pointer off the board and the next real click is eaten: the "click twice" bug).
+   Both are gone. One pointer gesture at a time, matched on pointerId, resolved on
+   pointerup by hit-testing the model — never by a later event's DOM target. A tap on a
+   vertex within DBLMS of the last tap on the SAME vertex is the loop gesture, timed
+   here rather than trusted to the browser's dblclick.
+   3 "+ vertex button is redundant with clicking to add vertex" — removed; the keyboard
+   path is N on the focused board (the board is a tab stop and says so in its label).
+   5 preset descriptions cut to the name in `prompts[].ask`.
+   6 "This should not be calculated by the computer but rather by the student" — the
+   live invariant strip, the degree receipt and the whole handshaking check are gone.
+   Five boxes take their place: order, size, Δ, δ, degree sequence, typed by the
+   student and marked ✓/✗ against invariants() — which still computes everything, and
+   now prints none of it.
+
+   ROUND 4 (professor, 2026-08-05): "please combine 'Submit for approval' and 'Check my
+   numbers' as a single button that appears at the bottom, and is labelled 'Check my
+   work.' … If the graph invariants for the incorrect graph are correct, do display the
+   confirmation message though … The point is earned when everything is correct for that
+   particular example."
+   One button, checkWork(), two independent judgements written to two lines: judge()
+   on the construction (verdict, under the board) and markStats() on the five boxes
+   (statsFeedback, under the boxes). The boxes are marked against the graph the student
+   DREW, so an incorrect graph that has been read correctly still earns the sentence
+   saying so — the reading is a separate skill and is graded as one. The commission
+   advances, and points++, in exactly one place: both halves right at the same press. */
+
+var CFG = JSON.parse(document.getElementById("m170-config").textContent);
+
+/* ---------- theme: auto → light → dark (design-system v2) ---------- */
+var root = document.documentElement, themeBtn = document.getElementById("themeBtn");
+function themeLabel(){
+  var m = root.dataset.theme || "auto";
+  themeBtn.textContent = m==="dark" ? "● dark" : m==="light" ? "○ light" : "◑ auto";
+}
+themeBtn.addEventListener("click", function(){
+  var cur = root.dataset.theme || "auto";
+  var next = cur==="auto" ? "light" : cur==="light" ? "dark" : "auto";
+  if(next==="auto"){ delete root.dataset.theme; try{localStorage.removeItem("m170-theme");}catch(e){} }
+  else { root.dataset.theme = next; try{localStorage.setItem("m170-theme", next);}catch(e){} }
+  themeLabel(); render();
+});
+if(window.matchMedia){ window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function(){ render(); }); }
+themeLabel();
+
+function css(v){ return getComputedStyle(document.body).getPropertyValue(v).trim(); }
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+function isArr(v){ return Object.prototype.toString.call(v)==="[object Array]"; }
+function fill(tpl, vars){
+  return String(tpl==null?"":tpl).replace(/\{(\w+)\}/g, function(m,k){
+    return vars[k]!==undefined ? vars[k] : m;
+  });
+}
+
+/* ---------- the commissions ---------- */
+var PROMPTS = (isArr(CFG.prompts) ? CFG.prompts : []).filter(function(p){
+  return p && p.n>0 && (p.kind==="iso" ? isArr(p.edges) : true);
+});
+var PRAISE = isArr(CFG.praise) && CFG.praise.length ? CFG.praise : ["Accepted."];
+var MSG = CFG.messages || {};
+var VCAP = Math.max(3, Math.round(+CFG.boardVertexCap || 8));
+
+/* how many edges a commission must have — every kind has a fixed count */
+function needEdges(p){
+  if(p.kind==="iso")     return p.edges.length;
+  if(p.kind==="empty")   return 0;
+  if(p.kind==="tree")    return p.n - 1;
+  if(p.kind==="regular") return p.n * (+p.k||0) / 2;
+  return null;
+}
+
+/* ---------- state ---------- */
+var S = null, points = 0, at = 0, awarded = [];
+var judgedStamp = null;          /* the board the last graph verdict was written about */
+function blankBoard(){
+  S = { verts:[], edges:[], nextV:1, nextE:1, sel:null, pending:null };
+  lastTap = { key:null, t:0 };   /* vertex ids restart, so the tap pair must too */
+  judgedStamp = null;
+}
+function vById(id){ for(var i=0;i<S.verts.length;i++) if(S.verts[i].id===id) return S.verts[i]; return null; }
+function degree(vid){
+  var d=0;
+  S.edges.forEach(function(e){ if(e.a===vid&&e.b===vid) d+=2; else if(e.a===vid||e.b===vid) d+=1; });
+  return d;
+}
+
+/* ---------- invariants ---------- */
+function invariants(){
+  var degs = S.verts.map(function(v){ return degree(v.id); });
+  var sorted = degs.slice().sort(function(a,b){return b-a;});
+  var hasLoop = S.edges.some(function(e){ return e.a===e.b; });
+  var seen={}, hasMulti=false;
+  S.edges.forEach(function(e){
+    if(e.a===e.b) return;
+    var k=Math.min(e.a,e.b)+"|"+Math.max(e.a,e.b);
+    if(seen[k]) hasMulti=true; seen[k]=true;
+  });
+  return { order:S.verts.length, size:S.edges.length,
+    maxDeg: degs.length?Math.max.apply(null,degs):0, minDeg: degs.length?Math.min.apply(null,degs):0,
+    seq:sorted, hasLoop:hasLoop, hasMulti:hasMulti };
+}
+/* connected components over ALL vertices, isolated ones included */
+function componentCount(){
+  var n = S.verts.length;
+  if(n===0) return 0;
+  var idx = {}; S.verts.forEach(function(v,i){ idx[v.id]=i; });
+  var adj = []; for(var i=0;i<n;i++) adj.push([]);
+  S.edges.forEach(function(e){
+    if(e.a===e.b) return;
+    var a=idx[e.a], b=idx[e.b];
+    if(a===undefined||b===undefined) return;
+    adj[a].push(b); adj[b].push(a);
+  });
+  var seen=[], c=0;
+  for(var s=0;s<n;s++){
+    if(seen[s]) continue;
+    c++; var q=[s]; seen[s]=1;
+    while(q.length){
+      var u=q.shift();
+      for(var t=0;t<adj[u].length;t++){ var w=adj[u][t]; if(!seen[w]){ seen[w]=1; q.push(w); } }
+    }
+  }
+  return c;
+}
+/* 0/1 adjacency matrix in current vertex order (simple graphs only) */
+function adjacency(){
+  var n=S.verts.length, idx={}, A=[];
+  S.verts.forEach(function(v,i){ idx[v.id]=i; });
+  for(var i=0;i<n;i++){ A.push([]); for(var j=0;j<n;j++) A[i].push(0); }
+  S.edges.forEach(function(e){
+    var a=idx[e.a], b=idx[e.b];
+    if(a===undefined||b===undefined) return;
+    A[a][b]=1; A[b][a]=1;
+  });
+  return A;
+}
+function targetAdjacency(p){
+  var A=[], i, j;
+  for(i=0;i<p.n;i++){ A.push([]); for(j=0;j<p.n;j++) A[i].push(0); }
+  p.edges.forEach(function(e){
+    var a=+e[0], b=+e[1];
+    if(a>=0&&a<p.n&&b>=0&&b<p.n){ A[a][b]=1; A[b][a]=1; }
+  });
+  return A;
+}
+
+/* ---------- isomorphism: exhaustive backtracking over vertex maps ----------
+   Builds a bijection student → target one vertex at a time, and rejects a
+   candidate the moment it disagrees with any already-mapped vertex. Worst case
+   is n! maps; with the board capped at 8 vertices that is 40320, and the
+   pruning means the real cost on these commissions is a few dozen tries. */
+function isomorphic(A, B){
+  var n = A.length;
+  if(B.length !== n) return false;
+  var perm = [], used = [];
+  for(var i=0;i<n;i++) used.push(false);
+  function place(k){
+    if(k===n) return true;
+    for(var v=0; v<n; v++){
+      if(used[v]) continue;
+      if(A[k][k] !== B[v][v]) continue;
+      var ok = true;
+      for(var j=0; j<k; j++){
+        if(A[k][j] !== B[v][perm[j]]){ ok = false; break; }
+      }
+      if(!ok) continue;
+      used[v] = true; perm[k] = v;
+      if(place(k+1)) return true;
+      used[v] = false;
+    }
+    return false;
+  }
+  return place(0);
+}
+
+/* ---------- the approval check ----------
+   Every refusal names exactly ONE property and stops there. It never describes
+   the construction, and it never prints the target's degree sequence. */
+function judge(p){
+  var inv = invariants();
+  var needN = p.n, needM = needEdges(p);
+  var seqTxt = inv.seq.join(", ") || "—";
+
+  if(inv.order !== needN)
+    return { ok:false, why:"vertices",
+             msg: fill(MSG.wrongVertices, {need:needN, have:inv.order}) };
+
+  if(inv.hasLoop || inv.hasMulti){
+    var what = [inv.hasLoop?"a loop":null, inv.hasMulti?"a repeated edge":null]
+                 .filter(Boolean).join(" and ");
+    return { ok:false, why:"simple", msg: fill(MSG.notSimple, {what:what}) };
+  }
+
+  if(needM !== null && inv.size !== needM)
+    return { ok:false, why:"edges",
+             msg: fill(MSG.wrongEdges, {need:needM, have:inv.size}) };
+
+  if(p.kind === "empty") return { ok:true };
+
+  if(p.kind === "regular"){
+    var k = +p.k;
+    var allK = S.verts.every(function(v){ return degree(v.id) === k; });
+    if(!allK) return { ok:false, why:"degrees",
+                       msg: fill(MSG.wrongDegrees, {seq:seqTxt}) };
+    return { ok:true };
+  }
+
+  if(p.kind === "tree"){
+    var parts = componentCount();
+    if(parts !== 1) return { ok:false, why:"connected",
+                             msg: fill(MSG.notConnected, {parts:parts}) };
+    /* connected with exactly n − 1 edges and no repeats is a tree, no cycle possible */
+    return { ok:true };
+  }
+
+  /* kind === "iso" */
+  var B = targetAdjacency(p);
+  var tdeg = B.map(function(r){ return r.reduce(function(a,b){return a+b;},0); })
+              .sort(function(a,b){return b-a;});
+  if(inv.seq.join(",") !== tdeg.join(","))
+    return { ok:false, why:"degrees", msg: fill(MSG.wrongDegrees, {seq:seqTxt}) };
+  if(!isomorphic(adjacency(), B))
+    return { ok:false, why:"shape",
+             msg: fill(MSG.notIsomorphic, {n:inv.order, m:inv.size, seq:seqTxt}) };
+  return { ok:true };
+}
+
+/* ---------- geometry helpers ---------- */
+function parallelIndex(e){   /* position of e among its parallel group, and group size */
+  var k = e.a===e.b ? ("L"+e.a) : (Math.min(e.a,e.b)+"|"+Math.max(e.a,e.b));
+  var group = S.edges.filter(function(x){
+    var xk = x.a===x.b ? ("L"+x.a) : (Math.min(x.a,x.b)+"|"+Math.max(x.a,x.b));
+    return xk===k;
+  });
+  return { i: group.indexOf(e), n: group.length };
+}
+function edgeGeom(e){
+  var A=vById(e.a), B=vById(e.b), pi=parallelIndex(e);
+  if(e.a===e.b){
+    var r = 16 + pi.i*10;
+    return { loop:true, cx:A.x, cy:A.y-20-r*0.6, r:r };
+  }
+  var off = (pi.i-(pi.n-1)/2)*30;
+  var mx=(A.x+B.x)/2, my=(A.y+B.y)/2, dx=B.x-A.x, dy=B.y-A.y, len=Math.sqrt(dx*dx+dy*dy)||1;
+  var nx=-dy/len, ny=dx/len, cx=mx+nx*off*1.9, cy=my+ny*off*1.9;
+  return { loop:false, x1:A.x, y1:A.y, x2:B.x, y2:B.y, cx:cx, cy:cy };
+}
+function edgePath(g){
+  if(g.loop) return null;
+  return "M "+g.x1+" "+g.y1+" Q "+g.cx+" "+g.cy+" "+g.x2+" "+g.y2;
+}
+
+/* ---------- render ---------- */
+var svg = document.getElementById("board");
+var wantFocus = null;      /* set by an edit that should hand focus to what it made */
+function render(){
+  var ink=css("--ink"), gold=css("--gold"), gray=css("--gray-text"),
+      paper=css("--paper");
+  var focusKey = wantFocus || (document.activeElement && document.activeElement.getAttribute
+      ? document.activeElement.getAttribute("data-k") : null);
+  wantFocus = null;
+  var out = "";
+
+  S.edges.forEach(function(e){
+    var g=edgeGeom(e), selected = S.sel && S.sel.type==="e" && S.sel.id===e.id;
+    var stroke = selected ? gold : ink, w = selected ? 3.5 : 1.6;
+    var lab = "edge "+vById(e.a).label+"–"+vById(e.b).label+(e.a===e.b?" (loop)":"");
+    out += '<g class="egrab" data-k="e'+e.id+'" tabindex="0" role="button" aria-label="'+esc(lab)+'">';
+    if(g.loop){
+      out += '<circle cx="'+g.cx+'" cy="'+g.cy+'" r="'+(g.r+7)+'" fill="none" stroke="rgba(0,0,0,0)" stroke-width="14"/>';
+      out += '<circle cx="'+g.cx+'" cy="'+g.cy+'" r="'+g.r+'" fill="none" stroke="'+stroke+'" stroke-width="'+w+'"/>';
+    } else {
+      var d=edgePath(g);
+      out += '<path d="'+d+'" fill="none" stroke="rgba(0,0,0,0)" stroke-width="16"/>';
+      out += '<path d="'+d+'" fill="none" stroke="'+stroke+'" stroke-width="'+w+'"/>';
+    }
+    out += '</g>';
+  });
+
+  if(gesture && gesture.to && gesture.from!==null){
+    var A0=vById(gesture.from);
+    if(A0) out += '<line x1="'+A0.x+'" y1="'+A0.y+'" x2="'+gesture.to.x+'" y2="'+gesture.to.y+
+           '" stroke="'+gold+'" stroke-width="2" stroke-dasharray="5 4" pointer-events="none"/>';
+  }
+
+  S.verts.forEach(function(v){
+    var selected = S.sel && S.sel.type==="v" && S.sel.id===v.id;
+    var pend = S.pending===v.id;
+    var deg = degree(v.id);
+    out += '<g class="vgrab" data-k="v'+v.id+'" tabindex="0" role="button" aria-label="vertex '+esc(v.label)+', degree '+deg+'">';
+    if(pend)  out += '<circle cx="'+v.x+'" cy="'+v.y+'" r="21" fill="none" stroke="'+gold+'" stroke-width="2" stroke-dasharray="3 3"/>';
+    out += '<circle cx="'+v.x+'" cy="'+v.y+'" r="14" fill="'+(selected?gold:paper)+
+           '" stroke="'+ink+'" stroke-width="'+(selected?2.5:1.5)+'"/>';
+    out += '<text x="'+v.x+'" y="'+(v.y+4)+'" text-anchor="middle" font-size="12" font-weight="600" fill="'+
+           (selected?"#111111":ink)+'" pointer-events="none">'+esc(v.label)+'</text>';
+    out += '</g>';
+  });
+  svg.innerHTML = out;
+  if(focusKey){
+    var el = svg.querySelector('[data-k="'+focusKey+'"]');
+    if(el){ try{ el.focus({preventScroll:true}); }catch(err){ el.focus(); } }
+  }
+
+  /* The ONLY thing the board still says about itself. It is not a count the student
+     owes — it names a thing they built on purpose (a loop, a doubled edge), which is
+     also how they learn the double-tap worked. Nothing numeric appears here. */
+  var inv = invariants();
+  document.getElementById("notsimple").textContent =
+    (inv.hasLoop||inv.hasMulti)
+      ? ("This graph is not simple: it has "+
+         [inv.hasLoop?"a loop":null, inv.hasMulti?"a repeated edge":null].filter(Boolean).join(" and ")+".")
+      : "";
+
+  document.getElementById("delSel").disabled = !S.sel;
+  syncStats();
+  syncVerdict();
+  renderCommission();
+}
+
+function renderCommission(){
+  var done = at >= PROMPTS.length;
+  document.getElementById("commissionSub").textContent =
+    done ? "all commissions issued" : "commission "+(at+1)+" of "+PROMPTS.length;
+  document.getElementById("ask").textContent =
+    done ? "" : String(PROMPTS[at].ask || "");
+  document.getElementById("score").textContent = String(points);
+  var pips = "";
+  PROMPTS.forEach(function(p,i){
+    pips += '<i class="'+(awarded[i]?"won":(i===at&&!done?"now":""))+'"></i>';
+  });
+  document.getElementById("pips").innerHTML = pips;
+  document.getElementById("tallyNote").textContent =
+    done ? "" : "· filled squares are commissions you earned";
+  document.getElementById("checkWork").disabled = done;
+  document.getElementById("skip").disabled = done;
+}
+
+function verdict(kind, text){
+  var el = document.getElementById("verdict");
+  el.className = "verdict" + (kind ? " "+kind : "");
+  el.textContent = "";
+  if(!text) return;
+  var symTxt = kind==="fail" ? (MSG.symFail||"✗")
+             : (kind==="pass"||kind==="done") ? (MSG.symPass||"✓") : "";
+  if(symTxt){
+    var s = document.createElement("span"); s.className="sym"; s.textContent = symTxt;
+    el.appendChild(s);
+  }
+  el.appendChild(document.createTextNode(text));
+}
+
+/* ---------- pointer interaction (build only) ---------- */
+function svgPointRaw(ev){
+  var pt = svg.createSVGPoint(); pt.x=ev.clientX; pt.y=ev.clientY;
+  var m = svg.getScreenCTM(); if(!m) return null;
+  return pt.matrixTransform(m.inverse());
+}
+function svgPoint(ev){
+  var p = svgPointRaw(ev); if(!p) return {x:0,y:0};
+  return { x:Math.max(18,Math.min(622,p.x)), y:Math.max(18,Math.min(402,p.y)) };
+}
+/* Was the pointer over the board at all? A release far outside clamps to a corner, and
+   a corner must not silently count as a vertex the student dropped an edge on. */
+function onBoard(ev){
+  var p = svgPointRaw(ev);
+  return !!p && p.x>=0 && p.x<=640 && p.y>=0 && p.y<=420;
+}
+function hitVertex(p){
+  for(var i=S.verts.length-1;i>=0;i--){
+    var v=S.verts[i], dx=p.x-v.x, dy=p.y-v.y;
+    if(dx*dx+dy*dy <= 20*20) return v;
+  }
+  return null;
+}
+/* An element's key, but ONLY while it is still inside the board. A node the last
+   render detached answers null, so a stale target can never act. */
+function keyOf(el){
+  var k=null, n=el;
+  while(n && n!==svg){
+    if(!k && n.getAttribute && n.getAttribute("data-k")) k = n.getAttribute("data-k");
+    n = n.parentNode;
+  }
+  return n===svg ? k : null;
+}
+/* What is under the pointer RIGHT NOW — read from the live document, never from an
+   event target that a re-render may have replaced. Vertices win over edges (they are
+   drawn on top and carry the more generous 20px hit radius). */
+function keyAt(ev){
+  var v = hitVertex(svgPoint(ev));
+  if(v) return "v"+v.id;
+  var el = document.elementFromPoint ? document.elementFromPoint(ev.clientX, ev.clientY) : null;
+  return keyOf(el);
+}
+
+/* ---- one gesture at a time, matched on pointerId, ended in exactly one place ----
+   Selection, loops and vertex-adding all resolve on pointerup from the model. No
+   click/dblclick event is trusted for pointer input, and no "ignore the next click"
+   flag exists to go stale. */
+var gesture = null;
+var DBLMS = 450, lastTap = { key:null, t:0 };
+var MOVE2 = 36;            /* 6px, squared — below this a press is a tap, not a drag */
+
+function endGesture(commit, ev){
+  var g = gesture; gesture = null;
+  if(!g) return;
+  try{ if(svg.hasPointerCapture && svg.hasPointerCapture(g.id)) svg.releasePointerCapture(g.id); }
+  catch(err){}
+  if(!commit || !ev){ render(); return; }
+  if(g.moved){
+    if(g.from !== null && onBoard(ev)){
+      var v = hitVertex(svgPoint(ev));
+      if(v && v.id !== g.from){ addEdge(g.from, v.id); return; }   /* vertex → vertex */
+    }
+    render(); return;                       /* a drag that hit nothing changes nothing */
+  }
+  tap(ev);
+}
+
+function tap(ev){
+  var p = svgPoint(ev), key = keyAt(ev), now = Date.now();
+  var second = key !== null && key === lastTap.key && (now - lastTap.t) <= DBLMS;
+  lastTap = { key: key, t: second ? 0 : now };   /* a third tap starts a fresh pair */
+  if(key && key.charAt(0)==="v"){
+    var id = +key.slice(1);
+    if(second){                                  /* double-tap a vertex → loop */
+      S.sel = {type:"v", id:id}; S.pending = null;
+      addEdge(id, id, key);
+      return;
+    }
+    toggleSelect("v", id, key); return;
+  }
+  if(key && key.charAt(0)==="e"){ toggleSelect("e", +key.slice(1), key); return; }
+  addVertexAt(p.x, p.y);                         /* empty space → new vertex */
+}
+
+svg.addEventListener("pointerdown", function(ev){
+  if(ev.button !== undefined && ev.button > 0) return;
+  if(gesture) endGesture(false);            /* a second finger never strands the first */
+  var v = hitVertex(svgPoint(ev));
+  gesture = { id: ev.pointerId, x0: ev.clientX, y0: ev.clientY,
+              from: v ? v.id : null, moved: false, to: null };
+  try{ svg.setPointerCapture(ev.pointerId); }catch(err){}
+  ev.preventDefault();
+});
+window.addEventListener("pointermove", function(ev){
+  if(!gesture || ev.pointerId !== gesture.id) return;
+  /* a mouse/pen with no button down cannot be dragging: if an "up" ever escapes us the
+     next hover move ends the gesture instead of leaving a rubber band on screen */
+  if(ev.buttons === 0 && ev.pointerType !== "touch"){ endGesture(false); return; }
+  var dx = ev.clientX-gesture.x0, dy = ev.clientY-gesture.y0;
+  if(!gesture.moved){
+    if(dx*dx+dy*dy < MOVE2) return;
+    gesture.moved = true;
+  }
+  if(gesture.from !== null){ gesture.to = svgPoint(ev); render(); }
+});
+window.addEventListener("pointerup", function(ev){
+  if(gesture && ev.pointerId === gesture.id) endGesture(true, ev);
+});
+window.addEventListener("pointercancel", function(ev){
+  if(gesture && ev.pointerId === gesture.id) endGesture(false);
+});
+window.addEventListener("blur", function(){ endGesture(false); });
+
+/* The only click path left: activation that did NOT come from a pointer — Enter/Space
+   relayed by assistive technology onto a vertex or edge, which reports detail === 0. */
+svg.addEventListener("click", function(ev){
+  if(ev.detail) return;
+  var k = keyOf(ev.target); if(!k) return;
+  toggleSelect(k.charAt(0)==="v" ? "v" : "e", +k.slice(1), k);
+});
+
+/* ---------- keyboard: every pointer gesture has an equal here ----------
+   board focused   N (or Enter/Space) new vertex · Delete removes the selection
+   vertex focused  arrows move (Shift = big step) · Enter starts/finishes an edge,
+                   twice on the same vertex or L makes a loop · Delete removes it
+   edge focused    Enter selects · Delete removes it
+   anywhere        Escape cancels a half-drawn edge or a live drag                */
+svg.addEventListener("keydown", function(ev){
+  if(ev.key==="Escape"){
+    endGesture(false);
+    if(S.pending!==null){ S.pending=null; render(); }
+    return;
+  }
+  var k = keyOf(ev.target);
+  if(!k){                                     /* the board itself has focus */
+    if(ev.key==="n"||ev.key==="N"||ev.key==="Enter"||ev.key===" "){
+      ev.preventDefault(); addVertexAtFreeSpot(); return;
+    }
+    if(ev.key==="Delete"||ev.key==="Backspace"){
+      ev.preventDefault(); deleteSelection(); return;
+    }
+    return;
+  }
+  var type=k.charAt(0), id=+k.slice(1);
+  if(type==="v"){
+    var v=vById(id), step = ev.shiftKey?40:4;
+    if(!v) return;
+    if(ev.key==="ArrowLeft"){ v.x=Math.max(18,v.x-step); render(); ev.preventDefault(); return; }
+    if(ev.key==="ArrowRight"){ v.x=Math.min(622,v.x+step); render(); ev.preventDefault(); return; }
+    if(ev.key==="ArrowUp"){ v.y=Math.max(18,v.y-step); render(); ev.preventDefault(); return; }
+    if(ev.key==="ArrowDown"){ v.y=Math.min(402,v.y+step); render(); ev.preventDefault(); return; }
+    if(ev.key==="l"||ev.key==="L"){            /* the keyboard's double-tap */
+      ev.preventDefault(); S.pending=null; S.sel={type:"v", id:id}; addEdge(id,id,k); return;
+    }
+    if(ev.key==="Enter"||ev.key===" "){
+      ev.preventDefault();
+      if(S.pending===null){ S.pending=id; render(); }
+      else { var from=S.pending; S.pending=null; addEdge(from,id,k); }  /* same twice → loop */
+      return;
+    }
+  }
+  if(type==="e" && (ev.key==="Enter"||ev.key===" ")){
+    ev.preventDefault(); toggleSelect("e", id, k); return;
+  }
+  if(ev.key==="Delete"||ev.key==="Backspace"){
+    ev.preventDefault();
+    if(type==="v") deleteVertex(id); else deleteEdge(id);
+  }
+});
+
+/* ---------- edits ----------
+   Each one takes an optional focus key so the thing you just acted on keeps the
+   keyboard, whether you got here by finger, mouse or Tab. */
+function toggleSelect(type,id,focus){
+  if(S.sel && S.sel.type===type && S.sel.id===id) S.sel=null;
+  else S.sel={type:type,id:id};
+  S.pending=null; wantFocus = focus || null; render();
+}
+function addVertexAt(x,y){
+  if(S.verts.length >= VCAP){
+    verdict("", "The board holds "+VCAP+" vertices — no commission needs more.");
+    return;
+  }
+  var used={}; S.verts.forEach(function(v){ used[v.label]=1; });
+  var n=1; while(used["v"+n]) n++;
+  var v = {id:S.nextV++, label:"v"+n, x:x, y:y};
+  S.verts.push(v);
+  wantFocus = "v"+v.id;
+  render();
+}
+/* deterministic free spot: the first grid cell far from every vertex. The keyboard's
+   "add a vertex", and the reason the + vertex button could go. */
+function addVertexAtFreeSpot(){
+  var spot=null;
+  outer:
+  for(var gy=60; gy<=380; gy+=70){
+    for(var gx=60; gx<=600; gx+=70){
+      var ok=S.verts.every(function(v){ var dx=v.x-gx, dy=v.y-gy; return dx*dx+dy*dy>55*55; });
+      if(ok){ spot={x:gx,y:gy}; break outer; }
+    }
+  }
+  if(!spot) spot={x:320,y:210};
+  addVertexAt(spot.x, spot.y);
+}
+function addEdge(a,b,focus){
+  S.edges.push({id:S.nextE++, a:a, b:b});
+  if(a!==b) S.sel=null;            /* a loop keeps its vertex selected; an edge clears */
+  wantFocus = focus || null;
+  render();
+}
+function deleteEdge(id){
+  S.edges = S.edges.filter(function(e){ return e.id!==id; });
+  if(S.sel && S.sel.type==="e" && S.sel.id===id) S.sel=null;
+  render();
+}
+function deleteVertex(id){
+  S.verts = S.verts.filter(function(v){ return v.id!==id; });
+  S.edges = S.edges.filter(function(e){ return e.a!==id && e.b!==id; });
+  if(S.sel && S.sel.type==="v" && S.sel.id===id) S.sel=null;
+  if(S.pending===id) S.pending=null;
+  render();
+}
+function deleteSelection(){
+  if(!S.sel) return;
+  if(S.sel.type==="v") deleteVertex(S.sel.id); else deleteEdge(S.sel.id);
+}
+document.getElementById("delSel").addEventListener("click", deleteSelection);
+document.getElementById("clearBoard").addEventListener("click", function(){
+  blankBoard(); verdict("", ""); clearStats(); render();
+});
+
+/* ---------- the reading: five boxes the STUDENT fills in ----------
+   ROUND 3 item 6: "Currently the computer calculates the order, size, max degree, min
+   degree, degree sequence, and checks handshake lemma. This should not be calculated by
+   the computer but rather by the student. Student should be able to input a number or
+   list for the order, size, max degree, min degree, degree sequence and have that
+   validated. Remove the handshake lemma check."
+
+   invariants() still computes all five — the approval check needs them — but they reach
+   the screen through nothing except a ✓ or an ✗ on what the student typed. There is no
+   reveal: the only thing the page had to reveal was the answer, and a wrong box gets a
+   sentence naming what to count instead. */
+var STAT_IDS = {order:1, size:1, maxdeg:1, mindeg:1, seq:1};
+var STATS = (isArr(CFG.stats) ? CFG.stats : []).filter(function(f){
+  return f && STAT_IDS[f.id];
+});
+var statIn = {}, statRow = {}, statWhy = {}, statSym = {};
+var marks = null, markedStamp = null;
+
+/* the true value of one box, as a canonical string */
+function trueStat(id){
+  var inv = invariants();
+  if(id==="order")  return String(inv.order);
+  if(id==="size")   return String(inv.size);
+  if(id==="maxdeg") return String(inv.maxDeg);
+  if(id==="mindeg") return String(inv.minDeg);
+  if(id==="seq")    return inv.seq.join(",");
+  return null;
+}
+/* what the graph looks like right now — any change to it retires the marks. The five
+   answers depend on nothing else, so a rewiring that leaves all three alone leaves the
+   marks standing, correctly. */
+function graphStamp(){
+  var inv = invariants();
+  return inv.order+"/"+inv.size+"/"+inv.seq.join(",");
+}
+/* the graph verdict needs a stricter stamp than the marks do: rewiring can keep every
+   invariant and still turn "the graph is correct" into a lie. This is the structure. */
+function boardStamp(){
+  var idx = {}; S.verts.forEach(function(v,i){ idx[v.id]=i; });
+  var es = S.edges.map(function(e){
+    var a=idx[e.a], b=idx[e.b];
+    return Math.min(a,b)+"-"+Math.max(a,b);
+  }).sort().join(" ");
+  return S.verts.length+":"+es;
+}
+/* a list of whole numbers in any order → the canonical sorted-descending string */
+function parseSeq(s){
+  var parts = String(s).split(/[^0-9]+/).filter(function(t){ return t.length; });
+  /* commas, spaces, semicolons and the brackets students copy off the board — nothing else */
+  if(!parts.length || !/^[\s,;()\[\]0-9]*$/.test(String(s))) return null;
+  var out = parts.map(function(t){ return parseInt(t,10); });
+  out.sort(function(a,b){ return b-a; });
+  return out.join(",");
+}
+function parseNum(s){
+  s = String(s).trim();
+  return /^[0-9]+$/.test(s) ? String(parseInt(s,10)) : null;
+}
+
+(function buildFields(){
+  var host = document.getElementById("fields");
+  STATS.forEach(function(f){
+    var wide = f.kind==="list";
+    var row = document.createElement("div");
+    row.className = "field" + (wide ? " wide" : "");
+    var lab = document.createElement("label");
+    lab.setAttribute("for", "stat-"+f.id);
+    lab.textContent = String(f.label==null ? f.id : f.label);
+    var inp = document.createElement("input");
+    inp.type = "text";
+    inp.id = "stat-"+f.id;
+    inp.className = "claimin";
+    inp.autocomplete = "off";
+    if(!wide){ inp.inputMode = "numeric"; inp.placeholder = "?"; }
+    else { inp.placeholder = "e.g. 3, 2, 2, 1"; }
+    inp.addEventListener("input", function(){ clearMarks(); });
+    inp.addEventListener("keydown", function(ev){
+      if(ev.key==="Enter"){ ev.preventDefault(); checkWork(); }   /* the button's keyboard equal */
+    });
+    var sym = document.createElement("span");
+    sym.className = "stat"; sym.setAttribute("aria-hidden","true");
+    var why = document.createElement("p");
+    why.className = "why"; why.hidden = true;
+    why.textContent = String(f.why || "");
+    row.appendChild(lab); row.appendChild(inp); row.appendChild(sym); row.appendChild(why);
+    host.appendChild(row);
+    statIn[f.id]=inp; statRow[f.id]=row; statWhy[f.id]=why; statSym[f.id]=sym;
+  });
+})();
+
+function statsFeedback(kind, text){
+  var el = document.getElementById("statsFeedback");
+  el.className = "feedback" + (kind ? " "+kind : "");
+  el.textContent = "";
+  if(!text) return;
+  var symTxt = kind==="bad" ? (MSG.symFail||"✗") : kind==="good" ? (MSG.symPass||"✓") : "";
+  if(symTxt){
+    var s = document.createElement("span"); s.className="sym"; s.textContent=symTxt;
+    el.appendChild(s);
+  }
+  el.appendChild(document.createTextNode(text));
+}
+function paintMarks(){
+  STATS.forEach(function(f){
+    var m = marks ? marks[f.id] : null;
+    statRow[f.id].className = "field" + (f.kind==="list" ? " wide" : "") +
+      (m==="ok" ? " ok" : m==="bad" ? " bad" : m==="todo" ? " todo" : "");
+    statSym[f.id].textContent = m==="ok" ? (MSG.symPass||"✓")
+                              : m==="bad" ? (MSG.symFail||"✗")
+                              : m==="todo" ? (MSG.symTodo||"·") : "";
+    /* an empty box gets the same what-to-count line a wrong one does — it names the
+       thing to go and count, which is exactly what an unanswered box needs */
+    statWhy[f.id].hidden = !(m==="bad" || m==="todo");
+    /* "todo" is unanswered, not invalid: aria-invalid stays false */
+    if(m) statIn[f.id].setAttribute("aria-invalid", m==="bad" ? "true" : "false");
+    else statIn[f.id].removeAttribute("aria-invalid");
+  });
+  var n = 0, total = STATS.length;
+  if(marks) STATS.forEach(function(f){ if(marks[f.id]==="ok") n++; });
+  document.getElementById("claimScore").textContent = marks ? (n+" of "+total+" right") : "";
+}
+function clearMarks(){                      /* the marks go; what was typed stays */
+  if(!marks) return;
+  marks = null; markedStamp = null; paintMarks();
+  statsFeedback("", "");
+}
+function clearStats(){                      /* a new commission: the boxes go too */
+  marks = null; markedStamp = null;
+  STATS.forEach(function(f){ statIn[f.id].value = ""; });
+  paintMarks(); statsFeedback("", "");
+}
+/* called from render(): if the board moved on, last check's marks no longer describe it */
+function syncStats(){
+  if(marks && markedStamp !== null && markedStamp !== graphStamp()){
+    marks = null; markedStamp = null; paintMarks();
+    statsFeedback("", MSG.statsStale || "The board changed, so the marks are cleared.");
+  }
+}
+/* and the graph verdict goes with it — "the graph is correct" must never outlive the
+   graph it was said about */
+function syncVerdict(){
+  if(judgedStamp !== null && judgedStamp !== boardStamp()){
+    judgedStamp = null; verdict("", "");
+  }
+}
+
+/* Mark the five boxes against the graph on the board — NOT against the commission.
+   Reading your own graph correctly is its own skill and is scored as one, which is why
+   an incorrect construction can still be told "the graph invariants are correct".
+   Returns what it found so checkWork() can decide the point without judging twice. */
+function markStats(){
+  if(!STATS.length) return { allRight:true, blank:0 };
+  if(!S.verts.length){
+    marks = null; markedStamp = null; paintMarks();
+    statsFeedback("bad", MSG.statsEmptyBoard || "The board is empty. Draw a graph first.");
+    return { allRight:false, blank:0 };
+  }
+  var m = {}, right = 0, blank = 0, wrong = 0, badNum = false, badSeq = false;
+  STATS.forEach(function(f){
+    var raw = statIn[f.id].value;
+    if(!String(raw).trim()){ m[f.id] = "todo"; blank++; return; }   /* unanswered, not wrong */
+    var list = f.kind==="list";
+    var got = list ? parseSeq(raw) : parseNum(raw);
+    if(got === null){ m[f.id] = "bad"; wrong++; if(list) badSeq = true; else badNum = true; return; }
+    if(got === trueStat(f.id)){ m[f.id] = "ok"; right++; }
+    else { m[f.id] = "bad"; wrong++; }
+  });
+  marks = m; markedStamp = graphStamp();
+  paintMarks();
+  var vars = { right:right, total:STATS.length, blank:blank };
+  if(right === STATS.length){
+    statsFeedback("good", fill(MSG.statsAllRight, vars));
+  } else if(blank === STATS.length){
+    statsFeedback("bad", fill(MSG.statsNoneFilled, vars));
+  } else if(!wrong){
+    statsFeedback("bad", fill(MSG.statsOnlyBlanks, vars));
+  } else {
+    var txt = fill(MSG.statsSomeWrong, vars);
+    if(blank) txt += " " + fill(MSG.statsBlanks, vars);
+    if(badNum) txt += " " + (MSG.statsBadNumber || "");
+    if(badSeq) txt += " " + (MSG.statsBadSeq || "");
+    statsFeedback("bad", txt);
+  }
+  return { allRight: right === STATS.length, blank:blank };
+}
+
+/* ---------- Check my work: one button, both halves (round 4) ----------
+   Four outcomes, and the point lives in exactly one of them:
+     graph ✗ · numbers ✗ → "Incorrect graph. …" + the marked boxes
+     graph ✗ · numbers ✓ → "Incorrect graph. …" AND "the graph invariants are correct"
+     graph ✓ · numbers ✗ → the construction is right, the reading is not, no point
+     graph ✓ · numbers ✓ → the point, and the next commission                      */
+function checkWork(){
+  if(at >= PROMPTS.length) return;
+  var read = markStats();                       /* always mark, whatever the graph is */
+  var p = PROMPTS[at], r = judge(p);
+  if(r.ok && read.allRight){
+    var praise = PRAISE[points % PRAISE.length];
+    var line = STATS.length
+      ? fill(MSG.bothRight, {praise:praise, right:STATS.length, total:STATS.length})
+      : praise;
+    awarded[at] = true; points++;
+    at++;
+    blankBoard(); clearStats();                 /* the board a second press would judge */
+    render();
+    verdict(at >= PROMPTS.length ? "done" : "pass",
+            at >= PROMPTS.length ? fill(MSG.allDone, {n:PROMPTS.length}) : line);
+    return;
+  }
+  judgedStamp = boardStamp();
+  if(!r.ok) verdict("fail", fill(MSG.graphIncorrect, {msg:r.msg}));
+  else verdict("half", MSG.graphRightOnly ||
+       "The graph is correct. The reading below is not right yet.");
+}
+document.getElementById("checkWork").addEventListener("click", checkWork);
+document.getElementById("clearStats").addEventListener("click", function(){
+  clearStats();
+  if(STATS.length) statIn[STATS[0].id].focus();
+});
+document.getElementById("skip").addEventListener("click", function(){
+  if(at >= PROMPTS.length) return;
+  at++; blankBoard(); clearStats(); render();
+  if(at >= PROMPTS.length) verdict("done", fill(MSG.allDone, {n:PROMPTS.length}));
+  else verdict("", MSG.skipped || "Skipped — no point for that one.");
+});
+
+/* Reset: back to commission 1 with an empty board and no points.
+   Two-press confirm once anything has been earned (design-system §4). */
+var resetBtn=document.getElementById("reset"), resetTimer=null, resetArmed=false;
+resetBtn.addEventListener("click", function(){
+  if((points>0 || S.verts.length>0) && !resetArmed){
+    resetArmed=true; resetBtn.textContent="Really reset?";
+    resetTimer=setTimeout(function(){ resetArmed=false; resetBtn.textContent="Reset"; }, 2000);
+    return;
+  }
+  if(resetTimer) clearTimeout(resetTimer);
+  resetArmed=false; resetBtn.textContent="Reset";
+  points=0; at=0; awarded=[];
+  endGesture(false);
+  blankBoard(); verdict("", ""); clearStats();
+  render();
+});
+
+blankBoard();
+render();
+})();
+</script>
+</body>
+</html>

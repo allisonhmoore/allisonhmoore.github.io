@@ -1,0 +1,681 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tune the machine · MATH 170</title>
+
+<!-- ================================================================
+     DESIGN-SYSTEM v2 TOKEN BLOCK — copied verbatim into every file.
+     A global tweak stays a find-replace across the set.
+     Copied unchanged from the exemplar week-13-softmax.html.
+     ================================================================ -->
+<style>
+/* hidden must always win over any author display rule */
+[hidden]{display:none !important}
+
+:root{
+  /* color — light */
+  --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+  --gold-soft:rgba(218,165,32,.12);
+  --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  /* type */
+  --font-body: ui-serif, Georgia, "Times New Roman", serif;
+  --font-ui:   system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+  --text-xl:1.75rem; --text-lg:1.25rem; --text-base:1rem; --text-sm:.875rem; --text-xs:.75rem;
+  --leading-prose:1.6; --leading-ui:1.3;
+  /* spacing */
+  --space-1:4px; --space-2:8px; --space-3:16px; --space-4:24px; --space-5:32px; --space-6:48px;
+  /* motion */
+  --ease:cubic-bezier(0.16,1,0.3,1); --dur:200ms;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+    --gold-soft:rgba(227,179,65,.16);
+    --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+  --gold-soft:rgba(227,179,65,.16);
+  --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+}
+@media (prefers-reduced-motion: reduce){ :root{ --dur:0ms; } }
+@media print{
+  :root, :root[data-theme="dark"]{
+    --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+    --gold-soft:rgba(218,165,32,.12);
+    --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  }
+  .theme-btn{display:none}
+  .stage{break-inside:avoid}
+}
+
+/* ================= base skin (design-system §3–§4) ================= */
+*{box-sizing:border-box}
+html{color-scheme:light dark}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--font-body); font-size:var(--text-base); line-height:var(--leading-prose);
+  -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:820px; margin:0 auto; padding:var(--space-5) var(--space-4) var(--space-6);}
+.topbar{display:flex; align-items:baseline; justify-content:space-between; gap:var(--space-3);
+  border-bottom:1px solid var(--gray-line); padding-bottom:var(--space-2); margin-bottom:var(--space-4);}
+.eyebrow{font-family:var(--font-ui); font-size:var(--text-xs); letter-spacing:.08em; text-transform:uppercase; color:var(--gray-text);}
+h1{font-family:var(--font-body); font-weight:600; font-size:var(--text-xl); line-height:1.2; margin:.2em 0 .1em;}
+h2{font-family:var(--font-ui); font-weight:600; font-size:var(--text-lg); line-height:1.3; margin:var(--space-5) 0 var(--space-2);}
+p{margin:0 0 var(--space-3);}
+.prose{max-width:66ch;}
+.muted{color:var(--gray-text);}
+.mono,code{font-family:var(--font-mono); font-variant-numeric:tabular-nums;}
+a{color:inherit;}
+:focus-visible{outline:2px solid var(--ink); outline-offset:2px; box-shadow:0 0 0 5px var(--gold-soft);}
+
+.theme-btn{font-family:var(--font-ui); font-size:var(--text-xs); background:none;
+  border:1px solid var(--gray-line); color:var(--gray-text); padding:6px 10px; cursor:pointer; border-radius:2px;}
+.theme-btn:hover{background:var(--gray-fill);}
+
+/* spec header */
+details.spec{border:1px solid var(--gray-line); border-radius:2px; margin:0 0 var(--space-4); background:var(--gray-fill);}
+details.spec>summary{font-family:var(--font-ui); font-size:var(--text-sm); cursor:pointer;
+  padding:var(--space-2) var(--space-3); list-style:none; color:var(--gray-text);}
+details.spec>summary::-webkit-details-marker{display:none}
+details.spec>summary::before{content:"▸ "; color:var(--gold);}
+details.spec[open]>summary::before{content:"▾ ";}
+.spec-body{padding:0 var(--space-3) var(--space-3); font-family:var(--font-ui); font-size:var(--text-sm); line-height:1.5;}
+.spec-body dt{font-weight:600; margin-top:var(--space-2);}
+.spec-body dd{margin:0; color:var(--gray-text);}
+
+/* stage */
+.stage{margin:var(--space-4) 0; text-align:center;}
+svg{max-width:100%; height:auto; font-family:var(--font-ui);}
+figcaption{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); margin-top:var(--space-2);}
+
+/* controls */
+.controls{border-top:1px solid var(--gray-line); padding-top:var(--space-3); margin-top:var(--space-4);
+  display:grid; grid-template-columns:1fr 1fr; gap:var(--space-3) var(--space-4);}
+.controls .full{grid-column:1/-1;}
+@media(max-width:560px){ .controls{grid-template-columns:1fr;} }
+.ctl label{display:flex; justify-content:space-between; align-items:baseline;
+  font-family:var(--font-ui); font-size:var(--text-sm); line-height:var(--leading-ui);}
+.ctl .val{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm); color:var(--ink);}
+.ctl .val.gold{color:var(--gold); font-weight:600;}
+.ctl .note{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); margin-top:4px;}
+
+/* range slider — filled track works in ALL engines (design-system v2 fix):
+   wireSlider() paints the webkit track with a two-stop gradient on input. */
+input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:18px;
+  background:transparent; margin:6px 0 0; cursor:pointer;}
+input[type=range]::-webkit-slider-runnable-track{height:2px; border-radius:1px;
+  background:var(--track, var(--gray-line));}
+input[type=range]::-moz-range-track{height:2px; background:var(--gray-line);}
+input[type=range]::-moz-range-progress{height:2px; background:var(--gold);}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; appearance:none;
+  width:18px; height:18px; margin-top:-8px; border-radius:50%; background:var(--gold); border:1px solid var(--ink);}
+input[type=range]::-moz-range-thumb{width:18px; height:18px; border-radius:50%; background:var(--gold); border:1px solid var(--ink);}
+
+/* buttons + segmented + stepper */
+.btn{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:1px solid var(--ink); padding:8px 14px; cursor:pointer; border-radius:2px;}
+.btn:hover{background:var(--gray-fill);}
+.btn.primary{background:var(--gold); border-color:var(--gold); color:#111111;}
+.btn[disabled]{border-color:var(--gray-line); color:var(--gray-line); cursor:default; background:var(--paper);}
+.seg{display:inline-flex; border:1px solid var(--ink); border-radius:2px; overflow:hidden;}
+.seg button{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:0; border-left:1px solid var(--ink); padding:7px 12px; cursor:pointer;}
+.seg button:first-child{border-left:0;}
+.seg button[aria-pressed="true"]{background:var(--gold); color:#111111;}
+.stepper{display:inline-flex; align-items:center; gap:var(--space-2); font-family:var(--font-ui); font-size:var(--text-sm);}
+.stepper .count{font-family:var(--font-mono); font-variant-numeric:tabular-nums; color:var(--gray-text);}
+
+.foot{display:flex; align-items:center; gap:var(--space-3); margin-top:var(--space-5);
+  border-top:1px solid var(--gray-line); padding-top:var(--space-3); flex-wrap:wrap;}
+.foot .btn{margin-right:auto;}
+.hint{font-family:var(--font-ui); font-size:var(--text-sm); color:var(--gray-text);}
+
+/* math reveal */
+.mathbox{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm);
+  background:var(--gray-fill); border-left:2px solid var(--gold); padding:var(--space-3);
+  margin:var(--space-3) 0; overflow-x:auto; white-space:pre; line-height:1.7; text-align:left;}
+.attach{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text);
+  border-top:1px dotted var(--gray-line); margin-top:var(--space-6); padding-top:var(--space-3);}
+.tag{display:inline-block; font-family:var(--font-ui); font-size:var(--text-xs);
+  border:1px solid var(--gray-line); border-radius:999px; padding:1px 8px; color:var(--gray-text); margin-left:6px;}
+.callout{font-family:var(--font-ui); font-size:var(--text-sm); border:1px solid var(--gray-line);
+  border-left:2px solid var(--gold); padding:var(--space-2) var(--space-3); margin:var(--space-3) 0; background:var(--paper);}
+
+.profnote{font-family:var(--font-ui); font-size:var(--text-sm); border:1px dotted var(--gray-line);
+  border-left:2px dotted var(--gold); padding:var(--space-3); margin:var(--space-4) 0;
+  color:var(--gray-text); max-width:72ch; text-align:left;}
+.profnote p{margin:0 0 var(--space-2);}
+.profnote p:last-child{margin-bottom:0;}
+.profnote strong,.profnote b{color:var(--ink);}
+
+/* ---- file-specific styles (additions only; base skin above unchanged) ---- */
+.bignum{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:1.4rem;
+  color:var(--ink); margin:var(--space-2) 0 0;}
+.bignum b{color:var(--gold); font-weight:600; font-size:1.7rem;}
+.dialrow{display:flex; gap:var(--space-5); justify-content:center; flex-wrap:wrap;}
+.dialctl{text-align:center; font-family:var(--font-ui); font-size:var(--text-sm);}
+.dialctl .val{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-weight:600; color:var(--gold);}
+.dialctl.locked .val{color:var(--gray-text); font-weight:400;}
+.dialctl .note{font-size:var(--text-xs); color:var(--gray-text);}
+.dial{cursor:grab; touch-action:none;}
+.dial.dragging{cursor:grabbing;}
+.dialctl.locked .dial{cursor:default;}
+.phasebar{font-family:var(--font-ui); font-size:var(--text-sm); display:flex; gap:var(--space-3);
+  align-items:center; flex-wrap:wrap;}
+.phasebar .chip{display:inline-block; font-size:var(--text-xs); font-weight:600;
+  border:1px solid var(--ink); border-radius:999px; padding:1px 10px;}
+.machine-out{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm);
+  color:var(--ink); margin-top:var(--space-1); min-height:1.4em;}
+</style>
+
+<!-- theme boot: apply stored choice before first paint (no flash) -->
+<script>
+try{var t=localStorage.getItem("m170-theme");if(t)document.documentElement.dataset.theme=t;}catch(e){}
+</script>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="eyebrow">MATH 170 · Derivatives, descent and learning · Learning = turning knobs</div>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Color theme">◑ auto</button>
+  </div>
+
+  <h1 data-edit="title">Tune the machine <span class="tag">you are the optimizer</span></h1>
+  <p class="prose muted" data-edit="intro">The regression unit's sleep-and-scores data is back — on purpose. This time
+  <em>you</em> are the machine: turn a knob, watch one error number, make it smaller.
+  Then unlock a second knob and feel why training is genuinely hard — and then let the
+  machine finish with your own strategy, done consistently.</p>
+
+  <div data-slot="notes-top"></div>
+
+
+  <div class="stage">
+    <svg id="chart" viewBox="0 0 640 360" role="img" aria-label="Sleep and test-score points with your adjustable line"></svg>
+    <div class="bignum" aria-live="polite" id="sseOut"></div>
+    <figcaption>ink dots: the same six students from the regression page · gold line: your machine ·
+      thin gray drops: each miss (largest drawn thick)</figcaption>
+    <svg id="spark" viewBox="0 0 640 110" role="img" aria-label="Error over time: your knob turns, then the machine's steps"></svg>
+    <div class="machine-out" aria-live="polite" id="machineOut"></div>
+    <figcaption>your descent trace — gray: your knob turns · gold: the machine's steps · log scale so the tail stays visible</figcaption>
+  </div>
+
+  <div class="controls">
+    <div class="full phasebar">
+      <span class="chip" id="phaseChip">Phase 1</span>
+      <span id="phaseText" class="muted"></span>
+    </div>
+    <div class="full dialrow">
+      <div class="dialctl" id="mCtl">
+        <div>slope knob — m <span class="val" id="mVal"></span></div>
+        <svg class="dial" id="mDial" viewBox="0 0 120 120" width="130" height="130" tabindex="0" role="slider"
+             aria-label="Slope knob m" aria-valuemin="0" aria-valuemax="20"></svg>
+        <div class="note" data-edit="note-m-dial">0 … 20 · arrows turn it (Shift = coarse)</div>
+      </div>
+      <div class="dialctl" id="bCtl">
+        <div>start-level knob — b <span class="val" id="bVal"></span></div>
+        <svg class="dial" id="bDial" viewBox="0 0 120 120" width="130" height="130" tabindex="0" role="slider"
+             aria-label="Intercept knob b" aria-valuemin="-30" aria-valuemax="80"></svg>
+        <div class="note" id="bNote">locked until Phase 2</div>
+      </div>
+    </div>
+    <div class="ctl">
+      <label>Advance the game</label>
+      <div style="display:flex; gap:var(--space-2); margin-top:6px; flex-wrap:wrap">
+        <button class="btn" id="phaseBtn" type="button">Phase 2: unlock the second knob ▸</button>
+      </div>
+      <div class="note" data-edit="note-phases">phases advance by button, never on their own</div>
+    </div>
+    <div class="ctl">
+      <label>Regression continuity</label>
+      <div style="margin-top:6px">
+        <div class="seg" role="group" aria-label="Squares">
+          <button type="button" id="sqBtn" aria-pressed="false">show the squared misses</button>
+        </div>
+      </div>
+      <div class="note" data-edit="note-squares">the faint squares' areas are exactly what the error adds up</div>
+    </div>
+    <div class="full">
+      <button class="btn" id="mathToggle" type="button" aria-expanded="false">Show the math ▸</button>
+      <div id="mathReveal" hidden>
+        <div class="mathbox" id="mathbox" aria-live="polite"></div>
+        <p class="muted prose" style="font-family:var(--font-ui); font-size:var(--text-sm)" id="mathNote" data-edit="math-note">
+        The machine's whole rule, in words: <em>measure which way each knob pushes the error down,
+        nudge it that way a little, repeat.</em> One honest detail: it measures the level knob at the
+        middle of the data (6.75&nbsp;h) so the two knobs don't fight each other, then reports
+        b&nbsp;=&nbsp;level&nbsp;−&nbsp;m&nbsp;·&nbsp;6.75. Same knobs, same error, steadier walk.</p>
+      </div>
+    </div>
+  </div>
+
+
+  <div data-slot="notes-bottom"></div>
+
+  <div class="foot">
+    <button class="btn" id="reset" type="button">Reset</button>
+    <span class="hint" data-edit="hint-try">Try: with one knob you can't get under 94.3 — why does unlocking b change that?</span>
+  </div>
+
+</div>
+
+<script type="application/json" id="m170-config">
+{
+  "_v": 1,
+  "data": [[5.5, 64], [6, 70], [6.5, 72], [7, 80], [7.5, 85], [8, 88]],
+  "xLabel": "hours of sleep",
+  "yLabel": "test score",
+  "window": {"xmin": 5.1, "xmax": 8.4, "ymin": 55, "ymax": 100},
+  "xTicks": [5.5, 6, 6.5, 7, 7.5, 8],
+  "yTicks": [60, 70, 80, 90, 100],
+  "initial": {"m": 4, "b": 40},
+  "mDial": {"min": 0, "max": 20, "step": 0.05},
+  "bDial": {"min": -30, "max": 80, "step": 0.5},
+  "optimum": {"m": 9.885714285714286, "b": 9.771428571428572, "sse": 7.942857142857143},
+  "descent": {"rateM": 0.0514, "rateLevel": 0.0375, "settle": 0.01, "stepMs": 350},
+  "traceMax": 400,
+  "_meta": {
+    "data": { "label": "Sleep and scores", "kind": "table", "columns": ["hours", "score"],
+      "regen": "scatter-linear",
+      "help": "The regression table, reused on purpose. Each row is [hours of sleep, test score]; the error, the machine's steps and the centring point are all computed from these rows." },
+    "xLabel": { "label": "X-axis name", "kind": "text" },
+    "yLabel": { "label": "Y-axis name", "kind": "text" },
+    "window": { "label": "Plot window", "kind": "range-spec",
+      "help": "The corners of the scatter panel: xmin/xmax hours, ymin/ymax score." },
+    "xTicks": { "label": "Numbers printed along the x-axis", "kind": "list" },
+    "yTicks": { "label": "Numbers printed along the y-axis", "kind": "list" },
+    "initial": { "label": "Starting knobs (also what Reset returns to)",
+      "help": "m = 4 is deliberately too shallow and b = 40 too high, so the first knob turn visibly helps." },
+    "mDial": { "label": "Slope knob range", "kind": "range-spec" },
+    "bDial": { "label": "Start-level knob range", "kind": "range-spec" },
+    "optimum": { "label": "The best-fit line and its error", "kind": "range-spec",
+      "help": "Drawn as the 'lowest possible' floor on the trace. Pinned to the same constants as week-05-regression.html — if you change the data, recompute these." },
+    "descent": { "label": "How the machine steps", "kind": "range-spec",
+      "help": "rateM and rateLevel are how far each knob moves per step; settle is the |change in error| at which it stops; stepMs is the pause between visible steps." },
+    "traceMax": { "label": "How many trace points to keep", "kind": "number" }
+  }
+}
+</script>
+
+<script>
+(function(){
+"use strict";
+/* ============ BUILD-TIME PINS (python3, 2026-07-03) — for the DEFAULT config island ============
+   Data (Week 5, verbatim): x = 5.5,6,6.5,7,7.5,8 ; y = 64,70,72,80,85,88.
+   MUST MATCH week-05-regression.html exactly:
+     m* = 9.885714285714286 (= 346/35)   b* = 9.771428571428572 (= 342/35)
+     SSE* = 7.942857142857143 (= 278/35)
+   Initial teaching state m=4, b=40 → SSE = 701.0 (hand-check).
+   Phase-1 floor (b locked at 40): best m = 5.4779, SSE = 94.3024 — the student
+   cannot reach 7.94 until b unlocks; that gap motivates Phase 2.
+   Auto-descent: gradient steps in centered coordinates (slope m, level c = value
+   at x̄ = 6.75, so b = c − 6.75m): g_m = 2·(4.375·m − 43.25), g_c = 12·(c − 76.5);
+   rates η_m = 0.0514, η_c = 0.0375 (per-step contraction ≈ 0.55 each — watchable).
+   Verified from starts (4,40),(0,80),(20,−30),(0,−30),(20,80),(14,−17): settles
+   (|ΔSSE| < 0.01) in 7–15 steps, always within 0.2 of (m*, b*) and 0.005 of SSE*.
+   The x̄, Σ(x−x̄)² and Σ(x−x̄)y above are read straight off the island's data, so the
+   arithmetic is unchanged for the default table and stays honest if the table is edited.
+   ============================================================================== */
+
+/* ---------- everything tunable comes from the config island ---------- */
+var CFG=JSON.parse(document.getElementById("m170-config").textContent);
+function nz(v,d){ v=+v; return isFinite(v)?v:d; }
+function dialSpec(s,d){
+  s=s||{};
+  var mn=nz(s.min,d.min), mx=nz(s.max,d.max), sp=nz(s.step,d.step);
+  if(!(mx>mn)){ mn=d.min; mx=d.max; }
+  if(!(sp>0)) sp=d.step;
+  return {min:mn,max:mx,step:sp};
+}
+function numList(v,d){
+  if(!Array.isArray(v)) return d;
+  var out=v.map(Number).filter(function(n){ return isFinite(n); });
+  return out.length?out:d;
+}
+var XS=[], YS=[];
+(Array.isArray(CFG.data)?CFG.data:[]).forEach(function(row){
+  if(!row || row.length<2) return;
+  var x=+row[0], y=+row[1];
+  if(isFinite(x) && isFinite(y)){ XS.push(x); YS.push(y); }
+});
+if(!XS.length){ XS=[5.5,6,6.5,7,7.5,8]; YS=[64,70,72,80,85,88]; }
+var NPTS=XS.length, XBAR=0, YBAR=0, SXX=0, SXY=0, ii;
+for(ii=0;ii<NPTS;ii++){ XBAR+=XS[ii]; YBAR+=YS[ii]; }
+XBAR/=NPTS; YBAR/=NPTS;
+for(ii=0;ii<NPTS;ii++){ SXX+=(XS[ii]-XBAR)*(XS[ii]-XBAR); SXY+=(XS[ii]-XBAR)*YS[ii]; }
+if(!(SXX>0)) SXX=1;                    /* every x identical — keep the m step finite */
+var OPT={m:nz((CFG.optimum||{}).m,9.885714285714286),
+         b:nz((CFG.optimum||{}).b,9.771428571428572),
+         sse:Math.max(0.01,nz((CFG.optimum||{}).sse,7.942857142857143))};
+var DES=CFG.descent||{};
+var RATE_M=nz(DES.rateM,0.0514), RATE_C=nz(DES.rateLevel,0.0375),
+    SETTLE=nz(DES.settle,0.01), STEP_MS=Math.max(16,nz(DES.stepMs,350));
+var DIAL={m:dialSpec(CFG.mDial,{min:0,max:20,step:0.05}),
+          b:dialSpec(CFG.bDial,{min:-30,max:80,step:0.5})};
+var XLAB=typeof CFG.xLabel==="string"?CFG.xLabel:"hours of sleep";
+var YLAB=typeof CFG.yLabel==="string"?CFG.yLabel:"test score";
+var XTICKS=numList(CFG.xTicks,[5.5,6,6.5,7,7.5,8]);
+var YTICKS=numList(CFG.yTicks,[60,70,80,90,100]);
+var TRACE_MAX=Math.max(2,Math.round(nz(CFG.traceMax,400)));
+var INIT={m:Math.max(DIAL.m.min,Math.min(DIAL.m.max,nz((CFG.initial||{}).m,4))),
+          b:Math.max(DIAL.b.min,Math.min(DIAL.b.max,nz((CFG.initial||{}).b,40)))};
+
+/* ---------- theme: auto → light → dark (copied from exemplar) ---------- */
+var root=document.documentElement, themeBtn=document.getElementById("themeBtn");
+function themeLabel(){
+  var m=root.dataset.theme||"auto";
+  themeBtn.textContent=m==="dark"?"● dark":m==="light"?"○ light":"◑ auto";
+}
+themeBtn.addEventListener("click",function(){
+  var cur=root.dataset.theme||"auto";
+  var next=cur==="auto"?"light":cur==="light"?"dark":"auto";
+  if(next==="auto"){ delete root.dataset.theme; try{localStorage.removeItem("m170-theme");}catch(e){} }
+  else { root.dataset.theme=next; try{localStorage.setItem("m170-theme",next);}catch(e){} }
+  themeLabel(); render();
+});
+if(window.matchMedia){ window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",function(){ render(); }); }
+themeLabel();
+
+/* ---------- helpers ---------- */
+function css(v){ return getComputedStyle(document.body).getPropertyValue(v).trim(); }
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+function txt(x,y,s,color,anchor,size,family,weight){
+  return '<text x="'+x+'" y="'+y+'" fill="'+color+'" text-anchor="'+(anchor||"start")+
+    '" font-size="'+(size||12)+'" font-family="'+(family||"var(--font-ui)")+'"'+
+    (weight?' font-weight="'+weight+'"':'')+
+    (family==="var(--font-mono)"?' style="font-variant-numeric:tabular-nums"':'')+'>'+esc(s)+'</text>';
+}
+function ln(x1,y1,x2,y2,color,w,dash,op){
+  return '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+color+
+    '" stroke-width="'+(w||1)+'"'+(dash?' stroke-dasharray="'+dash+'"':'')+
+    (op?' stroke-opacity="'+op+'"':'')+'/>';
+}
+function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
+function fmt(v,d){ return (+v).toFixed(d===undefined?1:d); }
+function sse(m,b){ var s=0; for(var i=0;i<NPTS;i++){ var r=YS[i]-(m*XS[i]+b); s+=r*r; } return s; }
+
+/* ---------- state ---------- */
+var st={m:INIT.m,b:INIT.b,phase:1,squares:false,
+        trace:[],           /* {v, who:"you"|"machine"} */
+        yourBest:null, machineBest:null, machineSteps:0,
+        machineLines:[], running:false, settled:false};
+var timer=null;
+
+/* ---------- scatter geometry ---------- */
+var W=640,H=360,L=56,R=18,T=24,Bm=44;
+var WIN=CFG.window||{};
+var XMIN=nz(WIN.xmin,5.1), XMAX=nz(WIN.xmax,8.4), YMIN=nz(WIN.ymin,55), YMAX=nz(WIN.ymax,100);
+if(!(XMAX>XMIN)){ XMIN=5.1; XMAX=8.4; }
+if(!(YMAX>YMIN)){ YMIN=55;  YMAX=100; }
+function gx(v){ return L+(v-XMIN)/(XMAX-XMIN)*(W-L-R); }
+function gy(v){ return H-Bm-(v-YMIN)/(YMAX-YMIN)*(H-T-Bm); }
+var svg=document.getElementById("chart"), spark=document.getElementById("spark");
+
+/* ---------- dials (the file's signature control; slider semantics) ---------- */
+function mkDial(id,key,fmtFn){
+  var el=document.getElementById(id);
+  var cfg=DIAL[key];
+  function locked(){ return (key==="b"&&st.phase<2)||st.running; }
+  function paint(){
+    var ink=css("--ink"), gold=css("--gold"), line=css("--gray-line"), gray=css("--gray-text");
+    var v=st[key], frac=(clamp(v,cfg.min,cfg.max)-cfg.min)/(cfg.max-cfg.min);
+    var a0=-135, a1=-135+270*frac;
+    function pt(a,r){ var rad=a*Math.PI/180; return [60+r*Math.sin(rad),60-r*Math.cos(rad)]; }
+    function arc(aA,aB,r){ var A=pt(aA,r),Bp=pt(aB,r);
+      return "M"+A[0].toFixed(2)+" "+A[1].toFixed(2)+" A"+r+" "+r+" 0 "+((aB-aA)>180?1:0)+" 1 "+
+             Bp[0].toFixed(2)+" "+Bp[1].toFixed(2); }
+    var needleCol=locked()?line:gold;
+    var tickHtml="";
+    for(var i=0;i<=10;i++){ var aa=-135+27*i, p1=pt(aa,50),p2=pt(aa,46);
+      tickHtml+=ln(p1[0],p1[1],p2[0],p2[1],line,1); }
+    var np=pt(a1,38);
+    el.innerHTML=
+      '<path d="'+arc(-135,135,44)+'" fill="none" stroke="'+line+'" stroke-width="4" stroke-linecap="round"/>'+
+      (frac>0.002?'<path d="'+arc(a0,a1,44)+'" fill="none" stroke="'+needleCol+'" stroke-width="4" stroke-linecap="round"/>':"")+
+      tickHtml+
+      ln(60,60,np[0],np[1],needleCol,3)+
+      '<circle cx="60" cy="60" r="7" fill="'+(locked()?line:gold)+'" stroke="'+ink+'" stroke-width="1"/>'+
+      txt(60,112,key+" = "+fmtFn(v),locked()?gray:ink,"middle",12,"var(--font-mono)",locked()?"400":"600");
+    el.setAttribute("aria-valuemin",String(cfg.min));
+    el.setAttribute("aria-valuemax",String(cfg.max));
+    el.setAttribute("aria-valuenow",String(v));
+    el.setAttribute("aria-valuetext",key+" = "+fmtFn(v));
+    el.setAttribute("aria-disabled",String(locked()));
+    document.getElementById(key+"Val").textContent=fmtFn(v);
+    document.getElementById(key+"Ctl").classList.toggle("locked",locked());
+  }
+  function setFromPointer(ev){
+    var pt0=el.createSVGPoint(); pt0.x=ev.clientX; pt0.y=ev.clientY;
+    var p=pt0.matrixTransform(el.getScreenCTM().inverse());
+    var a=Math.atan2(p.x-60,-(p.y-60))*180/Math.PI;   /* 0 = up, clockwise + */
+    a=clamp(a,-135,135);
+    var v=cfg.min+(a+135)/270*(cfg.max-cfg.min);
+    studentSet(key,Math.round(v/cfg.step)*cfg.step);
+  }
+  el.addEventListener("pointerdown",function(ev){
+    if(locked())return;
+    el.setPointerCapture(ev.pointerId); el.classList.add("dragging");
+    setFromPointer(ev); ev.preventDefault();
+  });
+  el.addEventListener("pointermove",function(ev){
+    if(!el.classList.contains("dragging"))return; setFromPointer(ev);
+  });
+  el.addEventListener("pointerup",function(){ el.classList.remove("dragging"); });
+  el.addEventListener("keydown",function(ev){
+    if(locked())return;
+    var stp=cfg.step*(ev.shiftKey?10:1), used=true;
+    if(ev.key==="ArrowUp"||ev.key==="ArrowRight") studentSet(key,st[key]+stp);
+    else if(ev.key==="ArrowDown"||ev.key==="ArrowLeft") studentSet(key,st[key]-stp);
+    else used=false;
+    if(used) ev.preventDefault();
+  });
+  return {paint:paint};
+}
+function studentSet(key,v){
+  var cfg=DIAL[key];
+  v=clamp(v,cfg.min,cfg.max);
+  if(v===st[key])return;
+  st[key]=v;
+  var e=sse(st.m,st.b);
+  pushTrace(e,"you");
+  st.yourBest=st.yourBest===null?e:Math.min(st.yourBest,e);
+  render();
+}
+function pushTrace(v,who){
+  st.trace.push({v:v,who:who});
+  if(st.trace.length>TRACE_MAX) st.trace.shift();
+}
+var dialM=mkDial("mDial","m",function(v){return v.toFixed(2);});
+var dialB=mkDial("bDial","b",function(v){return v.toFixed(1);});
+
+/* ---------- machine: gradient steps in centered coordinates (see pins) ---------- */
+function machineStep(){
+  var prev=sse(st.m,st.b);
+  var c=st.b+st.m*XBAR;
+  var gm=2*(SXX*st.m-SXY);          /* = 2·Σ(x−x̄)(pred−y): the downhill push on m  */
+  var gc=2*NPTS*(c-YBAR);           /* = 2·Σ(pred−y): the downhill push on the level */
+  var m2=clamp(st.m-RATE_M*gm,DIAL.m.min,DIAL.m.max);
+  var c2=c-RATE_C*gc;
+  var b2=clamp(c2-m2*XBAR,DIAL.b.min,DIAL.b.max);
+  st.m=Math.round(m2*1e6)/1e6; st.b=Math.round(b2*1e6)/1e6;
+  var cur=sse(st.m,st.b);
+  st.machineSteps++;
+  st.machineBest=st.machineBest===null?cur:Math.min(st.machineBest,cur);
+  pushTrace(cur,"machine");
+  st.machineLines.push("step "+st.machineSteps+":  push on m "+fmt(-gm,2)+" → m "+st.m.toFixed(3)+
+    "   push on level "+fmt(-gc,2)+" → b "+st.b.toFixed(2)+"   error "+fmt(prev,2)+" → "+fmt(cur,2));
+  if(Math.abs(prev-cur)<SETTLE){
+    st.running=false; st.settled=true;
+    st.machineLines.push("|Δerror| < "+SETTLE+" — settled.");
+  }
+  render();
+  return st.running;
+}
+function startMachine(){
+  if(timer)return;
+  st.running=true; st.settled=false; st.machineSteps=0; st.machineBest=null;
+  st.machineLines=["the rule: nudge each knob a little in whichever direction lowers the error, repeat."];
+  render();
+  timer=setInterval(function(){
+    if(!machineStep()){ clearInterval(timer); timer=null; render(); }
+  },STEP_MS);
+}
+
+/* ---------- render ---------- */
+function render(){
+  var ink=css("--ink"), gold=css("--gold"), gray=css("--gray-text"),
+      line=css("--gray-line");
+  var out='<clipPath id="pc"><rect x="'+L+'" y="'+T+'" width="'+(W-L-R)+'" height="'+(H-T-Bm)+'"/></clipPath>';
+  YTICKS.forEach(function(yv){ out+=ln(L,gy(yv),W-R,gy(yv),line,1); out+=txt(L-8,gy(yv)+4,yv,gray,"end",11,"var(--font-mono)"); });
+  XTICKS.forEach(function(xv){ out+=txt(gx(xv),H-Bm+18,xv.toFixed(1),gray,"middle",11,"var(--font-mono)"); });
+  out+=ln(L,H-Bm,W-R,H-Bm,ink,1.5); out+=ln(L,T,L,H-Bm,ink,1.5);
+  out+=txt(W-R,H-Bm+34,XLAB,gray,"end",12);
+  out+=txt(L-40,T-8,YLAB,gray,"start",12);
+  /* residual drops (+ squares on toggle) — same construction as week-05 */
+  var worst=-1,wi=-1;
+  XS.forEach(function(x,i){ var r=Math.abs(YS[i]-(st.m*x+st.b)); if(r>worst){worst=r;wi=i;} });
+  var g='<g clip-path="url(#pc)">';
+  XS.forEach(function(x,i){
+    var yhat=st.m*x+st.b, y1=gy(YS[i]), y2=gy(clamp(yhat,YMIN,YMAX)), px=gx(x);
+    var s=Math.abs(y2-y1);
+    if(st.squares&&s>0.5){
+      var left=px+s>W-R;
+      g+='<rect x="'+(left?px-s:px)+'" y="'+Math.min(y1,y2)+'" width="'+s+'" height="'+s+
+         '" fill="'+css("--gold-soft")+'" stroke="'+gold+'" stroke-opacity=".45" stroke-width="1"/>';
+    }
+    g+=ln(px,y1,px,y2,i===wi?ink:line,i===wi?2.5:1);
+  });
+  /* your line (clipped) */
+  g+=ln(gx(XMIN),gy(st.m*XMIN+st.b),gx(XMAX),gy(st.m*XMAX+st.b),gold,2.5);
+  g+='</g>';
+  out+=g;
+  XS.forEach(function(x,i){ out+='<circle cx="'+gx(x)+'" cy="'+gy(YS[i])+'" r="4.5" fill="'+ink+'"/>'; });
+  svg.innerHTML=out;
+
+  var e=sse(st.m,st.b);
+  document.getElementById("sseOut").innerHTML=
+    "error — the sum of squared misses: <b>"+fmt(e)+"</b>"+
+    (st.phase===1?" <span class='muted' style='font-size:var(--text-sm)'>(b locked at "+INIT.b+")</span>":"");
+
+  dialM.paint(); dialB.paint();
+  document.getElementById("bNote").textContent=st.phase<2?"locked until Phase 2"
+    :DIAL.b.min+" … "+DIAL.b.max+" · arrows turn it (Shift = coarse)";
+
+  /* phase chrome */
+  var chip=document.getElementById("phaseChip"), ptxt=document.getElementById("phaseText"),
+      pbtn=document.getElementById("phaseBtn");
+  chip.textContent="Phase "+st.phase;
+  if(st.phase===1){
+    ptxt.textContent="One knob: the slope. Get the error as low as you can.";
+    pbtn.textContent="Phase 2: unlock the second knob ▸"; pbtn.disabled=false;
+  } else if(st.phase===2){
+    ptxt.textContent="Two knobs. Fix one, and the other's best value moves — feel the fumbling.";
+    pbtn.textContent="Phase 3: let the machine finish ▸▸"; pbtn.disabled=false;
+  } else {
+    ptxt.textContent="The machine runs your strategy consistently: nudge each knob downhill, repeat.";
+    pbtn.textContent=st.running?"machine running…":"run the machine again ▸▸";
+    pbtn.disabled=st.running;
+  }
+
+  renderSpark(); renderMath(e);
+}
+function renderSpark(){
+  var ink=css("--ink"), gold=css("--gold"), gray=css("--gray-text"), line=css("--gray-line");
+  var Ls=40,Rs=14,Ts=10,Bs=18,Ws=640,Hs=110;
+  var t=st.trace, out="";
+  out+=ln(Ls,Hs-Bs,Ws-Rs,Hs-Bs,ink,1);
+  out+=ln(Ls,Ts,Ls,Hs-Bs,ink,1);
+  if(!t.length){
+    out+=txt((Ls+Ws-Rs)/2,(Ts+Hs-Bs)/2+4,"turn a knob — every change adds a point here",gray,"middle",11);
+    spark.innerHTML=out;
+    document.getElementById("machineOut").textContent="";
+    return;
+  }
+  var lo=Math.log10(Math.max(1,OPT.sse*0.8)), hi=Math.log10(Math.max.apply(null,t.map(function(p){return p.v;})));
+  lo=Math.log10(OPT.sse*0.8); if(hi-lo<0.3)hi=lo+0.3;
+  function sy(v){ return (Hs-Bs)-(Math.log10(Math.max(v,0.1))-lo)/(hi-lo)*(Hs-Bs-Ts); }
+  function sx(i){ return t.length===1?Ls:Ls+i/(t.length-1)*(Ws-Rs-Ls); }
+  /* pinned-optimum floor */
+  out+=ln(Ls,sy(OPT.sse),Ws-Rs,sy(OPT.sse),line,1,"2 3");
+  out+=txt(Ws-Rs,sy(OPT.sse)-4,"lowest possible "+fmt(OPT.sse),gray,"end",9,"var(--font-mono)");
+  /* your best */
+  if(st.yourBest!==null){
+    out+=ln(Ls,sy(st.yourBest),Ws-Rs,sy(st.yourBest),gray,1,"5 4");
+    out+=txt(Ls+4,sy(st.yourBest)-4,"your best "+fmt(st.yourBest),gray,"start",9,"var(--font-mono)");
+  }
+  /* trace: consecutive groups by author; machine gold, you gray */
+  var i=0;
+  while(i<t.length){
+    var who=t[i].who, j=i, pts=[];
+    if(i>0) pts.push(sx(i-1)+","+sy(t[i-1].v));
+    while(j<t.length&&t[j].who===who){ pts.push(sx(j)+","+sy(t[j].v)); j++; }
+    out+='<polyline points="'+pts.join(" ")+'" fill="none" stroke="'+(who==="machine"?gold:gray)+
+         '" stroke-width="'+(who==="machine"?2.2:1.4)+'"/>';
+    i=j;
+  }
+  var last=t[t.length-1];
+  out+='<circle cx="'+sx(t.length-1)+'" cy="'+sy(last.v)+'" r="3.5" fill="'+
+       (last.who==="machine"?gold:gray)+'" stroke="'+ink+'" stroke-width="1"/>';
+  spark.innerHTML=out;
+  var mo=document.getElementById("machineOut");
+  if(st.machineSteps>0){
+    mo.textContent="machine: "+fmt(st.machineBest)+" after "+st.machineSteps+" step"+
+      (st.machineSteps>1?"s":"")+(st.settled?" · settled.":"")+
+      (st.yourBest!==null?" · your best: "+fmt(st.yourBest):"");
+  } else if(st.yourBest!==null){
+    mo.textContent="your best so far: "+fmt(st.yourBest);
+  } else mo.textContent="";
+}
+function renderMath(e){
+  var Lb=[];
+  Lb.push("error at m = "+st.m.toFixed(3)+", b = "+st.b.toFixed(2)+"  (miss = score − predicted):");
+  var terms=XS.map(function(x,i){ var r=YS[i]-(st.m*x+st.b); return "("+fmt(r)+")²"; });
+  Lb.push("  "+terms.join(" + "));
+  Lb.push("  = "+XS.map(function(x,i){ var r=YS[i]-(st.m*x+st.b); return fmt(r*r);}).join(" + "));
+  Lb.push("  = "+fmt(e,2));
+  if(st.machineLines.length){ Lb.push(""); Lb=Lb.concat(st.machineLines); }
+  if(st.settled){
+    Lb.push("");
+    Lb.push("debrief: that walk is gradient descent — the regression best fit is where it ends.");
+    Lb.push("pinned optimum: m = "+OPT.m.toFixed(3)+", b = "+OPT.b.toFixed(3)+
+            ", error = "+fmt(OPT.sse,2)+" (same constants as week-05).");
+  }
+  document.getElementById("mathbox").textContent=Lb.join("\n");
+}
+
+/* ---------- events ---------- */
+document.getElementById("phaseBtn").addEventListener("click",function(){
+  if(st.phase===1){ st.phase=2; render(); }
+  else if(st.phase===2){ st.phase=3; startMachine(); }
+  else if(!st.running){ startMachine(); }
+});
+document.getElementById("sqBtn").addEventListener("click",function(){
+  st.squares=!st.squares;
+  this.setAttribute("aria-pressed",String(st.squares));
+  render();
+});
+var mt=document.getElementById("mathToggle"), mr=document.getElementById("mathReveal");
+mt.addEventListener("click",function(){
+  var open=mr.hidden; mr.hidden=!open;
+  mt.setAttribute("aria-expanded",String(open));
+  mt.textContent=open?"Hide the math ▾":"Show the math ▸";
+});
+/* Reset = the island's initial teaching state: Phase 1, m = 4 (visibly too shallow),
+   b = 40 locked, error showing (701.0 for the DEFAULT data), sparkline empty. */
+document.getElementById("reset").addEventListener("click",function(){
+  if(timer){ clearInterval(timer); timer=null; }
+  st={m:INIT.m,b:INIT.b,phase:1,squares:false,trace:[],yourBest:null,machineBest:null,
+      machineSteps:0,machineLines:[],running:false,settled:false};
+  document.getElementById("sqBtn").setAttribute("aria-pressed","false");
+  render();
+});
+
+render();
+})();
+</script>
+</body>
+</html>

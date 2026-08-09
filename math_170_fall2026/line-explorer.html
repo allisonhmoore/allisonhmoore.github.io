@@ -1,0 +1,1124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>One line, four ways · MATH 170</title>
+
+<!-- ================================================================
+     DESIGN-SYSTEM v2 TOKEN BLOCK — copied verbatim into every file.
+     A global tweak stays a find-replace across the set.
+     ================================================================ -->
+<style>
+/* hidden must always win over any author display rule */
+[hidden]{display:none !important}
+
+:root{
+  /* color — light */
+  --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+  --gold-soft:rgba(218,165,32,.12);
+  --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  /* type */
+  --font-body: ui-serif, Georgia, "Times New Roman", serif;
+  --font-ui:   system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+  --text-xl:1.75rem; --text-lg:1.25rem; --text-base:1rem; --text-sm:.875rem; --text-xs:.75rem;
+  --leading-prose:1.6; --leading-ui:1.3;
+  /* spacing */
+  --space-1:4px; --space-2:8px; --space-3:16px; --space-4:24px; --space-5:32px; --space-6:48px;
+  /* motion */
+  --ease:cubic-bezier(0.16,1,0.3,1); --dur:200ms;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+    --gold-soft:rgba(227,179,65,.16);
+    --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+  --gold-soft:rgba(227,179,65,.16);
+  --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+}
+@media (prefers-reduced-motion: reduce){ :root{ --dur:0ms; } }
+@media print{
+  :root, :root[data-theme="dark"]{
+    --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+    --gold-soft:rgba(218,165,32,.12);
+    --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  }
+  .theme-btn{display:none}
+  .stage{break-inside:avoid}
+}
+
+/* ================= base skin (design-system §3–§4) ================= */
+*{box-sizing:border-box}
+html{color-scheme:light dark}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--font-body); font-size:var(--text-base); line-height:var(--leading-prose);
+  -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:820px; margin:0 auto; padding:var(--space-5) var(--space-4) var(--space-6);}
+.topbar{display:flex; align-items:baseline; justify-content:space-between; gap:var(--space-3);
+  border-bottom:1px solid var(--gray-line); padding-bottom:var(--space-2); margin-bottom:var(--space-4);}
+.eyebrow{font-family:var(--font-ui); font-size:var(--text-xs); letter-spacing:.08em; text-transform:uppercase; color:var(--gray-text);}
+h1{font-family:var(--font-body); font-weight:600; font-size:var(--text-xl); line-height:1.2; margin:.2em 0 .1em;}
+h2{font-family:var(--font-ui); font-weight:600; font-size:var(--text-lg); line-height:1.3; margin:var(--space-5) 0 var(--space-2);}
+p{margin:0 0 var(--space-3);}
+.prose{max-width:66ch;}
+.muted{color:var(--gray-text);}
+.mono,code{font-family:var(--font-mono); font-variant-numeric:tabular-nums;}
+a{color:inherit;}
+:focus-visible{outline:2px solid var(--ink); outline-offset:2px; box-shadow:0 0 0 5px var(--gold-soft);}
+
+.theme-btn{font-family:var(--font-ui); font-size:var(--text-xs); background:none;
+  border:1px solid var(--gray-line); color:var(--gray-text); padding:6px 10px; cursor:pointer; border-radius:2px;}
+.theme-btn:hover{background:var(--gray-fill);}
+
+/* spec header */
+details.spec{border:1px solid var(--gray-line); border-radius:2px; margin:0 0 var(--space-4); background:var(--gray-fill);}
+details.spec>summary{font-family:var(--font-ui); font-size:var(--text-sm); cursor:pointer;
+  padding:var(--space-2) var(--space-3); list-style:none; color:var(--gray-text);}
+details.spec>summary::-webkit-details-marker{display:none}
+details.spec>summary::before{content:"▸ "; color:var(--gold);}
+details.spec[open]>summary::before{content:"▾ ";}
+.spec-body{padding:0 var(--space-3) var(--space-3); font-family:var(--font-ui); font-size:var(--text-sm); line-height:1.5;}
+.spec-body dt{font-weight:600; margin-top:var(--space-2);}
+.spec-body dd{margin:0; color:var(--gray-text);}
+
+/* stage */
+.stage{margin:var(--space-4) 0; text-align:center;}
+svg{max-width:100%; height:auto; font-family:var(--font-ui);}
+figcaption{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); margin-top:var(--space-2);}
+
+/* controls */
+.controls{border-top:1px solid var(--gray-line); padding-top:var(--space-3); margin-top:var(--space-4);
+  display:grid; grid-template-columns:1fr 1fr; gap:var(--space-3) var(--space-4);}
+.controls .full{grid-column:1/-1;}
+@media(max-width:560px){ .controls{grid-template-columns:1fr;} }
+.ctl label{display:flex; justify-content:space-between; align-items:baseline;
+  font-family:var(--font-ui); font-size:var(--text-sm); line-height:var(--leading-ui);}
+.ctl .val{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm); color:var(--ink);}
+.ctl .val.gold{color:var(--gold); font-weight:600;}
+.ctl .note{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); margin-top:4px;}
+
+/* range slider — filled track works in ALL engines (design-system v2 fix):
+   wireSlider() paints the webkit track with a two-stop gradient on input. */
+input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:18px;
+  background:transparent; margin:6px 0 0; cursor:pointer;}
+input[type=range]::-webkit-slider-runnable-track{height:2px; border-radius:1px;
+  background:var(--track, var(--gray-line));}
+input[type=range]::-moz-range-track{height:2px; background:var(--gray-line);}
+input[type=range]::-moz-range-progress{height:2px; background:var(--gold);}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; appearance:none;
+  width:18px; height:18px; margin-top:-8px; border-radius:50%; background:var(--gold); border:1px solid var(--ink);}
+input[type=range]::-moz-range-thumb{width:18px; height:18px; border-radius:50%; background:var(--gold); border:1px solid var(--ink);}
+
+/* buttons + segmented + stepper */
+.btn{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:1px solid var(--ink); padding:8px 14px; cursor:pointer; border-radius:2px;}
+.btn:hover{background:var(--gray-fill);}
+.btn.primary{background:var(--gold); border-color:var(--gold); color:#111111;}
+.btn[disabled]{border-color:var(--gray-line); color:var(--gray-line); cursor:default; background:var(--paper);}
+.seg{display:inline-flex; border:1px solid var(--ink); border-radius:2px; overflow:hidden; flex-wrap:wrap;}
+.seg button{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:0; border-left:1px solid var(--ink); padding:7px 12px; cursor:pointer;}
+.seg button:first-child{border-left:0;}
+.seg button[aria-pressed="true"]{background:var(--gold); color:#111111;}
+.stepper{display:inline-flex; align-items:center; gap:var(--space-2); font-family:var(--font-ui); font-size:var(--text-sm);}
+.stepper .count{font-family:var(--font-mono); font-variant-numeric:tabular-nums; color:var(--gray-text);}
+
+.foot{display:flex; align-items:center; gap:var(--space-3); margin-top:var(--space-5);
+  border-top:1px solid var(--gray-line); padding-top:var(--space-3); flex-wrap:wrap;}
+.foot .btn{margin-right:auto;}
+.hint{font-family:var(--font-ui); font-size:var(--text-sm); color:var(--gray-text);}
+
+/* math reveal */
+.mathbox{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm);
+  background:var(--gray-fill); border-left:2px solid var(--gold); padding:var(--space-3);
+  margin:var(--space-3) 0; overflow-x:auto; white-space:pre; line-height:1.7; text-align:left;}
+.attach{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text);
+  border-top:1px dotted var(--gray-line); margin-top:var(--space-6); padding-top:var(--space-3);}
+.tag{display:inline-block; font-family:var(--font-ui); font-size:var(--text-xs);
+  border:1px solid var(--gray-line); border-radius:999px; padding:1px 8px; color:var(--gray-text); margin-left:6px;}
+.callout{font-family:var(--font-ui); font-size:var(--text-sm); border:1px solid var(--gray-line);
+  border-left:2px solid var(--gold); padding:var(--space-2) var(--space-3); margin:var(--space-3) 0; background:var(--paper);}
+</style>
+
+<!-- component CSS — added AFTER the shared skin, never restyling it -->
+<style>
+.stage-flex{display:flex; gap:var(--space-4); align-items:flex-start; text-align:left;}
+.stage-left{flex:0 0 auto; max-width:100%;}
+.stage-right{flex:1 1 230px; min-width:230px; display:flex; flex-direction:column; gap:var(--space-3);}
+@media(max-width:560px){ .stage-flex{flex-direction:column;} .stage-right{min-width:0;} }
+.panel{border:1px solid var(--gray-line); border-radius:2px; padding:var(--space-2) var(--space-3);
+  font-family:var(--font-ui); font-size:var(--text-sm); line-height:1.5;}
+.panel .ptitle{font-size:var(--text-xs); letter-spacing:.06em; text-transform:uppercase;
+  color:var(--gray-text); margin:0 0 var(--space-1);}
+.eqn{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-base); margin:0;}
+.eqn .sub{font-size:var(--text-xs); color:var(--gray-text);}
+.vtable{border-collapse:collapse; font-family:var(--font-mono); font-variant-numeric:tabular-nums;
+  font-size:var(--text-sm); width:100%;}
+.vtable th{font-family:var(--font-ui); font-weight:600; color:var(--gray-text);}
+.vtable td,.vtable th{padding:2px 8px; text-align:right; border-bottom:1px solid var(--gray-line);}
+.vtable tr:last-child td{border-bottom:0;}
+.num{transition:color var(--dur) var(--ease);}
+.pulse .num{color:var(--gold);}
+.sentence{font-family:var(--font-body); font-size:var(--text-base);}
+.handle{cursor:ns-resize;}
+.story{font-family:var(--font-body); font-size:var(--text-base); line-height:var(--leading-prose);
+  max-width:66ch; text-align:left;}
+.story .who{display:block; font-family:var(--font-ui); font-size:var(--text-xs);
+  text-transform:uppercase; letter-spacing:.05em; color:var(--gray-text); margin-bottom:var(--space-1);}
+</style>
+
+<!-- theme boot: apply stored choice before first paint (no flash) -->
+<script>
+try{var t=localStorage.getItem("m170-theme");if(t)document.documentElement.dataset.theme=t;}catch(e){}
+</script>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="eyebrow">MATH 170 · Points, lines and regions · Algebra Review</div>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Color theme">◑ auto</button>
+  </div>
+
+  <h1 data-edit="title">One line, four ways <span class="tag">linear functions</span></h1>
+  <p class="prose muted" data-edit="intro">Eight word problems — the six from the points-and-lines
+  worksheets, plus two more whose line naturally falls. Each one is
+  one line told four ways — as a <strong>graph</strong>, a <strong>formula</strong>, a
+  <strong>table</strong>, and a <strong>sentence</strong>. Move any one of them and watch the other
+  three keep up.</p>
+
+  <div data-slot="notes-top"></div>
+
+
+  <!-- PINNED VALUES for the DEFAULT config island (re-checked in python3, 2026-07-27).
+       Each scenario's slope and intercept are the points-and-lines worksheets' own numbers.
+         train      Worksheet 1 review:  D(t) = 83t + 250          D(0)=250      D(10)=1080
+         diver      Worksheet 1 Q1:      P(d) = 0.434d + 14.696    P(0)=14.696   P(50)=36.396   P(100)=58.096
+         population Worksheet 2 Q1a:     (27800 − 23400)/(2012 − 2008) = 4400/4 = 1100 people per year
+                                         P(t) = 1100t + 23400      P(0)=23400    P(4)=27800
+         butterflies Worksheet 2 Q1b:    (964 − 1806)/(2025 − 2022) = −842/3 ≈ −280.6667 per year
+                                         B(t) = −280.67t + 1806    B(0)=1806     B(3)=964 exactly
+         trucking   Worksheet 2 Q2a:     C(x) = 0.60x + 20         C(0)=20       C(100)=80
+         signs      Worksheet 2 Q2b:     C(x) = 37.50x + 1250      C(0)=1250     C(100)=5000
+       The last two are NOT worksheet data — they were invented for this page on 2026-08-03,
+       when the professor asked for two more examples with a naturally negative slope:
+         battery    invented 2026-08-03: B(t) = −12.5t + 100       B(0)=100      B(8)=0 exactly
+                                         handles (2,75),(6,25): (25−75)/(6−2) = −50/4 = −12.5
+                                         table step 2 h: ΔB = −25 percent
+         car value  invented 2026-08-03: V(t) = −1500t + 18000     V(0)=18000    V(10)=3000
+                                         handles (2,15000),(8,6000): −9000/6 = −1500
+                                         table step 2 yr: ΔV = −$3,000
+       Every y-window contains its scenario's line across the whole x-window. -->
+
+  <p class="callout story" id="storyOut"></p>
+
+  <figure class="stage">
+    <div class="stage-flex" id="exploreStage">
+      <div class="stage-left">
+        <svg id="graph" viewBox="0 0 400 400" width="400" height="400" role="img"
+             aria-label="Graph of the current line with two draggable handle points"></svg>
+      </div>
+      <div class="stage-right">
+        <div class="panel" id="panelEqn">
+          <p class="ptitle">function notation</p>
+          <p class="eqn" id="eqnOut"></p>
+          <p class="eqn sub" id="eqnAlt" hidden></p>
+        </div>
+        <div class="panel" id="panelTable">
+          <p class="ptitle">table of values</p>
+          <table class="vtable" id="valTable"></table>
+          <p class="note muted" id="tableNote" style="font-size:var(--text-xs); margin:var(--space-1) 0 0;" hidden></p>
+        </div>
+        <div class="panel" id="panelSentence">
+          <p class="ptitle">in plain language</p>
+          <p class="sentence" id="sentenceOut" aria-live="polite"></p>
+        </div>
+      </div>
+    </div>
+
+    <figcaption id="stageCap" data-edit="caption">Drag a gold handle (or press arrow keys on it) — every representation updates together.</figcaption>
+  </figure>
+
+  <div class="controls">
+    <div class="full" style="display:flex; gap:var(--space-3); flex-wrap:wrap; align-items:center;">
+      <div class="seg" role="group" aria-label="Word problem" id="scenSeg"></div>
+    </div>
+    <div class="ctl" id="ctlM">
+      <label for="mSlider">slope m <span class="val gold" id="mSliderv">0.434</span></label>
+      <input type="range" id="mSlider" min="0" max="1" step="0.001" value="0.434">
+      <div class="note" id="mNote">PSI per foot of depth</div>
+    </div>
+    <div class="ctl" id="ctlB">
+      <label for="bSlider">intercept b <span class="val gold" id="bSliderv">14.696</span></label>
+      <input type="range" id="bSlider" min="0" max="30" step="0.001" value="14.696">
+      <div class="note" id="bNote">PSI at the surface (depth 0)</div>
+    </div>
+    <div class="full" style="display:flex; gap:var(--space-3); flex-wrap:wrap; align-items:center;">
+      <div class="seg" role="group" aria-label="Table rate column">
+        <button type="button" id="deltaBtn" aria-pressed="false">show the rate in the table</button>
+      </div>
+      <div class="seg" role="group" aria-label="Equation form" id="formSeg">
+        <button type="button" data-f="si" aria-pressed="true">y = mx + b</button>
+        <button type="button" data-f="ps" aria-pressed="false">point–slope</button>
+      </div>
+    </div>
+    <div class="full">
+      <button class="btn" id="mathToggle" type="button" aria-expanded="false">Show the math ▸</button>
+      <div id="mathReveal" hidden>
+        <div class="mathbox" id="mathbox" aria-live="polite"></div>
+        <p class="muted prose" data-edit="math-prose" style="font-family:var(--font-ui); font-size:var(--text-sm)">
+          The slope comes straight from the two gold handles: rise over run,
+          <em>m</em> = (y<sub>2</sub> − y<sub>1</sub>) ÷ (x<sub>2</sub> − x<sub>1</sub>), with the
+          current numbers filled in. Then the intercept is what's left when you walk back to
+          x&nbsp;=&nbsp;0: <em>b</em> = y<sub>1</sub> − m·x<sub>1</sub>.</p>
+      </div>
+    </div>
+  </div>
+
+  <div data-slot="notes-bottom"></div>
+
+  <div class="foot">
+    <button class="btn" id="reset" type="button">Reset</button>
+    <span class="hint" data-edit="hint-try">Try: switch to butterflies — what does a <em>negative</em> slope say in words?</span>
+  </div>
+
+</div>
+
+<script type="application/json" id="m170-config">
+{
+  "_v": 1,
+  "defaultScenario": "train",
+  "scenarios": [
+    {
+      "id": "train",
+      "tab": "train",
+      "f": "D",
+      "x": "t",
+      "story": "A train traveling a long distance maintains a constant speed of 83 meters per second for a period of time, once it is 250 meters from the station.",
+      "xword": "time (seconds)",
+      "yword": "distance from station (meters)",
+      "xmin": 0,
+      "xmax": 10,
+      "ymin": 0,
+      "ymax": 1200,
+      "xticks": [
+        0,
+        2,
+        4,
+        6,
+        8,
+        10
+      ],
+      "yticks": [
+        0,
+        250,
+        500,
+        750,
+        1000
+      ],
+      "m": 83,
+      "b": 250,
+      "mMin": 0,
+      "mMax": 160,
+      "mStep": 1,
+      "bMin": 0,
+      "bMax": 600,
+      "bStep": 10,
+      "mdp": 0,
+      "bdp": 0,
+      "vdp": 0,
+      "hx": [
+        2,
+        8
+      ],
+      "keyStep": 5,
+      "tableX": [
+        0,
+        2,
+        4,
+        6,
+        8
+      ],
+      "mNote": "meters per second",
+      "bNote": "meters from the station at t = 0",
+      "xunit": "second",
+      "yunit": "{v} meters of distance",
+      "bphrase": "at t = 0 the train is already {b}&nbsp;m from the station"
+    },
+    {
+      "id": "diver",
+      "tab": "diver",
+      "f": "P",
+      "x": "d",
+      "story": "The pressure P, in pounds per square inch (PSI) on a diver depends upon their depth below the water surface, d, in feet.",
+      "xword": "depth below the surface (feet)",
+      "yword": "pressure (PSI)",
+      "xmin": 0,
+      "xmax": 100,
+      "ymin": 0,
+      "ymax": 60,
+      "xticks": [
+        0,
+        20,
+        40,
+        60,
+        80,
+        100
+      ],
+      "yticks": [
+        0,
+        15,
+        30,
+        45,
+        60
+      ],
+      "m": 0.434,
+      "b": 14.696,
+      "mMin": 0,
+      "mMax": 1,
+      "mStep": 0.001,
+      "bMin": 0,
+      "bMax": 30,
+      "bStep": 0.001,
+      "mdp": 3,
+      "bdp": 3,
+      "vdp": 2,
+      "hx": [
+        20,
+        80
+      ],
+      "keyStep": 0.1,
+      "tableX": [
+        0,
+        10,
+        20,
+        30,
+        40
+      ],
+      "mNote": "PSI per foot of depth",
+      "bNote": "PSI at the surface (depth 0)",
+      "xunit": "foot of depth",
+      "yunit": "{v} PSI",
+      "bphrase": "at the surface the pressure is {b}&nbsp;PSI"
+    },
+    {
+      "id": "pop",
+      "tab": "population",
+      "f": "P",
+      "x": "t",
+      "story": "The population of a city increased from 23,400 to 27,800 between 2008 and 2012. Assume the change was constant across those four years.",
+      "xword": "years since 2008",
+      "yword": "people in the city",
+      "xmin": 0,
+      "xmax": 4,
+      "ymin": 20000,
+      "ymax": 30000,
+      "xticks": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "yticks": [
+        20000,
+        22500,
+        25000,
+        27500,
+        30000
+      ],
+      "m": 1100,
+      "b": 23400,
+      "mMin": -2000,
+      "mMax": 3000,
+      "mStep": 10,
+      "bMin": 20000,
+      "bMax": 30000,
+      "bStep": 100,
+      "mdp": 0,
+      "bdp": 0,
+      "vdp": 0,
+      "hx": [
+        0,
+        4
+      ],
+      "keyStep": 100,
+      "tableX": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "mNote": "people per year",
+      "bNote": "population in 2008 (year 0)",
+      "xunit": "year",
+      "yunit": "{v} people",
+      "bphrase": "in 2008 (year 0) the city holds {b} people"
+    },
+    {
+      "id": "bfly",
+      "tab": "butterflies",
+      "f": "B",
+      "x": "t",
+      "story": "The population of butterflies in a botanical study decreased from 1,806 to 964 between 2022 and 2025. Assume the change is constant over those three years.",
+      "xword": "years since 2022",
+      "yword": "butterflies counted",
+      "xmin": 0,
+      "xmax": 4,
+      "ymin": 0,
+      "ymax": 2000,
+      "xticks": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "yticks": [
+        0,
+        500,
+        1000,
+        1500,
+        2000
+      ],
+      "m": -280.6667,
+      "b": 1806,
+      "mMin": -400,
+      "mMax": 100,
+      "mStep": 0.01,
+      "bMin": 0,
+      "bMax": 2000,
+      "bStep": 1,
+      "mdp": 2,
+      "bdp": 0,
+      "vdp": 0,
+      "hx": [
+        0,
+        3
+      ],
+      "keyStep": 10,
+      "tableX": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "mNote": "butterflies per year (negative — the count is falling)",
+      "bNote": "butterflies counted in 2022 (year 0)",
+      "xunit": "year",
+      "yunit": "about {v} butterflies",
+      "bphrase": "in 2022 (year 0) the count is {b} butterflies"
+    },
+    {
+      "id": "truck",
+      "tab": "trucking",
+      "f": "C",
+      "x": "x",
+      "story": "A trucking company charges a $20 flat fee, then 60 cents a mile after that. C(x) is the cost of the rental truck after being driven x miles.",
+      "xword": "miles driven",
+      "yword": "cost (dollars)",
+      "xmin": 0,
+      "xmax": 100,
+      "ymin": 0,
+      "ymax": 100,
+      "xticks": [
+        0,
+        20,
+        40,
+        60,
+        80,
+        100
+      ],
+      "yticks": [
+        0,
+        25,
+        50,
+        75,
+        100
+      ],
+      "m": 0.6,
+      "b": 20,
+      "mMin": 0,
+      "mMax": 2,
+      "mStep": 0.01,
+      "bMin": 0,
+      "bMax": 60,
+      "bStep": 0.5,
+      "mdp": 2,
+      "bdp": 2,
+      "vdp": 2,
+      "hx": [
+        20,
+        80
+      ],
+      "keyStep": 0.5,
+      "tableX": [
+        0,
+        20,
+        40,
+        60,
+        80
+      ],
+      "mNote": "dollars per mile",
+      "bNote": "base cost at zero miles",
+      "xunit": "mile",
+      "yunit": "${v} of cost",
+      "bphrase": "at zero miles the base cost is ${b}"
+    },
+    {
+      "id": "signs",
+      "tab": "signs",
+      "f": "C",
+      "x": "x",
+      "story": "A company that produces custom signs incurs a fixed cost of $1,250 per month for rent and overhead. Production costs are $37.50 per item. C(x) is the cost of producing x items in a given month.",
+      "xword": "signs produced this month",
+      "yword": "cost (dollars)",
+      "xmin": 0,
+      "xmax": 100,
+      "ymin": 0,
+      "ymax": 5000,
+      "xticks": [
+        0,
+        20,
+        40,
+        60,
+        80,
+        100
+      ],
+      "yticks": [
+        0,
+        1250,
+        2500,
+        3750,
+        5000
+      ],
+      "m": 37.5,
+      "b": 1250,
+      "mMin": 0,
+      "mMax": 100,
+      "mStep": 0.5,
+      "bMin": 0,
+      "bMax": 2500,
+      "bStep": 10,
+      "mdp": 2,
+      "bdp": 2,
+      "vdp": 2,
+      "hx": [
+        20,
+        80
+      ],
+      "keyStep": 25,
+      "tableX": [
+        0,
+        20,
+        40,
+        60,
+        80
+      ],
+      "mNote": "dollars per sign produced",
+      "bNote": "fixed monthly cost at zero signs",
+      "xunit": "sign",
+      "yunit": "${v} of cost",
+      "bphrase": "with zero signs made, the month still costs ${b}"
+    },
+    {
+      "id": "batt",
+      "tab": "battery",
+      "f": "B",
+      "x": "t",
+      "story": "A phone starts a long flight at 100% battery. Streaming video drains it at a constant 12.5% per hour. B(t) is the battery percentage left after t hours of streaming.",
+      "xword": "hours of streaming",
+      "yword": "battery remaining (percent)",
+      "xmin": 0,
+      "xmax": 8,
+      "ymin": 0,
+      "ymax": 100,
+      "xticks": [
+        0,
+        2,
+        4,
+        6,
+        8
+      ],
+      "yticks": [
+        0,
+        25,
+        50,
+        75,
+        100
+      ],
+      "m": -12.5,
+      "b": 100,
+      "mMin": -25,
+      "mMax": 5,
+      "mStep": 0.5,
+      "bMin": 0,
+      "bMax": 100,
+      "bStep": 1,
+      "mdp": 1,
+      "bdp": 0,
+      "vdp": 0,
+      "hx": [
+        2,
+        6
+      ],
+      "keyStep": 1,
+      "tableX": [
+        0,
+        2,
+        4,
+        6,
+        8
+      ],
+      "mNote": "percent of battery per hour (negative — the charge is draining)",
+      "bNote": "battery percentage at t = 0",
+      "xunit": "hour of streaming",
+      "yunit": "{v} percent of battery",
+      "bphrase": "at t = 0 the battery reads {b}%"
+    },
+    {
+      "id": "car",
+      "tab": "car value",
+      "f": "V",
+      "x": "t",
+      "story": "A used car is worth $18,000 the day it is driven off the lot, and it loses $1,500 of value every year after that. Assume the drop is constant. V(t) is the car's value after t years.",
+      "xword": "years since it was bought",
+      "yword": "value of the car (dollars)",
+      "xmin": 0,
+      "xmax": 10,
+      "ymin": 0,
+      "ymax": 20000,
+      "xticks": [
+        0,
+        2,
+        4,
+        6,
+        8,
+        10
+      ],
+      "yticks": [
+        0,
+        5000,
+        10000,
+        15000,
+        20000
+      ],
+      "m": -1500,
+      "b": 18000,
+      "mMin": -3000,
+      "mMax": 1000,
+      "mStep": 50,
+      "bMin": 0,
+      "bMax": 20000,
+      "bStep": 100,
+      "mdp": 0,
+      "bdp": 0,
+      "vdp": 0,
+      "hx": [
+        2,
+        8
+      ],
+      "keyStep": 250,
+      "tableX": [
+        0,
+        2,
+        4,
+        6,
+        8
+      ],
+      "mNote": "dollars of value per year (negative — the car is depreciating)",
+      "bNote": "value at year 0, the day it was bought",
+      "xunit": "year",
+      "yunit": "${v} of value",
+      "bphrase": "the day it was bought the car is worth ${b}"
+    }
+  ],
+  "_meta": {
+    "defaultScenario": {
+      "label": "Scenario shown on load and after Reset",
+      "kind": "choice",
+      "options": [
+        "train",
+        "diver",
+        "pop",
+        "bfly",
+        "truck",
+        "signs",
+        "batt",
+        "car"
+      ]
+    },
+    "scenarios": {
+      "label": "The eight word problems",
+      "kind": "table",
+      "columns": [
+        "id",
+        "tab",
+        "f",
+        "x",
+        "story",
+        "xword",
+        "yword",
+        "xmin",
+        "xmax",
+        "ymin",
+        "ymax",
+        "xticks",
+        "yticks",
+        "m",
+        "b",
+        "mMin",
+        "mMax",
+        "mStep",
+        "bMin",
+        "bMax",
+        "bStep",
+        "mdp",
+        "bdp",
+        "vdp",
+        "hx",
+        "keyStep",
+        "tableX",
+        "mNote",
+        "bNote",
+        "xunit",
+        "yunit",
+        "bphrase"
+      ],
+      "help": "One row per word problem — the first six carry the worksheets' own coefficients, the last two (battery, car value) were written for this page and are not worksheet data. mdp/bdp/vdp are decimal places; hx is the pair of x-positions of the two draggable handles; yunit uses {v} for the per-unit amount and bphrase uses {b} for the intercept. Keep the y-window wide enough to contain the line across the whole x-window."
+    }
+  }
+}
+</script>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- theme: auto → light → dark (design-system v2) ---------- */
+var root = document.documentElement, themeBtn = document.getElementById("themeBtn");
+function themeLabel(){
+  var m = root.dataset.theme || "auto";
+  themeBtn.textContent = m==="dark" ? "● dark" : m==="light" ? "○ light" : "◑ auto";
+}
+themeBtn.addEventListener("click", function(){
+  var cur = root.dataset.theme || "auto";
+  var next = cur==="auto" ? "light" : cur==="light" ? "dark" : "auto";
+  if(next==="auto"){ delete root.dataset.theme; try{localStorage.removeItem("m170-theme");}catch(e){} }
+  else { root.dataset.theme = next; try{localStorage.setItem("m170-theme", next);}catch(e){} }
+  themeLabel(); render();
+});
+if(window.matchMedia){ window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function(){ render(); }); }
+themeLabel();
+
+/* ---------- shared slider helper (design-system v2) ---------- */
+function wireSlider(id, fmt, onInput){
+  var el = document.getElementById(id), out = document.getElementById(id+"v");
+  function paint(){
+    var p = (el.value - el.min) / (el.max - el.min) * 100;
+    el.style.setProperty("--track",
+      "linear-gradient(to right, var(--gold) "+p+"%, var(--gray-line) "+p+"%)");
+    if(out) out.textContent = fmt(+el.value);
+  }
+  el.addEventListener("input", function(){ paint(); onInput(); });
+  paint();
+  return { el: el, paint: paint,
+           set: function(v){ el.value = v; paint(); } };
+}
+
+function css(v){ return getComputedStyle(document.body).getPropertyValue(v).trim(); }
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+
+/* ---------- scenarios: all eight word problems come from the config island ---------- */
+var CFG = JSON.parse(document.getElementById("m170-config").textContent);
+var SCEN = {}, SCEN_ORDER = [];
+CFG.scenarios.forEach(function(sc){ SCEN[sc.id] = sc; SCEN_ORDER.push(sc.id); });
+function fillT(tpl, key, value){
+  return String(tpl == null ? "" : tpl).split("{"+key+"}").join(value);
+}
+/* per-scenario wording, kept as templates so the Studio can edit them as text */
+function yunitOf(s, amount){ return fillT(s.yunit, "v", amount); }
+function bphraseOf(s, bstr){ return fillT(s.bphrase, "b", '<strong class="num">'+bstr+"</strong>"); }
+
+/* ---------- state ---------- */
+var START = SCEN[CFG.defaultScenario] ? CFG.defaultScenario : SCEN_ORDER[0];
+var state = { scen:START, m:+SCEN[START].m, b:+SCEN[START].b,
+              showDelta:false, form:"si" };
+
+/* scenario tabs — the only toggle on the page */
+var scenSeg = document.getElementById("scenSeg");
+SCEN_ORDER.forEach(function(id){
+  var b = document.createElement("button");
+  b.type = "button"; b.dataset.s = id;
+  b.textContent = SCEN[id].tab || id;
+  b.setAttribute("aria-pressed", String(id === state.scen));
+  scenSeg.appendChild(b);
+});
+
+var svg = document.getElementById("graph");
+var W=400,H=400,padL=56,padR=14,padT=26,padB=46;
+function sx(x){ var s=SCEN[state.scen]; return padL+(x-s.xmin)/(s.xmax-s.xmin)*(W-padL-padR); }
+function sy(y){ var s=SCEN[state.scen]; return (H-padB)-(y-s.ymin)/(s.ymax-s.ymin)*(H-padT-padB); }
+function clamp(v,a,b){ return Math.min(b,Math.max(a,v)); }
+function fmt(v,dp){ return (+v).toFixed(dp); }
+
+var mS = wireSlider("mSlider", function(v){ return fmt(v, SCEN[state.scen].mdp); }, function(){
+  state.m = +mS.el.value; afterChange();
+});
+var bS = wireSlider("bSlider", function(v){ return fmt(v, SCEN[state.scen].bdp); }, function(){
+  state.b = +bS.el.value; afterChange();
+});
+
+function configureSliders(){
+  var s = SCEN[state.scen];
+  mS.el.min=s.mMin; mS.el.max=s.mMax; mS.el.step=s.mStep;
+  bS.el.min=s.bMin; bS.el.max=s.bMax; bS.el.step=s.bStep;
+  document.getElementById("storyOut").innerHTML =
+    '<span class="who">the word problem</span>' + esc(s.story || "");
+  mS.set(state.m); bS.set(state.b);
+  document.getElementById("mNote").textContent = s.mNote;
+  document.getElementById("bNote").textContent = s.bNote;
+}
+
+/* ---------- gold pulse (causation, ~200ms) ---------- */
+var pulseTimer=null;
+function pulsePanels(){
+  ["panelEqn","panelTable","panelSentence"].forEach(function(id){
+    document.getElementById(id).classList.add("pulse");
+  });
+  clearTimeout(pulseTimer);
+  pulseTimer=setTimeout(function(){
+    ["panelEqn","panelTable","panelSentence"].forEach(function(id){
+      document.getElementById(id).classList.remove("pulse");
+    });
+  }, 260);
+}
+function afterChange(){ render(); pulsePanels(); }
+
+/* ---------- render: graph ---------- */
+function txt(x,y,s,color,anchor,size,extra){
+  return '<text x="'+x+'" y="'+y+'" fill="'+color+'" text-anchor="'+(anchor||"start")+
+    '" font-size="'+(size||11)+'"'+(extra||"")+'>'+esc(s)+'</text>';
+}
+function renderGraph(){
+  var s=SCEN[state.scen];
+  var ink=css("--ink"), gold=css("--gold"), gray=css("--gray-text"), line=css("--gray-line");
+  var out='<defs><clipPath id="plotClip"><rect x="'+padL+'" y="'+padT+'" width="'+(W-padL-padR)+'" height="'+(H-padT-padB)+'"/></clipPath></defs>';
+
+  // gridlines + ticks
+  s.xticks.forEach(function(tx){
+    var X=sx(tx);
+    out+='<line x1="'+X+'" y1="'+padT+'" x2="'+X+'" y2="'+(H-padB)+'" stroke="'+line+'" stroke-width="1"/>';
+    out+=txt(X, H-padB+16, String(tx), gray, "middle", 10);
+  });
+  s.yticks.forEach(function(ty){
+    var Y=sy(ty);
+    out+='<line x1="'+padL+'" y1="'+Y+'" x2="'+(W-padR)+'" y2="'+Y+'" stroke="'+line+'" stroke-width="1"/>';
+    out+=txt(padL-6, Y+3, String(ty), gray, "end", 10);
+  });
+  // axes (through 0 when 0 is inside the window, Desmos-like; else on the frame edge)
+  var ax = (s.ymin<0&&s.ymax>0) ? sy(0) : (H-padB);
+  var ay = (s.xmin<0&&s.xmax>0) ? sx(0) : padL;
+  out+='<line x1="'+padL+'" y1="'+ax+'" x2="'+(W-padR)+'" y2="'+ax+'" stroke="'+ink+'" stroke-width="1.5"/>';
+  out+='<line x1="'+ay+'" y1="'+padT+'" x2="'+ay+'" y2="'+(H-padB)+'" stroke="'+ink+'" stroke-width="1.5"/>';
+  // axis labels in words
+  out+=txt((padL+W-padR)/2, H-6, s.xword, gray, "middle", 11);
+  out+=txt(padL, padT-10, s.yword, gray, "start", 11);
+
+  // the line (clipped to the plot)
+  var y1=state.m*s.xmin+state.b, y2=state.m*s.xmax+state.b;
+  out+='<g clip-path="url(#plotClip)"><line x1="'+sx(s.xmin)+'" y1="'+sy(y1)+'" x2="'+sx(s.xmax)+'" y2="'+sy(y2)+
+       '" stroke="'+gold+'" stroke-width="2.5"/></g>';
+
+  // gold handles (draggable, focusable)
+  s.hx.forEach(function(hx,i){
+    var hy=state.m*hx+state.b, cy=clamp(sy(clamp(hy,s.ymin,s.ymax)), padT, H-padB);
+    var off = hy<s.ymin || hy>s.ymax;
+    out+='<g class="handle" data-h="'+i+'" tabindex="0" role="slider" aria-orientation="vertical"'+
+      ' aria-valuemin="'+s.ymin+'" aria-valuemax="'+s.ymax+'" aria-valuenow="'+fmt(clamp(hy,s.ymin,s.ymax),s.vdp)+'"'+
+      ' aria-label="Handle at '+s.x+' = '+hx+'; value '+fmt(hy,s.vdp)+'. Arrow keys adjust.">'+
+      '<circle cx="'+sx(hx)+'" cy="'+cy+'" r="14" fill="transparent"/>'+
+      '<circle cx="'+sx(hx)+'" cy="'+cy+'" r="7" fill="'+(off?'none':gold)+'" stroke="'+ink+'" stroke-width="1.5"'+(off?' stroke-dasharray="2 2"':'')+'/>'+
+      '</g>';
+    out+=txt(sx(hx)+10, cy-10, "("+hx+", "+fmt(hy,s.vdp)+")", ink, "start", 10,
+             ' font-family="var(--font-mono)" style="font-variant-numeric:tabular-nums"');
+  });
+  var focused = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.h : null;
+  svg.innerHTML = out;
+  if(focused!=null){
+    var g=svg.querySelector('[data-h="'+focused+'"]');
+    if(g) g.focus({preventScroll:true});
+  }
+}
+
+/* ---------- render: notation, table, sentence, mathbox ---------- */
+function num(sv){ return '<span class="num">'+sv+'</span>'; }
+function renderPanels(){
+  var s=SCEN[state.scen];
+  var mstr=fmt(state.m,s.mdp), bstr=fmt(state.b,s.bdp);
+  var sign = state.b<0 ? " − " : " + ";
+  document.getElementById("eqnOut").innerHTML =
+    s.f+"("+s.x+") = "+num(mstr)+"·"+s.x+sign+num(fmt(Math.abs(state.b),s.bdp));
+  var alt=document.getElementById("eqnAlt");
+  if(state.form==="ps"){
+    var x1=s.hx[0], y1=state.m*x1+state.b;
+    var sgnX = x1<0 ? " + "+(-x1) : " − "+x1;
+    var sgnY = y1<0 ? " + "+fmt(-y1,s.vdp) : " − "+fmt(y1,s.vdp);
+    alt.hidden=false;
+    alt.innerHTML = "point–slope through ("+x1+", "+fmt(y1,s.vdp)+"):  "+
+      s.f+sgnY+" = "+num(mstr)+"·("+s.x+sgnX+")";
+  } else { alt.hidden=true; }
+
+  // table
+  var rows='<tr><th>'+esc(s.x)+'</th><th>'+esc(s.f)+'('+esc(s.x)+')</th>'+
+           (state.showDelta?'<th>Δ'+esc(s.f)+'</th>':'')+'</tr>';
+  var prev=null;
+  s.tableX.forEach(function(x){
+    var v=state.m*x+state.b;
+    rows+='<tr><td>'+x+'</td><td>'+num(fmt(v,s.vdp))+'</td>';
+    if(state.showDelta){
+      rows+= prev===null ? '<td class="muted">—</td>'
+           : '<td>'+num(fmt(v-prev,s.vdp))+'</td>';
+    }
+    rows+='</tr>';
+    prev=v;
+  });
+  document.getElementById("valTable").innerHTML=rows;
+  var tn=document.getElementById("tableNote");
+  if(state.showDelta){
+    var dx=s.tableX[1]-s.tableX[0], df=state.m*dx, ddp=Math.max(s.vdp,s.mdp);
+    tn.hidden=false;
+    tn.textContent="Δ"+s.f+" ÷ Δ"+s.x+" = "+fmt(df,ddp)+" ÷ "+dx+" = "+fmt(state.m,s.mdp)+
+      " — the slope, hiding in the table.";
+  } else tn.hidden=true;
+
+  // sentence
+  var dir = state.m>=0 ? "adds" : "removes";
+  var rate = yunitOf(s, fmt(Math.abs(state.m),s.mdp));
+  document.getElementById("sentenceOut").innerHTML =
+    "Every extra <strong>"+esc(s.xunit)+"</strong> "+dir+" <strong class=\"num\">"+rate+
+    "</strong>; "+bphraseOf(s, fmt(state.b,s.bdp))+".";
+
+  // mathbox — slope from the two handles, with current numbers
+  var x1=s.hx[0], x2=s.hx[1], y1=state.m*x1+state.b, y2=state.m*x2+state.b;
+  var L=[];
+  L.push("two points on the line:  ("+x1+", "+fmt(y1,s.vdp)+")  and  ("+x2+", "+fmt(y2,s.vdp)+")");
+  L.push("");
+  L.push("m = (y2 − y1) / (x2 − x1)");
+  L.push("  = ("+fmt(y2,s.vdp)+" − "+fmt(y1,s.vdp)+") / ("+x2+" − "+x1+")");
+  L.push("  = "+fmt(y2-y1,s.vdp)+" / "+(x2-x1)+"  =  "+fmt(state.m,Math.max(s.mdp,2)));
+  L.push("");
+  L.push("b = y1 − m·x1 = "+fmt(y1,s.vdp)+" − "+fmt(state.m,Math.max(s.mdp,2))+"·"+x1+"  =  "+fmt(state.b,Math.max(s.bdp,2)));
+  L.push("");
+  L.push("slope-intercept:  "+s.f+"("+s.x+") = "+fmt(state.m,s.mdp)+"·"+s.x+(state.b<0?" − ":" + ")+fmt(Math.abs(state.b),s.bdp));
+  L.push("point–slope:      "+s.f+" − "+fmt(y1,s.vdp)+" = "+fmt(state.m,s.mdp)+"·("+s.x+" − "+x1+")");
+  document.getElementById("mathbox").textContent=L.join("\n");
+}
+
+function render(){ renderGraph(); renderPanels(); }
+
+/* ---------- handle drag + keyboard ---------- */
+var dragging=null;
+function svgPoint(evt){
+  var pt=svg.createSVGPoint(); pt.x=evt.clientX; pt.y=evt.clientY;
+  return pt.matrixTransform(svg.getScreenCTM().inverse());
+}
+function setHandleY(i, yVal){
+  var s=SCEN[state.scen];
+  yVal = clamp(Math.round(yVal*10)/10, s.ymin, s.ymax);   // handles snap to 0.1
+  var xi=s.hx[i], xo=s.hx[1-i], yo=state.m*xo+state.b;
+  state.m=(yVal-yo)/(xi-xo);
+  state.b=yVal-state.m*xi;
+  mS.set(state.m); bS.set(state.b);
+  afterChange();
+}
+svg.addEventListener("pointerdown", function(e){
+  var g=e.target.closest("[data-h]");
+  if(!g) return;
+  dragging=+g.dataset.h;
+  svg.setPointerCapture(e.pointerId);
+  e.preventDefault();
+});
+svg.addEventListener("pointermove", function(e){
+  if(dragging===null) return;
+  var s=SCEN[state.scen], p=svgPoint(e);
+  var yVal=s.ymin+((H-padB)-p.y)/(H-padT-padB)*(s.ymax-s.ymin);
+  setHandleY(dragging,yVal);
+});
+svg.addEventListener("pointerup", function(){ dragging=null; });
+svg.addEventListener("pointercancel", function(){ dragging=null; });
+svg.addEventListener("keydown", function(e){
+  var g=e.target.closest ? e.target.closest("[data-h]") : null;
+  if(!g) return;
+  var i=+g.dataset.h, s=SCEN[state.scen];
+  var step=s.keyStep*(e.shiftKey?10:1), d=0;
+  if(e.key==="ArrowUp"||e.key==="ArrowRight") d=step;
+  else if(e.key==="ArrowDown"||e.key==="ArrowLeft") d=-step;
+  else return;
+  e.preventDefault();
+  setHandleY(i, state.m*s.hx[i]+state.b+d);
+});
+
+/* ---------- segmented controls ---------- */
+function segWire(id, fn){
+  var seg=document.getElementById(id);
+  seg.addEventListener("click", function(e){
+    var b=e.target.closest("button"); if(!b) return;
+    Array.prototype.forEach.call(seg.querySelectorAll("button"), function(x){
+      x.setAttribute("aria-pressed", String(x===b));
+    });
+    fn(b);
+  });
+  return seg;
+}
+segWire("scenSeg", function(b){ setScenario(b.dataset.s); });
+function setScenario(id){
+  if(!SCEN[id]) id = SCEN_ORDER[0];
+  state.scen = id;
+  var s = SCEN[id];
+  state.m = +s.m; state.b = +s.b;
+  Array.prototype.forEach.call(scenSeg.querySelectorAll("button"), function(x){
+    x.setAttribute("aria-pressed", String(x.dataset.s === id));
+  });
+  configureSliders();
+  afterChange();
+}
+segWire("formSeg", function(b){ state.form=b.dataset.f; render(); });
+
+var deltaBtn=document.getElementById("deltaBtn");
+deltaBtn.addEventListener("click", function(){
+  state.showDelta=!state.showDelta;
+  deltaBtn.setAttribute("aria-pressed", String(state.showDelta));
+  render();
+});
+var mt=document.getElementById("mathToggle"), mr=document.getElementById("mathReveal");
+mt.addEventListener("click", function(){
+  var open=mr.hidden; mr.hidden=!open;
+  mt.setAttribute("aria-expanded", String(open));
+  mt.textContent=open?"Hide the math ▾":"Show the math ▸";
+});
+
+/* ---------- Reset: the initial teaching state named in the spec ---------- */
+document.getElementById("reset").addEventListener("click", function(){
+  state.showDelta=false; state.form="si";
+  deltaBtn.setAttribute("aria-pressed","false");
+  var fs=document.getElementById("formSeg");
+  Array.prototype.forEach.call(fs.querySelectorAll("button"), function(x){
+    x.setAttribute("aria-pressed", String(x.dataset.f==="si"));
+  });
+  setScenario(START);
+});
+
+setScenario(START);
+})();
+</script>
+</body>
+</html>

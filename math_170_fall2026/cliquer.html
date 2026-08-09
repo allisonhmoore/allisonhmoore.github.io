@@ -1,0 +1,2302 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cliquer — draw lines, collect cliques · MATH 170</title>
+
+<!-- RULES SOURCE: Dan &amp; Andrew's Gaming Place, "Cliquer: a graph theory game",
+     22 November 2017. Seven or more dots; a move draws an edge between two dots
+     not already joined; the new edge may not cross an existing edge or a dot; the
+     game ends when no edge can be drawn; you score for EVERY clique your edge
+     completes — 1 for the edge itself, 3 for each triangle, 5 for each 4-clique;
+     highest total wins. The post's own worked example is a four-dot game whose
+     closing move scores 12 (1 + 3 + 3 + 5) and whose whole game is worth 23
+     (14 to 9) — tools/verify_cliquer.py reproduces both numbers from this file's
+     scoring table.
+
+     REVISED 2026-08-04, on the professor's note: "On paper, playing Cliquer
+     sometimes involves drawing edges as curved arcs in order to avoid
+     intersecting with other edges. The current instantiation of the game seems
+     to only permit edges as straight line segments, which prevents many valid
+     moves in the game, especially 4-cliques." So an edge is now ANY planar
+     curve. Three things follow, all checked by tools/verify_cliquer.py:
+
+       * every game lasts exactly 3n - 6 moves, whatever anybody does — the
+         finished drawing is a triangulation of the sphere, outer face included,
+         because a curve may loop right round the outside;
+       * where the dots are no longer decides what is playable. Any n dots start
+         as n loose dots on one blank face, so every board with the same dot
+         count is the same game. The layout decides how the curves have to be
+         drawn, not what can be drawn;
+       * a 5-clique still cannot happen: the drawing is plane, and a plane graph
+         has no K5. The engine raises if one ever appears.
+
+     REVISED AGAIN 2026-08-05, on the professor's rule call: "it would be
+     preferable to display any legal curve. Even if there is a bit of a visual
+     discrepancy in the sense that the sketch lines cross or touch in the current
+     computer view, that is okay --the human viewer should be able to convince
+     themselves that if they could increase the size of a board to huge, such a
+     line would be possible. What is not allowed if there is no possible curve
+     that is mathematically possible in the sense of the Jordan curve theorem".
+     So the renderer no longer has a veto. Every move the face-structure model
+     calls legal is played AND drawn: cleanly if the screen can hold it, and
+     otherwise by a second router that treats the drawn lines as tolls rather
+     than walls and crosses as few as it can. Such a curve is drawn faded and
+     broken and says why. The dots stay walls in both routers — going through a
+     dot is a real violation, not a screen artefact. The old "too tight to draw
+     at this size" refusal and its short-of-3n-6 counter are gone.
+
+     PINNED, for the DEFAULT island: n = 7 -> 15 moves, n = 8 -> 18 moves. The
+     four-dot game is small enough to solve outright and is worth -11 to the
+     player who moves first (91 positions) — so the post's own 14-to-9 game had
+     neither player playing it perfectly. Whole seven- and eight-dot games are
+     NOT solvable here; the computer solves the last exactFromMovesLeft moves
+     exactly and looks `lookahead` moves ahead before that. -->
+
+<!-- ================================================================
+     DESIGN-SYSTEM v2 TOKEN BLOCK — copied verbatim into every file.
+     A global tweak stays a find-replace across the set.
+     ================================================================ -->
+<style>
+/* hidden must always win over any author display rule */
+[hidden]{display:none !important}
+
+:root{
+  /* color — light */
+  --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+  --gold-soft:rgba(218,165,32,.12);
+  --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  /* type */
+  --font-body: ui-serif, Georgia, "Times New Roman", serif;
+  --font-ui:   system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+  --text-xl:1.75rem; --text-lg:1.25rem; --text-base:1rem; --text-sm:.875rem; --text-xs:.75rem;
+  --leading-prose:1.6; --leading-ui:1.3;
+  /* spacing */
+  --space-1:4px; --space-2:8px; --space-3:16px; --space-4:24px; --space-5:32px; --space-6:48px;
+  /* motion */
+  --ease:cubic-bezier(0.16,1,0.3,1); --dur:200ms;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+    --gold-soft:rgba(227,179,65,.16);
+    --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+  --gold-soft:rgba(227,179,65,.16);
+  --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+}
+@media (prefers-reduced-motion: reduce){ :root{ --dur:0ms; } }
+@media print{
+  :root, :root[data-theme="dark"]{
+    --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+    --gold-soft:rgba(218,165,32,.12);
+    --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  }
+  .theme-btn{display:none}
+  .stage{break-inside:avoid}
+}
+
+/* ================= base skin (design-system §3–§4) ================= */
+*{box-sizing:border-box}
+html{color-scheme:light dark}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--font-body); font-size:var(--text-base); line-height:var(--leading-prose);
+  -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:820px; margin:0 auto; padding:var(--space-5) var(--space-4) var(--space-6);}
+.topbar{display:flex; align-items:baseline; justify-content:space-between; gap:var(--space-3);
+  border-bottom:1px solid var(--gray-line); padding-bottom:var(--space-2); margin-bottom:var(--space-4);}
+.eyebrow{font-family:var(--font-ui); font-size:var(--text-xs); letter-spacing:.08em; text-transform:uppercase; color:var(--gray-text);}
+h1{font-family:var(--font-body); font-weight:600; font-size:var(--text-xl); line-height:1.2; margin:.2em 0 .1em;}
+h2{font-family:var(--font-ui); font-weight:600; font-size:var(--text-lg); line-height:1.3; margin:var(--space-5) 0 var(--space-2);}
+p{margin:0 0 var(--space-3);}
+.prose{max-width:66ch;}
+.muted{color:var(--gray-text);}
+.mono,code{font-family:var(--font-mono); font-variant-numeric:tabular-nums;}
+a{color:inherit;}
+:focus-visible{outline:2px solid var(--ink); outline-offset:2px; box-shadow:0 0 0 5px var(--gold-soft);}
+
+.theme-btn{font-family:var(--font-ui); font-size:var(--text-xs); background:none;
+  border:1px solid var(--gray-line); color:var(--gray-text); padding:6px 10px; cursor:pointer; border-radius:2px;}
+.theme-btn:hover{background:var(--gray-fill);}
+
+/* spec header */
+details.spec{border:1px solid var(--gray-line); border-radius:2px; margin:0 0 var(--space-4); background:var(--gray-fill);}
+details.spec>summary{font-family:var(--font-ui); font-size:var(--text-sm); cursor:pointer;
+  padding:var(--space-2) var(--space-3); list-style:none; color:var(--gray-text);}
+details.spec>summary::-webkit-details-marker{display:none}
+details.spec>summary::before{content:"▸ "; color:var(--gold);}
+details.spec[open]>summary::before{content:"▾ ";}
+.spec-body{padding:0 var(--space-3) var(--space-3); font-family:var(--font-ui); font-size:var(--text-sm); line-height:1.5;}
+.spec-body dt{font-weight:600; margin-top:var(--space-2);}
+.spec-body dd{margin:0; color:var(--gray-text);}
+
+/* stage */
+.stage{margin:var(--space-4) 0; text-align:center;}
+svg{max-width:100%; height:auto; font-family:var(--font-ui);}
+figcaption{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); margin-top:var(--space-2);}
+
+/* controls */
+.controls{border-top:1px solid var(--gray-line); padding-top:var(--space-3); margin-top:var(--space-4);
+  display:grid; grid-template-columns:1fr 1fr; gap:var(--space-3) var(--space-4);}
+.controls .full{grid-column:1/-1;}
+@media(max-width:560px){ .controls{grid-template-columns:1fr;} }
+.ctl label{display:flex; justify-content:space-between; align-items:baseline;
+  font-family:var(--font-ui); font-size:var(--text-sm); line-height:var(--leading-ui);}
+.ctl .val{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm); color:var(--ink);}
+.ctl .val.gold{color:var(--gold); font-weight:600;}
+.ctl .note{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); margin-top:4px;}
+
+/* range slider — filled track works in ALL engines (design-system v2 fix) */
+input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:18px;
+  background:transparent; margin:6px 0 0; cursor:pointer;}
+input[type=range]::-webkit-slider-runnable-track{height:2px; border-radius:1px;
+  background:var(--track, var(--gray-line));}
+input[type=range]::-moz-range-track{height:2px; background:var(--gray-line);}
+input[type=range]::-moz-range-progress{height:2px; background:var(--gold);}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; appearance:none;
+  width:18px; height:18px; margin-top:-8px; border-radius:50%; background:var(--gold); border:1px solid var(--ink);}
+input[type=range]::-moz-range-thumb{width:18px; height:18px; border-radius:50%; background:var(--gold); border:1px solid var(--ink);}
+
+/* buttons + segmented + stepper */
+.btn{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:1px solid var(--ink); padding:8px 14px; cursor:pointer; border-radius:2px;}
+.btn:hover{background:var(--gray-fill);}
+.btn.primary{background:var(--gold); border-color:var(--gold); color:#111111;}
+.btn[disabled]{border-color:var(--gray-line); color:var(--gray-line); cursor:default; background:var(--paper);}
+.seg{display:inline-flex; border:1px solid var(--ink); border-radius:2px; overflow:hidden;}
+.seg button{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:0; border-left:1px solid var(--ink); padding:7px 12px; cursor:pointer;}
+.seg button:first-child{border-left:0;}
+.seg button[aria-pressed="true"]{background:var(--gold); color:#111111;}
+.stepper{display:inline-flex; align-items:center; gap:var(--space-2); font-family:var(--font-ui); font-size:var(--text-sm);}
+.stepper .count{font-family:var(--font-mono); font-variant-numeric:tabular-nums; color:var(--gray-text);}
+
+.foot{display:flex; align-items:center; gap:var(--space-3); margin-top:var(--space-5);
+  border-top:1px solid var(--gray-line); padding-top:var(--space-3); flex-wrap:wrap;}
+.foot .btn{margin-right:auto;}
+.hint{font-family:var(--font-ui); font-size:var(--text-sm); color:var(--gray-text);}
+
+/* math reveal */
+.mathbox{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm);
+  background:var(--gray-fill); border-left:2px solid var(--gold); padding:var(--space-3);
+  margin:var(--space-3) 0; overflow-x:auto; white-space:pre; line-height:1.7; text-align:left;}
+.attach{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text);
+  border-top:1px dotted var(--gray-line); margin-top:var(--space-6); padding-top:var(--space-3);}
+.tag{display:inline-block; font-family:var(--font-ui); font-size:var(--text-xs);
+  border:1px solid var(--gray-line); border-radius:999px; padding:1px 8px; color:var(--gray-text); margin-left:6px;}
+.callout{font-family:var(--font-ui); font-size:var(--text-sm); border:1px solid var(--gray-line);
+  border-left:2px solid var(--gold); padding:var(--space-2) var(--space-3); margin:var(--space-3) 0; background:var(--paper);}
+</style>
+
+<!-- theme boot: apply stored choice before first paint (no flash) -->
+<script>
+try{var t=localStorage.getItem("m170-theme");if(t)document.documentElement.dataset.theme=t;}catch(e){}
+</script>
+
+<!-- ============ bespoke styles for this manipulative only ============ -->
+<style>
+.setup{display:flex; flex-wrap:wrap; gap:var(--space-3) var(--space-4); align-items:flex-start;
+  border:1px solid var(--gray-line); border-radius:2px; padding:var(--space-3);
+  margin:0 0 var(--space-3); text-align:left;}
+.setup .field{display:flex; flex-direction:column; gap:6px;}
+.setup .flabel{font-family:var(--font-ui); font-size:var(--text-xs); letter-spacing:.08em;
+  text-transform:uppercase; color:var(--gray-text);}
+.setup select{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper);
+  color:var(--ink); border:1px solid var(--ink); border-radius:2px; padding:7px 8px; max-width:100%;}
+
+/* the rules card — plain language, with the price list */
+.rules{border:1px solid var(--gray-line); border-left:2px solid var(--gold); border-radius:2px;
+  padding:var(--space-3); margin:0 0 var(--space-3); text-align:left;
+  font-family:var(--font-ui); font-size:var(--text-sm); line-height:1.55;}
+.rules ol{margin:0 0 var(--space-2); padding-left:1.4em;}
+.rules li{margin:0 0 4px;}
+.pricelist{display:flex; flex-wrap:wrap; gap:var(--space-2) var(--space-5); margin-top:var(--space-2);
+  font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm);}
+.pricelist span{display:inline-flex; align-items:center; gap:10px;}
+.pricelist svg{width:34px; height:26px; overflow:visible;}
+
+/* scoreboard */
+.scoreboard{display:flex; flex-wrap:wrap; align-items:center; gap:var(--space-2) var(--space-4);
+  border-left:2px solid var(--gold); background:var(--gold-soft);
+  padding:var(--space-2) var(--space-3); margin:0 0 var(--space-3); text-align:left;
+  font-family:var(--font-ui); font-size:var(--text-sm); min-height:2.6em;}
+.scoreboard .big{font-family:var(--font-mono); font-variant-numeric:tabular-nums;
+  font-size:var(--text-lg); font-weight:700;}
+.scoreboard .who{font-weight:600;}
+.scoreboard .left{color:var(--gray-text);}
+
+.legend{display:flex; justify-content:center; gap:var(--space-4); flex-wrap:wrap;
+  font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text);
+  margin-top:var(--space-2);}
+.legend span{display:inline-flex; align-items:center; gap:6px;}
+.legend svg{width:40px; height:14px; overflow:visible;}
+
+.verdict{font-family:var(--font-ui); font-size:var(--text-sm); text-align:left;
+  margin:var(--space-3) 0 0; padding:var(--space-2) var(--space-3); min-height:1.6em;}
+.verdict .sym{font-family:var(--font-mono); font-weight:700; margin-right:6px;}
+.verdict.won{border-left:2px solid var(--gold); background:var(--gold-soft);}
+.verdict.lost{border-left:2px dashed var(--ink);}
+.verdict.tie{border-left:2px dotted var(--ink);}
+.verdict.no{border-left:2px solid var(--gray-line);}
+
+/* the quiet line under the board when a curve had to be drawn approximately */
+.crossnote{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text);
+  border-left:2px solid var(--gray-line); padding-left:var(--space-2); text-align:left;
+  max-width:60ch; margin:var(--space-2) auto 0;}
+
+.movelog{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-xs);
+  color:var(--gray-text); text-align:left; margin:var(--space-2) 0 0; line-height:1.8;
+  overflow-x:auto; white-space:pre-wrap;}
+svg .vgrab{cursor:pointer;}
+svg .frame{fill:none; stroke:var(--gray-line); stroke-width:1; stroke-dasharray:3 6;}
+@media print{ .setup, .rules{border-color:#CCCCCC;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="eyebrow">MATH 170 · Graphs · Cliques, and a drawing that cannot cross</div>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Color theme">◑ auto</button>
+  </div>
+
+  <h1 data-edit="title">Cliquer <span class="tag">cliques · planar drawing</span></h1>
+  <p class="prose muted" data-edit="intro">A handful of dots and two people taking turns joining them
+  up. Every line you draw is worth a point — and if that line finishes off a triangle, or a group of
+  four all joined to each other, it is worth a great deal more. The line does not have to be straight:
+  swing it round the long way if that is what it takes. The one rule about where you may draw is that
+  your line may not cross a line that is already there.</p>
+
+  <div data-slot="notes-top"></div>
+
+
+  <div class="rules">
+    <p style="margin:0 0 var(--space-2)"><strong data-edit="rules-head">How Cliquer is played</strong></p>
+    <ol>
+      <li data-edit="rule-1">Take turns. On your turn you draw <strong>one line</strong> between two dots that are not already joined. It may be straight or it may curve — whatever gets there.</li>
+      <li data-edit="rule-2">Your line may not <strong>cross</strong> a line that is already on the board, may not cross <strong>itself</strong>, and may not run <strong>through</strong> another dot. Meeting an existing line at a shared dot is fine — that is not a crossing.</li>
+      <li data-edit="rule-3">The game ends when nobody can draw anything. Highest score wins.</li>
+      <li data-edit="rule-4">You are paid for <strong>every clique your line completes</strong> — not just the biggest one. A <em>clique</em> is a set of dots with every pair of them joined.</li>
+    </ol>
+    <div class="pricelist" id="pricelist" aria-label="What each completed clique pays"></div>
+  </div>
+
+  <div class="setup">
+    <div class="field">
+      <span class="flabel" id="lblBoard">board</span>
+      <select id="boardSel" aria-labelledby="lblBoard"></select>
+    </div>
+    <div class="field">
+      <span class="flabel" id="lblFirst">first move</span>
+      <div class="seg" role="group" aria-labelledby="lblFirst" id="firstSeg">
+        <button type="button" data-f="you" aria-pressed="true">yours</button>
+        <button type="button" data-f="computer" aria-pressed="false">the computer's</button>
+      </div>
+    </div>
+    <div class="field">
+      <span class="flabel" id="lblStrength">the computer</span>
+      <div class="seg" role="group" aria-labelledby="lblStrength" id="strengthSeg">
+        <button type="button" data-p="greedy" aria-pressed="false">grabs the most now</button>
+        <button type="button" data-p="planner" aria-pressed="true">plans ahead</button>
+      </div>
+    </div>
+    <div class="field">
+      <span class="flabel">&nbsp;</span>
+      <button class="btn primary" id="newGame" type="button">New game</button>
+    </div>
+  </div>
+
+  <p class="prose muted" id="boardBlurb" style="font-family:var(--font-ui); font-size:var(--text-sm);"></p>
+
+  <div class="scoreboard" id="scoreboard" aria-live="polite"></div>
+
+  <figure class="stage" style="margin-left:0;margin-right:0;">
+    <svg id="board" viewBox="-80 -70 800 560" role="application"
+         aria-label="Cliquer board. Join two dots with a line that crosses nothing. The line may curve."></svg>
+    <div class="legend" id="legend"></div>
+    <p class="crossnote" id="crossNote" hidden></p>
+    <figcaption id="caption" data-edit="caption">Tap one dot then the other and the line draws itself, going round whatever is in the way. To choose the route yourself, drag all the way from one dot to the other — or tap the first dot, tap the board where you want the line to pass, then tap the second dot. Keyboard: Tab to a dot, press Enter, Tab to the second dot, Enter again. Escape cancels; Backspace takes back the last bend.</figcaption>
+  </figure>
+
+  <p class="verdict" id="verdict" aria-live="polite"></p>
+
+  <div class="controls">
+    <div class="full" style="display:flex; gap:var(--space-3); flex-wrap:wrap; align-items:center;">
+      <button class="btn" id="mathToggle" type="button" aria-expanded="false">Show the scoring ▸</button>
+      <button class="btn" id="valueToggle" type="button" aria-expanded="false">How long is this game? ▸</button>
+    </div>
+    <div class="full">
+      <div id="mathReveal" hidden>
+        <div class="mathbox" id="mathbox"></div>
+        <p class="muted prose" style="font-family:var(--font-ui); font-size:var(--text-sm)" data-edit="math-note">
+          Notice what is <em>not</em> on the price list: a 5-clique. It is not an oversight. A drawing
+          with no crossings is a <em>planar</em> drawing, and K₅ — five dots with all ten pairs joined —
+          is the smallest graph that cannot be drawn flat without a crossing. Curving the lines does not
+          help: a curve is still a drawing in the plane. So a 4-clique is the biggest prize there is,
+          and the rule that keeps your pencil honest is the same rule that caps the payout.</p>
+      </div>
+      <div id="valueReveal" hidden>
+        <div class="mathbox" id="valuebox"></div>
+        <p class="muted prose" style="font-family:var(--font-ui); font-size:var(--text-sm)" data-edit="value-note">
+          The number of moves never changes: whatever either of you does, the finished picture is a
+          triangulation, and every triangulation of the same dots has the same number of edges. Once
+          lines may curve, the outside of the drawing is a face like any other — you can always loop
+          round it — so the count is 3n − 6 and the shape of the board drops out of it entirely. A
+          whole seven-dot game is far too big to solve here, but the last few moves are not, and the
+          computer solves them exactly. One honest difference between this and paper: a pencil line
+          can be as thin as you like, and a drawn one cannot. In a crowded finish the screen sometimes
+          cannot fit a legal curve in the gap it belongs in — so it draws it a little wide, crossing
+          something, and marks it faded and broken. The move is legal; the crossing is the size of
+          the board. Blow the picture up big enough and that curve would clear.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="movelog" id="movelog" aria-live="polite"></div>
+
+  <div data-slot="notes-bottom"></div>
+
+  <div class="foot">
+    <button class="btn" id="reset" type="button">Reset</button>
+    <span class="hint" id="footHint" data-edit="hint-try">Try: play a board against "grabs the most now", then the same board against "plans ahead". The greedy computer takes every triangle the moment it appears; the planner sometimes leaves one sitting there, because taking it would hand you a four. Then try "seven in a row", where almost nothing can be joined with a straight line and every move is a curve.</span>
+  </div>
+
+</div>
+
+<script type="application/json" id="m170-config">
+{
+  "_v": 1,
+  "startBoard": 0,
+  "defaultFirst": "you",
+  "strength": "planner",
+  "lookahead": 3,
+  "exactFromMovesLeft": 9,
+  "thinkMs": 420,
+  "cliqueScores": {"2": 1, "3": 3, "4": 5},
+  "frame": {"x0": -80, "y0": -70, "x1": 720, "y1": 490},
+  "drawing": {"nodeClearance": 16, "edgeClearance": 2.2, "straightSnap": 10,
+              "simplify": 3, "step": 4, "routeCell": 4},
+  "boards": [
+    {
+      "id": "ring7", "name": "1 · seven on a ring",
+      "blurb": "Seven dots round a circle and nothing inside. Straight chords get in each other's way early — and then you start going round the outside.",
+      "points": [["A", 320, 47], ["B", 524.8, 110.3], ["C", 575.4, 252.4], ["D", 433.7, 366.4],
+                 ["E", 206.3, 366.4], ["F", 64.6, 252.4], ["G", 115.2, 110.3]],
+      "moves": 15,
+      "lesson": "With every dot on the outside, the long chords shut the inside down fast. The last few moves are all big loops round the edge of the paper — which is exactly how it goes on paper."
+    },
+    {
+      "id": "pent2", "name": "2 · five out, two in",
+      "blurb": "A pentagon with two dots inside it. The inside dots are where the four-cliques live.",
+      "points": [["A", 320, 55], ["B", 575, 175], ["C", 490, 375], ["D", 150, 375],
+                 ["E", 65, 175], ["F", 250, 215], ["G", 400, 255]],
+      "moves": 15,
+      "lesson": "An inside dot can reach every one of its neighbours, so it collects triangles fast. Watch which dot the computer keeps feeding."
+    },
+    {
+      "id": "quad3", "name": "3 · four corners, three inside",
+      "blurb": "A rectangle with three dots inside. Plenty of room in the middle, and a long way round the outside.",
+      "points": [["A", 80, 70], ["B", 560, 70], ["C", 560, 350], ["D", 80, 350],
+                 ["E", 250, 150], ["F", 410, 250], ["G", 300, 300]],
+      "moves": 15,
+      "lesson": "Three dots inside means three little rooms that fill up quickly. When a room is full, the only way out is round the outside — and that route is worth as much as any other."
+    },
+    {
+      "id": "ring8", "name": "4 · eight on a ring",
+      "blurb": "Eight dots round a circle. Same shape as board 1 with one more dot, and three more moves.",
+      "points": [["A", 320, 47], ["B", 505.3, 96.2], ["C", 582, 215], ["D", 505.3, 333.8],
+                 ["E", 320, 383], ["F", 134.7, 333.8], ["G", 58, 215], ["H", 134.7, 96.2]],
+      "moves": 18,
+      "lesson": "One extra dot on the ring and the game is three moves longer: 3n − 6 goes up by three every time you add a dot, however you arrange them."
+    },
+    {
+      "id": "row7", "name": "5 · seven in a row",
+      "blurb": "Seven dots almost in a straight line. Hardly any pair can be joined with a straight line — nearly every move here is a curve.",
+      "points": [["A", 70, 214], ["B", 160, 200], ["C", 250, 217], ["D", 340, 203],
+                 ["E", 430, 219], ["F", 520, 205], ["G", 610, 213]],
+      "moves": 15,
+      "lesson": "If lines had to be straight, almost nothing here could be joined: a line from A to D would run straight through B and C. Because they may curve, this is an ordinary game — 15 moves, the same as every other seven-dot board."
+    },
+    {
+      "id": "horse7", "name": "6 · a horseshoe",
+      "blurb": "Seven dots on an arc that nearly closes. Everything happens inside the curve of the shoe until it does not.",
+      "points": [["A", 412.5, 71.1], ["B", 301.4, 52.5], ["C", 203.6, 108.9], ["D", 165, 215],
+                 ["E", 203.6, 321.1], ["F", 301.4, 377.5], ["G", 412.5, 358.9]],
+      "moves": 15,
+      "lesson": "The mouth of the horseshoe is the widest door on the board. Once it is sealed off, the two ends can only reach each other the long way round."
+    },
+    {
+      "id": "two7", "name": "7 · three here, four there",
+      "blurb": "A small triangle on the left, a square on the right, and a lot of empty paper between them.",
+      "points": [["A", 110, 140], ["B", 200, 215], ["C", 110, 300], ["D", 360, 215],
+                 ["E", 470, 110], ["F", 590, 215], ["G", 470, 320]],
+      "moves": 15,
+      "lesson": "Two clumps far apart: every line between them runs the length of the board, and once a few have, the rest must loop round those. This is the board whose finished drawing looks most like one done by hand on paper."
+    },
+    {
+      "id": "sq8", "name": "8 · four in, four out",
+      "blurb": "A square inside a square. The ring between them is a corridor, and corridors are where curves earn their keep.",
+      "points": [["A", 100, 90], ["B", 540, 90], ["C", 540, 330], ["D", 100, 330],
+                 ["E", 260, 170], ["F", 380, 170], ["G", 380, 250], ["H", 260, 250]],
+      "moves": 18,
+      "lesson": "Join the inner square up and it becomes a wall: after that, the outer dots can only reach each other by going round the outside of everything. Eighteen moves, same as any eight dots."
+    }
+  ],
+  "messages": {
+    "turnYou": "Your turn — join two dots.",
+    "turnComputer": "The computer is thinking…",
+    "turnComputerSolving": "The computer is solving the rest of the game…",
+    "wonYou": "You win.",
+    "wonComputer": "The computer wins this one.",
+    "tie": "A dead heat — exactly level.",
+    "alreadyJoined": "Those two are already joined. Every pair can only be drawn once.",
+    "wouldCross": "That line crosses {what}. Lines are not allowed to cross.",
+    "tooClose": "That line runs along {what} too closely to tell them apart. Leave a little daylight.",
+    "throughDot": "That line runs too close to {what}. Go round it.",
+    "crossesItself": "That line crosses itself. A line has to be a simple curve.",
+    "backOnDot": "That line comes back to {what} after leaving it. Start again.",
+    "offBoard": "Keep the line inside the board.",
+    "noRoute": "There is no way from {what} without crossing something. That pair is shut off for good.",
+    "sameDot": "Pick two different dots.",
+    "notYourTurn": "Not your turn yet — the computer is still moving.",
+    "gameOver": "This game is over — nothing more can be drawn. Press New game.",
+    "crossNote": "The faded lines cross on screen only because the board is this small. Each one is a legal move: on a huge board it would clear everything by going round.",
+    "crossTitle": "Drawn approximately. This curve crosses on screen because the board is this size — on a huge board it would clear.",
+    "pickedUp": "Started at {what}. Now pick the other end — or tap the board to bend the line round something. Escape lets go.",
+    "waypoint": "Bend at {what}. Tap the other dot when you are ready, or Backspace to take it back.",
+    "badWaypoint": "That spot is already taken up. Pick somewhere clear."
+  },
+  "_meta": {
+    "startBoard": {"label": "Board selected at load", "kind": "number"},
+    "defaultFirst": {"label": "Who moves first at load", "kind": "choice",
+      "options": ["you", "computer"]},
+    "strength": {"label": "How hard the computer plays at load", "kind": "choice",
+      "options": ["greedy", "planner"],
+      "help": "\"greedy\" takes the highest-scoring line available this turn and looks no further — a real strategy students can name, and one they can beat. \"planner\" looks `lookahead` moves ahead and solves the endgame exactly."},
+    "lookahead": {"label": "Moves the planner looks ahead", "kind": "number",
+      "help": "Alpha-beta on the score difference. 3 is instant on a phone; 4 is noticeably slower because a move now means a curve as well as a pair, so there are more of them."},
+    "exactFromMovesLeft": {"label": "Moves left at which the computer starts solving exactly", "kind": "number",
+      "help": "Once the drawing is in one piece and this many moves remain, the rest of the game is solved outright and memoised on the shape of the drawing. Above about 10 the first solve gets slow on a phone; a whole seven-dot game is far out of reach."},
+    "thinkMs": {"label": "Pause before the computer moves, in milliseconds", "kind": "number",
+      "help": "The page uses 0 automatically for anyone who has asked their system to reduce motion."},
+    "cliqueScores": {"label": "What each completed clique pays", "kind": "table",
+      "columns": ["clique size", "points"],
+      "help": "The source post lists 1, 3 and 5 for cliques of size 2, 3 and 4 — the pattern 2k - 3. There is deliberately no entry for 5: the no-crossing rule makes the finished drawing planar, and a planar graph never contains K5, so a 5-clique can never be completed. The page prints the price list from this table."},
+    "frame": {"label": "The drawable area, in board units", "kind": "table",
+      "columns": ["edge", "board units"],
+      "help": "The dots live in the 640x420 box the boards are written in; the frame is bigger so a curve has room to loop right round the outside. Everything drawn stays inside it."},
+    "drawing": {"label": "How curves are drawn and checked", "kind": "table",
+      "columns": ["setting", "value"],
+      "help": "nodeClearance: how far a line must stay from any dot it is not ending at. edgeClearance: how far two lines must stay apart. straightSnap: draw within this of the straight line and you get the straight line. simplify: how hard a freehand wobble is ironed out first. step: the spacing of the points a curve is stored and drawn with - every legality test is exact on those points. routeCell: the grid the page routes a curve through when it draws one for you."},
+    "boards": {"label": "The boards, in the order they are offered", "kind": "table",
+      "regen": "scatter-clustered",
+      "help": "points are [label, x, y] inside a 640x420 box; SEVEN or more, as the source rules require. Dots need about 48 units between them and about 96 units to the frame, so a curve can pass between them and loop round the outside; the verifier fails if a board is tighter than that. moves is DISPLAY ONLY and equals 3n - 6 - it no longer depends on the layout at all, because a curve can always go round. Re-run tools/verify_cliquer.py after any edit. Keep boards at 9 dots or fewer: the game is 3n - 6 moves long and the endgame solver grows with it."},
+    "messages": {"label": "Wording for turns, verdicts and refusals", "kind": "text",
+      "help": "Placeholders: {what}."}
+  }
+}
+</script>
+
+<script>
+(function(){
+"use strict";
+
+/* Professor, 2026-07-27: "Playable vs computer: the graph-theory Shannon Switching Game
+   and the Cliquer game", with https://danandandrewsgamingplace.wordpress.com/2017/11/22/
+   cliquer-a-graph-theory-game/ named as the source. Professor, 2026-08-03: edges must be
+   allowed to curve, because on paper they do, and straight-only "prevents many valid moves
+   in the game, especially 4-cliques".
+
+   WHAT A POSITION IS, NOW THAT LINES CURVE
+   A drawn line is a polyline whose points are at most DRAW.step apart; the page stores the
+   same points it draws, so every legality test below is exact on the thing on screen. The
+   POSITION, though, is not the geometry — it is the drawing's face structure: which dots sit
+   on which face. A move joins two dots that share a face. Joining two places on one boundary
+   splits that face in two; joining places on two different boundaries merges them. That is
+   all a pencil can do, and it is all this engine does.
+
+   Consequences, all checked in tools/verify_cliquer.py:
+     * a game is always 3n - 6 moves long — the finished drawing is a triangulation and the
+       outside is a face like any other, because a curve can loop round it;
+     * the layout stopped mattering to what is playable. Any n dots begin as n loose dots on
+       one blank face. The board decides how hard the curves are to draw, nothing more;
+     * no 5-clique, ever: the drawing is plane, and a plane graph has no K5. moveScore()
+       raises if one appears.
+
+   THE TWO THINGS THE POST LEAVES OPEN and how this page settles them:
+   1. The dots are placed for you, so a board is reproducible.
+   2. No price above a 4-clique. None is needed — see above.
+
+   WHAT DECIDES LEGALITY (professor, 2026-08-05). The model above, and nothing else.
+   The drawing is a picture of the position, not the position; where the picture has
+   to cross itself to fit on 800 x 560, it crosses, and says so. Two tests, therefore,
+   not one: hardVerdict() is what no size of paper would fix — off the board, through
+   a dot, back over itself — and it still refuses. curveVerdict() adds the clean
+   passage between the lines already drawn, and failing THAT only downgrades a curve
+   to approximate. */
+
+var CFG = JSON.parse(document.getElementById("m170-config").textContent);
+
+/* ---------- theme: auto → light → dark (design-system v2) ---------- */
+var root = document.documentElement, themeBtn = document.getElementById("themeBtn");
+function themeLabel(){
+  var m = root.dataset.theme || "auto";
+  themeBtn.textContent = m==="dark" ? "● dark" : m==="light" ? "○ light" : "◑ auto";
+}
+themeBtn.addEventListener("click", function(){
+  var cur = root.dataset.theme || "auto";
+  var next = cur==="auto" ? "light" : cur==="light" ? "dark" : "auto";
+  if(next==="auto"){ delete root.dataset.theme; try{localStorage.removeItem("m170-theme");}catch(e){} }
+  else { root.dataset.theme = next; try{localStorage.setItem("m170-theme", next);}catch(e){} }
+  themeLabel(); render();
+});
+if(window.matchMedia){ window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function(){ render(); }); }
+themeLabel();
+
+function css(v){ return getComputedStyle(document.body).getPropertyValue(v).trim(); }
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+function isArr(v){ return Object.prototype.toString.call(v)==="[object Array]"; }
+function num(v, d){ var x = +v; return isFinite(x) ? x : d; }
+function reducedMotion(){
+  return !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+}
+var MSG = CFG.messages || {};
+function msg(k, dflt){ return MSG[k]!=null ? String(MSG[k]) : dflt; }
+function fill(tpl, vars){
+  return String(tpl==null?"":tpl).replace(/\{(\w+)\}/g, function(m,k){
+    return vars[k]!==undefined ? vars[k] : m;
+  });
+}
+
+/* ---------- the price list ---------- */
+var SCORES = {};
+(function(){
+  var raw = CFG.cliqueScores || {};
+  for(var k in raw){ if(Object.prototype.hasOwnProperty.call(raw,k)){
+    var n = Math.round(+k), v = Math.round(+raw[k]);
+    if(n>=2 && n<=4 && isFinite(v)) SCORES[n] = v;
+  }}
+  if(SCORES[2]==null) SCORES[2] = 1;
+  if(SCORES[3]==null) SCORES[3] = 3;
+  if(SCORES[4]==null) SCORES[4] = 5;
+})();
+
+/* ---------- the drawable frame and the drawing tolerances ---------- */
+var fr = CFG.frame || {};
+var FRAME = { x0: num(fr.x0,-80), y0: num(fr.y0,-70), x1: num(fr.x1,720), y1: num(fr.y1,490) };
+if(FRAME.x1 - FRAME.x0 < 200){ FRAME.x0 = -80; FRAME.x1 = 720; }
+if(FRAME.y1 - FRAME.y0 < 200){ FRAME.y0 = -70; FRAME.y1 = 490; }
+var dw = CFG.drawing || {};
+var DRAW = {
+  node:  Math.max(13, Math.min(60, num(dw.nodeClearance, 16))),
+  edge:  Math.max(1,  Math.min(30, num(dw.edgeClearance, 3))),
+  snap:  Math.max(0,  Math.min(60, num(dw.straightSnap, 10))),
+  simp:  Math.max(0.5,Math.min(20, num(dw.simplify, 3))),
+  step:  Math.max(1,  Math.min(12, num(dw.step, 4))),
+  cell:  Math.max(2,  Math.min(12, num(dw.routeCell, 4)))
+};
+var STUB = 11;            /* inside this of a dot, two of its own lines may meet */
+var ANGR = 10;            /* the radius at which a line's direction out of a dot is read */
+var TOUCH = 0.6;          /* two lines may meet this close to a dot they share */
+
+/* ---------- boards, defensively read from the island ---------- */
+function readBoards(raw){
+  var out = [];
+  (isArr(raw) ? raw : []).forEach(function(b, bi){
+    if(!b || !isArr(b.points)) return;
+    var pts = [];
+    b.points.forEach(function(p, i){
+      if(!isArr(p)) return;
+      var x = +p[1], y = +p[2];
+      pts.push({ label: p[0]!=null ? String(p[0]) : String.fromCharCode(65+i),
+                 x: Math.max(FRAME.x0+40, Math.min(FRAME.x1-40, isFinite(x)?x:320)),
+                 y: Math.max(FRAME.y0+40, Math.min(FRAME.y1-40, isFinite(y)?y:210)) });
+    });
+    /* the source rules say seven or more; nine is where the endgame solver gives up */
+    if(pts.length < 7 || pts.length > 9) return;
+    out.push({
+      id: b.id!=null ? String(b.id) : ("board"+bi),
+      name: b.name!=null ? String(b.name) : ("board "+(bi+1)),
+      blurb: b.blurb!=null ? String(b.blurb) : "",
+      lesson: b.lesson!=null ? String(b.lesson) : "",
+      moves: 3*pts.length - 6,
+      pts: pts
+    });
+  });
+  return out;
+}
+var BOARDS = readBoards(CFG.boards);
+if(!BOARDS.length){
+  BOARDS = [{ id:"fallback", name:"seven on a ring", blurb:"", lesson:"", moves:15,
+    pts:[{label:"A",x:320,y:47},{label:"B",x:524.8,y:110.3},{label:"C",x:575.4,y:252.4},
+         {label:"D",x:433.7,y:366.4},{label:"E",x:206.3,y:366.4},{label:"F",x:64.6,y:252.4},
+         {label:"G",x:115.2,y:110.3}] }];
+}
+
+/* ================================================================
+   1. GEOMETRY ON POLYLINES
+   A line IS its polyline. Points are at most DRAW.step apart and the same array
+   is what gets drawn, so none of this is an approximation of anything.
+   ================================================================ */
+function dist(ax,ay,bx,by){ var dx=ax-bx, dy=ay-by; return Math.sqrt(dx*dx+dy*dy); }
+function ptSegD(px,py, ax,ay, bx,by){
+  var dx=bx-ax, dy=by-ay, L=dx*dx+dy*dy, t;
+  if(L < 1e-12) return dist(px,py,ax,ay);
+  t = ((px-ax)*dx + (py-ay)*dy) / L;
+  t = t<0 ? 0 : (t>1 ? 1 : t);
+  return dist(px,py, ax+t*dx, ay+t*dy);
+}
+function segSegD(a,b,c,d){
+  return Math.min(ptSegD(a.x,a.y,c.x,c.y,d.x,d.y), ptSegD(b.x,b.y,c.x,c.y,d.x,d.y),
+                  ptSegD(c.x,c.y,a.x,a.y,b.x,b.y), ptSegD(d.x,d.y,a.x,a.y,b.x,b.y));
+}
+/* where two segments meet: null, a point, or the string "overlap" */
+function segCross(p,q,r,s){
+  var rx=q.x-p.x, ry=q.y-p.y, sx=s.x-r.x, sy=s.y-r.y;
+  var den = rx*sy - ry*sx, qx = r.x-p.x, qy = r.y-p.y, t, u, rr, t0, t1, lo, hi, a, b;
+  if(Math.abs(den) < 1e-12){
+    if(Math.abs(qx*ry - qy*rx) > 1e-7) return null;         /* parallel, apart */
+    rr = rx*rx + ry*ry;
+    if(rr < 1e-12) return null;
+    t0 = (qx*rx + qy*ry)/rr; t1 = t0 + (sx*rx + sy*ry)/rr;
+    lo = Math.min(t0,t1); hi = Math.max(t0,t1);
+    if(hi < -1e-9 || lo > 1+1e-9) return null;
+    a = Math.max(0,lo); b = Math.min(1,hi);
+    if(b - a > 1e-7) return "overlap";
+    return { x: p.x + a*rx, y: p.y + a*ry };
+  }
+  t = (qx*sy - qy*sx)/den; u = (qx*ry - qy*rx)/den;
+  if(t < -1e-9 || t > 1+1e-9 || u < -1e-9 || u > 1+1e-9) return null;
+  return { x: p.x + t*rx, y: p.y + t*ry };
+}
+function bboxApart(a1,a2,b1,b2,pad){
+  return Math.min(a1.x,a2.x)-pad > Math.max(b1.x,b2.x) ||
+         Math.max(a1.x,a2.x)+pad < Math.min(b1.x,b2.x) ||
+         Math.min(a1.y,a2.y)-pad > Math.max(b1.y,b2.y) ||
+         Math.max(a1.y,a2.y)+pad < Math.min(b1.y,b2.y);
+}
+/* do A and B meet anywhere that is not within TOUCH of one of the points in ok? */
+function polyMeet(A, B, ok, fromA){
+  var i, j, h, k;
+  for(i = fromA||0; i < A.length-1; i++){
+    for(j = 0; j < B.length-1; j++){
+      if(bboxApart(A[i],A[i+1],B[j],B[j+1],0)) continue;
+      h = segCross(A[i],A[i+1],B[j],B[j+1]);
+      if(!h) continue;
+      if(h === "overlap") return true;
+      var fine = false;
+      for(k = 0; ok && k < ok.length; k++){
+        if(dist(h.x,h.y,ok[k].x,ok[k].y) <= TOUCH){ fine = true; break; }
+      }
+      if(!fine) return true;
+    }
+  }
+  return false;
+}
+/* min gap between A and B, ignoring any segment that comes within STUB of a shared dot */
+function polyTooClose(A, B, eps, shared, fromA){
+  var i, j, k, skip;
+  for(i = fromA||0; i < A.length-1; i++){
+    skip = false;
+    for(k = 0; shared && k < shared.length; k++){
+      if(ptSegD(shared[k].x,shared[k].y, A[i].x,A[i].y, A[i+1].x,A[i+1].y) < STUB){ skip = true; break; }
+    }
+    if(skip) continue;
+    for(j = 0; j < B.length-1; j++){
+      if(bboxApart(A[i],A[i+1],B[j],B[j+1],eps)) continue;
+      skip = false;
+      for(k = 0; shared && k < shared.length; k++){
+        if(ptSegD(shared[k].x,shared[k].y, B[j].x,B[j].y, B[j+1].x,B[j+1].y) < STUB){ skip = true; break; }
+      }
+      if(skip) continue;
+      if(segSegD(A[i],A[i+1],B[j],B[j+1]) < eps) return true;
+    }
+  }
+  return false;
+}
+function polyPtD(A, p, from){
+  var best = Infinity, i;
+  for(i = from||0; i < A.length-1; i++){
+    var d = ptSegD(p.x,p.y, A[i].x,A[i].y, A[i+1].x,A[i+1].y);
+    if(d < best) best = d;
+  }
+  return A.length === 1 ? dist(A[0].x,A[0].y,p.x,p.y) : best;
+}
+/* A line may not cross itself — nor come so close to itself that it reads as a
+   crease. SELFGAP is deliberately smaller than the gap between two different
+   lines: a curve is allowed to double back tightly, just not to touch. */
+var SELFGAP = 2;
+function polySelfMeet(A, from){
+  var i, j;
+  for(i = from||0; i < A.length-1; i++){
+    for(j = i+2; j < A.length-1; j++){
+      if(bboxApart(A[i],A[i+1],A[j],A[j+1],SELFGAP)) continue;
+      if(segCross(A[i],A[i+1],A[j],A[j+1])) return true;
+      if(j >= i+4 && segSegD(A[i],A[i+1],A[j],A[j+1]) < SELFGAP) return true;
+    }
+  }
+  return false;
+}
+function polyLen(A){
+  var L = 0, i;
+  for(i=0;i<A.length-1;i++) L += dist(A[i].x,A[i].y,A[i+1].x,A[i+1].y);
+  return L;
+}
+function inFrame(p){
+  return p.x >= FRAME.x0 && p.x <= FRAME.x1 && p.y >= FRAME.y0 && p.y <= FRAME.y1;
+}
+/* leaves the disc around p and never comes back */
+function reenters(A, p, r, reverse){
+  var i, out = false, n = A.length;
+  for(i=0;i<n;i++){
+    var q = reverse ? A[n-1-i] : A[i];
+    var d = dist(q.x,q.y,p.x,p.y);
+    if(!out){ if(d >= r) out = true; }
+    else if(d < r) return true;
+  }
+  return false;
+}
+/* Ramer–Douglas–Peucker */
+function rdp(pts, tol){
+  if(pts.length < 3) return pts.slice();
+  var keep = [], stack = [[0, pts.length-1]], mark = [], i;
+  for(i=0;i<pts.length;i++) mark.push(false);
+  mark[0] = mark[pts.length-1] = true;
+  while(stack.length){
+    var seg = stack.pop(), a = seg[0], b = seg[1], worst = -1, wd = tol;
+    for(i=a+1;i<b;i++){
+      var d = ptSegD(pts[i].x,pts[i].y, pts[a].x,pts[a].y, pts[b].x,pts[b].y);
+      if(d > wd){ wd = d; worst = i; }
+    }
+    if(worst > 0){ mark[worst] = true; stack.push([a,worst]); stack.push([worst,b]); }
+  }
+  for(i=0;i<pts.length;i++) if(mark[i]) keep.push(pts[i]);
+  return keep;
+}
+/* Catmull-Rom through the points, sampled to DRAW.step. Ends stay put. */
+function smoothPath(pts, tension, step){
+  if(pts.length < 3) return resample(pts, step);
+  var P = [pts[0]].concat(pts, [pts[pts.length-1]]), out = [], i, k;
+  for(i=1;i<P.length-2;i++){
+    var p0=P[i-1], p1=P[i], p2=P[i+1], p3=P[i+2];
+    var n = Math.max(2, Math.ceil(dist(p1.x,p1.y,p2.x,p2.y)/step));
+    var m1x=tension*(p2.x-p0.x), m1y=tension*(p2.y-p0.y),
+        m2x=tension*(p3.x-p1.x), m2y=tension*(p3.y-p1.y);
+    for(k=0;k<n;k++){
+      var t=k/n, t2=t*t, t3=t2*t;
+      var h1=2*t3-3*t2+1, h2=t3-2*t2+t, h3=-2*t3+3*t2, h4=t3-t2;
+      out.push({ x: h1*p1.x + h2*m1x + h3*p2.x + h4*m2x,
+                 y: h1*p1.y + h2*m1y + h3*p2.y + h4*m2y });
+    }
+  }
+  out.push(pts[pts.length-1]);
+  return out;
+}
+function resample(pts, step){
+  if(pts.length < 2) return pts.slice();
+  var out = [pts[0]], i, k;
+  for(i=0;i<pts.length-1;i++){
+    var a=pts[i], b=pts[i+1], L=dist(a.x,a.y,b.x,b.y), n=Math.max(1, Math.ceil(L/step));
+    for(k=1;k<=n;k++) out.push({ x:a.x + (b.x-a.x)*k/n, y:a.y + (b.y-a.y)*k/n });
+  }
+  return out;
+}
+/* Twice the signed area of a closed polyline. Its SIGN says which side of the
+   walk the face is on: with the tracing convention below (the corner just
+   counterclockwise in atan2 order), a walk with positive area bounds the face
+   OUTSIDE it and one with negative area bounds the face inside. Checked by hand
+   on a triangle with a pendant edge, where only the outer face can traverse both
+   sides of the pendant, and again on a bare triangle. */
+function signedArea2(poly){
+  var s = 0, i, j;
+  for(i=0, j=poly.length-1; i<poly.length; j=i++)
+    s += poly[j].x*poly[i].y - poly[i].x*poly[j].y;
+  return s;
+}
+/* even-odd test against a closed polyline */
+function insideClosed(poly, p){
+  var inside = false, i, j;
+  for(i=0, j=poly.length-1; i<poly.length; j=i++){
+    var yi=poly[i].y, yj=poly[j].y;
+    if((yi > p.y) !== (yj > p.y)){
+      var x = poly[i].x + (p.y - yi) * (poly[j].x - poly[i].x) / (yj - yi);
+      if(x > p.x) inside = !inside;
+    }
+  }
+  return inside;
+}
+
+/* ================================================================
+   2. BOARD STATE — dots, drawn lines, and the face structure
+   ================================================================ */
+var B = null, N = 0, PT = [];
+var EDGES = [];        /* {u,v,pts,who} */
+var ADJ = [];          /* bitmask per vertex */
+var HE = [];           /* halfedges: HE[2i] = edge i from u to v, HE[2i+1] the reverse */
+var ROT = [];          /* per vertex, halfedge ids sorted by the angle they leave at */
+var FACES = [];        /* {walks:[[he,…],…], iso:[v,…]} */
+var HEAT = {};         /* halfedge id -> {f,w,p} */
+var TOTALMOVES = 0;
+
+function labelOf(v){ return PT[v] ? PT[v].label : "?"; }
+function edgeName(e){ return labelOf(e.u) + "–" + labelOf(e.v); }
+function pairName(u,v){ return labelOf(u) + "–" + labelOf(v); }
+function joined(u,v){ return ((ADJ[u]>>v)&1) === 1; }
+function degOf(v){ return ROT[v] ? ROT[v].length : 0; }
+
+function loadBoard(idx){
+  B = BOARDS[Math.max(0, Math.min(BOARDS.length-1, idx))];
+  N = B.pts.length;
+  PT = B.pts;
+  TOTALMOVES = 3*N - 6;
+}
+
+function clearDrawing(){
+  var i;
+  EDGES = []; HE = []; ADJ = []; ROT = [];
+  for(i=0;i<N;i++){ ADJ.push(0); ROT.push([]); }
+  FACES = [{ walks: [], iso: (function(){ var a=[],k; for(k=0;k<N;k++) a.push(k); return a; })() }];
+  HEAT = {};
+}
+
+/* the direction a line leaves a dot in, read at radius ANGR so a curve that
+   bends immediately still sorts into the right place round the dot */
+function exitAngle(pts){
+  var p0 = pts[0], i;
+  for(i=1;i<pts.length;i++){
+    if(dist(pts[i].x,pts[i].y,p0.x,p0.y) >= ANGR)
+      return Math.atan2(pts[i].y-p0.y, pts[i].x-p0.x);
+  }
+  var last = pts[pts.length-1];
+  return Math.atan2(last.y-p0.y, last.x-p0.x);
+}
+function heTail(h){ return HE[h].u; }
+function heAng(h){ return HE[h].ang; }
+function rotNext(h){
+  var r = ROT[HE[h].u], i = r.indexOf(h);
+  return r[(i+1) % r.length];
+}
+/* Put a halfedge into the rotation at the corner it was assigned, rather than at
+   the place its ANGLE would sort to. For a curve that crosses nothing the two are
+   the same thing. For an approximate curve — one the screen could only draw with a
+   crossing, allowed since the professor's note of 2026-08-05 — they can differ, and
+   it is the corner that must win: the rotation's only job is to say which face a
+   later line leaving this dot sets off into, and that answer has to agree with the
+   walks. Geometry decides which corner; the corner then decides the rotation. */
+function insertRotAt(h, c){
+  var r = ROT[HE[h].u], i;
+  if(!r.length || !c || c.iso || c.h === undefined){ r.push(h); return; }
+  i = r.indexOf(c.h);
+  r.splice(i < 0 ? r.length : i, 0, h);
+}
+var TAU = 2*Math.PI;
+/* Every corner at v: one per gap in the rotation, named by the halfedge that
+   follows the gap (which is what fixes its place in a face walk). */
+function cornersOf(v){
+  var r = ROT[v], out = [], i;
+  if(!r || !r.length){
+    for(i=0;i<FACES.length;i++)
+      if(FACES[i].iso.indexOf(v) >= 0) return [{ f:i, iso:true, lo:0, hi:TAU }];
+    return [];
+  }
+  for(i=0;i<r.length;i++){
+    var h = r[(i+1)%r.length], at = HEAT[h];
+    if(!at) continue;
+    var lo = HE[r[i]].ang, hi = HE[h].ang;
+    if(hi <= lo) hi += TAU;
+    out.push({ f:at.f, w:at.w, p:at.p, iso:false, h:h, lo:lo, hi:hi });
+  }
+  return out;
+}
+/* how far outside a corner's wedge an exit angle falls; 0 means inside it */
+function angGap(ang, c){
+  if(c.iso) return 0;
+  var a = ang;
+  while(a < c.lo) a += TAU;
+  while(a >= c.lo + TAU) a -= TAU;
+  if(a > c.lo && a < c.hi) return 0;
+  return Math.min(Math.abs(a - c.lo), Math.abs(a - c.hi), Math.abs(c.lo + TAU - a));
+}
+/* which corner of which face does a line leaving v at angle `ang` sit in? */
+function findCorner(v, ang){
+  var cs = cornersOf(v), i, best = null, bd = Infinity, d;
+  for(i=0;i<cs.length;i++){
+    d = angGap(ang, cs[i]);
+    if(d < bd){ bd = d; best = cs[i]; }
+  }
+  return best;
+}
+/* The pair of corners a new line joins. The drawing is the guide — but the face
+   structure is the law, so the pair is chosen from corners that genuinely share a
+   face, the one closest to the angles the curve actually leaves at. For a curve
+   that crosses nothing this is exactly findCorner at each end. For an approximate
+   curve it is the nearest legal reading of what was drawn. */
+function resolveCorners(u, v, angU, angV){
+  var cu = cornersOf(u), cv = cornersOf(v), i, j, best = null, bd = Infinity, d;
+  for(i=0;i<cu.length;i++) for(j=0;j<cv.length;j++){
+    if(cu[i].f !== cv[j].f) continue;
+    d = angGap(angU, cu[i]) + angGap(angV, cv[j]);
+    if(d < bd){ bd = d; best = [cu[i], cv[j]]; }
+  }
+  return best;
+}
+function reindexFaces(){
+  HEAT = {};
+  FACES.forEach(function(f, fi){
+    f.walks.forEach(function(w, wi){
+      w.forEach(function(h, pi){ HEAT[h] = { f:fi, w:wi, p:pi }; });
+    });
+  });
+}
+function cyc(arr, a, b){                     /* arr[a..b-1], wrapping */
+  var out = [], n = arr.length, i = a;
+  do { out.push(arr[i]); i = (i+1) % n; } while(i !== b);
+  return out;
+}
+function walkGeom(walk){                      /* the drawn curve of a run of halfedges */
+  var out = [], i, k;
+  for(i=0;i<walk.length;i++){
+    var p = HE[walk[i]].pts;
+    for(k = (i ? 1 : 0); k < p.length; k++) out.push(p[k]);
+  }
+  return out;
+}
+
+/* Add the drawn line u–v with geometry `pts` to the drawing and to the faces.
+   Returns null, or a string naming what went wrong (which would be a bug). */
+function addDrawnEdge(u, v, pts, who){
+  var ei = EDGES.length, a = 2*ei, b = 2*ei+1;
+  var rev = pts.slice().reverse();
+  var angU = exitAngle(pts), angV = exitAngle(rev);
+  var pair = resolveCorners(u, v, angU, angV);
+  if(!pair) return "the two ends are not on the same face";
+  var cu = pair[0], cv = pair[1];
+
+  HE[a] = { u:u, v:v, pts:pts, ang:angU, edge:ei };
+  HE[b] = { u:v, v:u, pts:rev, ang:angV, edge:ei };
+  EDGES.push({ u:u, v:v, pts:pts, who:who, d:pathD(pts) });
+  ADJ[u] |= (1<<v); ADJ[v] |= (1<<u);
+
+  var f = FACES[cu.f], others = [], iso = [], i;
+  if(!cu.iso && !cv.iso && cu.w === cv.w){
+    /* SPLIT: the curve cuts one boundary into two */
+    var W = f.walks[cu.w];
+    var A = cyc(W, cu.p, cv.p).concat([b]);
+    var C = cyc(W, cv.p, cu.p).concat([a]);
+    var ring = walkGeom(cyc(W, cu.p, cv.p)).concat(rev.slice(1));
+    var aHolds = signedArea2(ring) < 0;      /* is face A the inside of its own ring? */
+    var inA = { walks:[A], iso:[] }, inC = { walks:[C], iso:[] };
+    f.walks.forEach(function(w, wi){
+      if(wi === cu.w) return;
+      var rep = PT[heTail(w[0])];
+      (insideClosed(ring, rep) === aHolds ? inA : inC).walks.push(w);
+    });
+    f.iso.forEach(function(x){
+      (insideClosed(ring, PT[x]) === aHolds ? inA : inC).iso.push(x);
+    });
+    FACES.splice(cu.f, 1, inA, inC);
+  } else {
+    /* MERGE: the curve joins two boundaries of one face into one */
+    var wu = cu.iso ? [] : f.walks[cu.w];
+    var wv = cv.iso ? [] : f.walks[cv.w];
+    var merged = (cu.iso ? [] : cyc(wu, cu.p, cu.p)).concat([a],
+                 (cv.iso ? [] : cyc(wv, cv.p, cv.p)), [b]);
+    var keep = [];
+    for(i=0;i<f.walks.length;i++){
+      if((!cu.iso && i === cu.w) || (!cv.iso && i === cv.w)) continue;
+      keep.push(f.walks[i]);
+    }
+    keep.push(merged);
+    f.walks = keep;
+    f.iso = f.iso.filter(function(x){ return x !== u && x !== v; });
+  }
+  insertRotAt(a, cu); insertRotAt(b, cv);
+  reindexFaces();
+  return null;
+}
+
+/* Euler's formula, as a self-check the harness can read off the board */
+function topologyNote(){
+  var E = EDGES.length, seen = [], comps = 0, i, v;
+  for(i=0;i<N;i++) seen.push(-1);
+  for(v=0;v<N;v++){
+    if(seen[v] >= 0) continue;
+    comps++;
+    var stack = [v]; seen[v] = comps;
+    while(stack.length){
+      var x = stack.pop(), y;
+      for(y=0;y<N;y++) if(joined(x,y) && seen[y] < 0){ seen[y] = comps; stack.push(y); }
+    }
+  }
+  var want = E - N + 1 + comps, sides = 0;
+  FACES.forEach(function(f){ f.walks.forEach(function(w){ sides += w.length; }); });
+  var ok = (FACES.length === want) && (sides === 2*E);
+  return (ok ? "ok" : "BROKEN") + " V=" + N + " E=" + E + " C=" + comps +
+         " F=" + FACES.length + "/" + want + " sides=" + sides + "/" + (2*E);
+}
+
+/* ================================================================
+   3. THE TOPOLOGICAL MODEL THE COMPUTER SEARCHES IN
+   A face is a list of walks; a walk is a list of vertices; a walk of length one
+   is a loose dot. This is the same model tools/verify_cliquer.py plays in.
+   ================================================================ */
+function modelNow(){
+  return FACES.map(function(f){
+    return f.walks.map(function(w){
+      return w.map(function(h){ return heTail(h); });
+    }).concat(f.iso.map(function(v){ return [v]; }));
+  });
+}
+function canonWalk(w){
+  if(w.length < 2) return w.join(",");
+  var best = null, i, r;
+  for(i=0;i<w.length;i++){
+    r = w.slice(i).concat(w.slice(0,i)).join(",");
+    if(best === null || r < best) best = r;
+  }
+  return best;
+}
+function canonState(faces){
+  return faces.map(function(f){
+    return f.map(canonWalk).sort().join("|");
+  }).sort().join("#");
+}
+function expandWalk(w, p){
+  if(w.length === 1) return w.slice();
+  var r = w.slice(p).concat(w.slice(0,p));
+  return r.concat([r[0]]);
+}
+/* every legal move as {u,v,faces,fi,wi,pi,wj,pj}. `all` enumerates every way of
+   parcelling out a face's other contents when a curve splits it; the shallow
+   search uses two of them, which costs nothing once the drawing is in one piece. */
+function genMoves(faces, adj, all){
+  var out = [], seen = {}, fi, i, j;
+  for(fi=0; fi<faces.length; fi++){
+    var face = faces[fi], rest = faces.slice(0,fi).concat(faces.slice(fi+1));
+    var occ = [];
+    for(i=0;i<face.length;i++) for(j=0;j<face[i].length;j++) occ.push([i,j,face[i][j]]);
+    for(i=0;i<occ.length;i++) for(j=i+1;j<occ.length;j++){
+      var wa=occ[i][0], pa=occ[i][1], u=occ[i][2];
+      var wb=occ[j][0], pb=occ[j][1], v=occ[j][2];
+      if(u === v || ((adj[u]>>v)&1)) continue;
+      var cand = [];
+      if(wa === wb){
+        var W = face[wa];
+        var w1 = W.slice(pa, pb+1);
+        var w2 = W.slice(pb).concat(W.slice(0, pa+1));
+        var others = face.filter(function(x, k){ return k !== wa; });
+        if(!others.length){
+          cand.push(rest.concat([[w1],[w2]]));
+        } else if(all){
+          var total = 1 << others.length, m, k2;
+          for(m=0;m<total;m++){
+            var g1=[w1], g2=[w2];
+            for(k2=0;k2<others.length;k2++) ((m>>k2)&1 ? g2 : g1).push(others[k2]);
+            cand.push(rest.concat([g1,g2]));
+          }
+        } else {
+          cand.push(rest.concat([[w1].concat(others), [w2]]));
+          cand.push(rest.concat([[w1], [w2].concat(others)]));
+        }
+      } else {
+        var merged = expandWalk(face[wa], pa).concat(expandWalk(face[wb], pb));
+        var keep = face.filter(function(x, k){ return k !== wa && k !== wb; });
+        cand.push(rest.concat([[merged].concat(keep)]));
+      }
+      for(var c=0;c<cand.length;c++){
+        var key = u + "-" + v + "-" + canonState(cand[c]);
+        if(seen[key]) continue;
+        seen[key] = 1;
+        out.push({ u:u, v:v, faces:cand[c], fi:fi, wi:wa, pi:pa, wj:wb, pj:pb });
+      }
+    }
+  }
+  return out;
+}
+function isConnectedModel(faces){
+  var i;
+  for(i=0;i<faces.length;i++) if(faces[i].length !== 1) return false;
+  return true;
+}
+/* what joining u and v pays, and which cliques it finishes */
+function moveScore(adj, u, v){
+  var common = adj[u] & adj[v], members = [], w, a, b, c;
+  for(w=0;w<N;w++) if((common>>w)&1) members.push(w);
+  var pts = SCORES[2], cliques = [[u,v]];
+  for(a=0;a<members.length;a++){
+    pts += SCORES[3];
+    cliques.push([u, v, members[a]]);
+    for(b=a+1;b<members.length;b++){
+      if(!((adj[members[a]]>>members[b])&1)) continue;
+      pts += SCORES[4];
+      cliques.push([u, v, members[a], members[b]]);
+      for(c=b+1;c<members.length;c++){
+        if(((adj[members[a]]>>members[c])&1) && ((adj[members[b]]>>members[c])&1)){
+          /* a plane drawing has no K5; if one ever appears the page must say so */
+          cliques.push([u, v, members[a], members[b], members[c]]);
+        }
+      }
+    }
+  }
+  return { points: pts, cliques: cliques };
+}
+
+/* ---------- the opponent ----------
+   Negamax on the score DIFFERENCE. "grabs the most now" is depth 1. "plans
+   ahead" is alpha-beta to CFG.lookahead, and once the drawing is in one piece
+   with few enough moves left, an exact solve of the whole rest of the game,
+   memoised on the shape of the drawing (which is all the rest of the game
+   depends on — the score so far and whose turn it is do not enter into it). */
+var LOOKAHEAD = Math.max(1, Math.round(num(CFG.lookahead, 3)));
+var EXACT_FROM = Math.max(0, Math.round(num(CFG.exactFromMovesLeft, 9)));
+var memo = {}, exactActive = false;
+
+function edgeCount(adj){
+  var n = 0, i, m;
+  for(i=0;i<N;i++){ m = adj[i]; while(m){ n += m & 1; m >>>= 1; } }
+  return n >> 1;
+}
+function solveExact(faces, adj){
+  var key = canonState(faces), hit = memo[key];
+  if(hit !== undefined) return hit;
+  var mv = genMoves(faces, adj, true), best = null, k;
+  for(k=0;k<mv.length;k++){
+    var m = mv[k], g = moveScore(adj, m.u, m.v).points;
+    adj[m.u] |= (1<<m.v); adj[m.v] |= (1<<m.u);
+    var val = g - solveExact(m.faces, adj);
+    adj[m.u] &= ~(1<<m.v); adj[m.v] &= ~(1<<m.u);
+    if(best === null || val > best) best = val;
+  }
+  best = (best === null) ? 0 : best;
+  memo[key] = best;
+  return best;
+}
+function alphabeta(faces, adj, depth, alpha, beta){
+  if(depth <= 0) return 0;
+  var mv = genMoves(faces, adj, false);
+  if(!mv.length) return 0;
+  var order = mv.map(function(m, k){ return { k:k, g:moveScore(adj, m.u, m.v).points }; });
+  order.sort(function(p,q){ return (q.g - p.g) || (p.k - q.k); });
+  var best = -1e9, i;
+  for(i=0;i<order.length;i++){
+    var m = mv[order[i].k], g = order[i].g;
+    adj[m.u] |= (1<<m.v); adj[m.v] |= (1<<m.u);
+    var val = g - alphabeta(m.faces, adj, depth-1, -beta, -alpha);
+    adj[m.u] &= ~(1<<m.v); adj[m.v] &= ~(1<<m.u);
+    if(val > best) best = val;
+    if(best > alpha) alpha = best;
+    if(alpha >= beta) break;
+  }
+  return best;
+}
+/* every root move, best first */
+function rankedMoves(){
+  var faces = modelNow(), adj = ADJ.slice();
+  var exact = (UI.strength === "planner") && isConnectedModel(faces) &&
+              (TOTALMOVES - EDGES.length) <= EXACT_FROM;
+  exactActive = exact;
+  var mv = genMoves(faces, adj, exact);
+  if(!mv.length) return [];
+  var scored = mv.map(function(m, k){ return { m:m, k:k, g:moveScore(adj, m.u, m.v).points }; });
+  scored.sort(function(p,q){ return (q.g - p.g) || (p.m.u - q.m.u) || (p.m.v - q.m.v) || (p.k - q.k); });
+  var depth = (UI.strength === "greedy") ? 1 : LOOKAHEAD;
+  scored.forEach(function(s){
+    var m = s.m;
+    adj[m.u] |= (1<<m.v); adj[m.v] |= (1<<m.u);
+    s.val = s.g - (exact ? solveExact(m.faces, adj)
+                         : alphabeta(m.faces, adj, depth-1, -1e9, 1e9));
+    adj[m.u] &= ~(1<<m.v); adj[m.v] &= ~(1<<m.u);
+  });
+  scored.sort(function(p,q){ return (q.val - p.val) || (q.g - p.g) || (p.k - q.k); });
+  return scored.map(function(s){ return s.m; });
+}
+/* the pairs that could still be joined at all */
+function playablePairs(){
+  var mv = genMoves(modelNow(), ADJ, false), set = {}, out = [], i;
+  for(i=0;i<mv.length;i++){
+    var k = mv[i].u + "-" + mv[i].v;
+    if(set[k]) continue;
+    set[k] = 1; out.push([mv[i].u, mv[i].v]);
+  }
+  return out;
+}
+function pairIsPlayable(u,v){
+  var p = playablePairs(), i;
+  for(i=0;i<p.length;i++) if((p[i][0]===u&&p[i][1]===v)||(p[i][0]===v&&p[i][1]===u)) return true;
+  return false;
+}
+
+/* ================================================================
+   4. IS THIS CURVE LEGAL?  (exact, on the points that get drawn)
+   u or v may be -1 for a stub or a shortcut that does not end on a dot.
+   ================================================================ */
+/* THE PART THAT IS NOT NEGOTIABLE. Running off the board, crossing yourself and —
+   above all — running through a dot are mathematical violations: no size of paper
+   makes them legal. Meeting another line is not in this list, because at 800 x 560
+   a crossing can be nothing more than the size of the screen. Professor, 2026-08-05:
+   "the human viewer should be able to convince themselves that if they could increase
+   the size of a board to huge, such a line would be possible. What is not allowed if
+   there is no possible curve that is mathematically possible in the sense of the
+   Jordan curve theorem". */
+function hardVerdict(poly, u, v, cv){
+  var i, w;
+  cv = cv || DRAW.node;
+  if(poly.length < 2) return { k:"crossesItself" };
+  for(i=0;i<poly.length;i++) if(!inFrame(poly[i])) return { k:"offBoard" };
+  if(poly.length > 3 && polySelfMeet(poly)) return { k:"crossesItself" };
+  for(w=0;w<N;w++){
+    if(w === u || w === v) continue;
+    if(polyPtD(poly, PT[w]) < cv) return { k:"throughDot", what:"dot " + labelOf(w) };
+  }
+  if(u >= 0 && reenters(poly, PT[u], DRAW.node, false))
+    return { k:"backOnDot", what:"dot " + labelOf(u) };
+  if(v >= 0 && reenters(poly, PT[v], DRAW.node, true))
+    return { k:"backOnDot", what:"dot " + labelOf(v) };
+  return null;
+}
+/* The full test: hard violations, and then a clean passage between the lines that
+   are already drawn. A curve that passes this is drawn as it stands; one that fails
+   only the second half is still playable, and is drawn as an approximation. */
+function curveVerdict(poly, u, v, ce, cv){
+  var bad = hardVerdict(poly, u, v, cv), i, e, shared;
+  if(bad) return bad;
+  ce = ce || DRAW.edge;
+  for(i=0;i<EDGES.length;i++){
+    e = EDGES[i];
+    shared = [];
+    if(e.u === u || e.u === v) shared.push(PT[e.u]);
+    if(e.v === u || e.v === v) shared.push(PT[e.v]);
+    if(polyMeet(poly, e.pts, shared)) return { k:"wouldCross", what:"the line " + edgeName(e) };
+    if(polyTooClose(poly, e.pts, ce, shared))
+      return { k:"tooClose", what:"the line " + edgeName(e) };
+  }
+  return null;
+}
+/* how many drawn lines this curve touches on screen — 0 means it is exact */
+function crossingCount(poly, u, v){
+  var n = 0, i, e, shared;
+  for(i=0;i<EDGES.length;i++){
+    e = EDGES[i];
+    shared = [];
+    if(e.u === u || e.u === v) shared.push(PT[e.u]);
+    if(e.v === u || e.v === v) shared.push(PT[e.v]);
+    if(polyMeet(poly, e.pts, shared) || polyTooClose(poly, e.pts, DRAW.edge, shared)) n++;
+  }
+  return n;
+}
+function verdictText(bad){
+  var text = msg(bad.k, "That line will not do.");
+  return fill(text, { what: bad.what || "" });
+}
+
+/* ================================================================
+   5. THE ROUTER — the page drawing a curve for you
+   A grid over the frame, every cell that is too near a line or a dot marked
+   blocked, breadth-first from the ring of free cells round one dot to the ring
+   round the other, then the path pulled taut and smoothed. Because a cell is
+   blocked when its CENTRE is within (clearance + half a diagonal) of anything,
+   a path through cell centres clears everything by the full clearance, and the
+   exact test above is only ever confirming what the grid already promised.
+   ================================================================ */
+/* The free space, as a grid, plus how much room each free cell has.
+   A cell is blocked when its CENTRE is within (clearance + half a diagonal) of a
+   line or a dot, so a route through free cell centres clears everything by the
+   full clearance and the exact test above only ever confirms it. D[cell] is the
+   extra room beyond that minimum — the distance to the nearest blocked cell,
+   by a two-pass chamfer sweep, which is what lets the search pick the WIDEST
+   corridor rather than the shortest path. Hugging is the enemy: a line drawn
+   tight against the last one closes the gap the next line needs. */
+function buildField(cell, soft){
+  var W = Math.ceil((FRAME.x1-FRAME.x0)/cell), H = Math.ceil((FRAME.y1-FRAME.y0)/cell);
+  var g = new Uint8Array(W*H), D = new Float32Array(W*H), pad = cell*0.7072;
+  var S = new Uint8Array(W*H);
+  var i, j, k, m, a = cell, b = cell*1.4142136;
+  function cx(i){ return FRAME.x0 + (i+0.5)*cell; }
+  function cy(j){ return FRAME.y0 + (j+0.5)*cell; }
+  function stamp(ax,ay,bx,by,r,into){
+    var big = r, y, x, c;
+    var i0 = Math.max(0, Math.floor((Math.min(ax,bx)-big-FRAME.x0)/cell));
+    var i1 = Math.min(W-1, Math.ceil((Math.max(ax,bx)+big-FRAME.x0)/cell));
+    var j0 = Math.max(0, Math.floor((Math.min(ay,by)-big-FRAME.y0)/cell));
+    var j1 = Math.min(H-1, Math.ceil((Math.max(ay,by)+big-FRAME.y0)/cell));
+    for(y=j0;y<=j1;y++) for(x=i0;x<=i1;x++){
+      c = y*W+x;
+      if(into[c]) continue;
+      if(ptSegD(cx(x),cy(y),ax,ay,bx,by) < r) into[c] = 1;
+    }
+  }
+  /* In SOFT mode the drawn lines are not walls, only tolls: the approximate router
+     is allowed to cross one if there is no other way at this size. The dots and the
+     frame stay walls in both modes — going through a dot is never a screen artefact. */
+  EDGES.forEach(function(e){
+    for(var t=0;t<e.pts.length-1;t++)
+      stamp(e.pts[t].x,e.pts[t].y,e.pts[t+1].x,e.pts[t+1].y, DRAW.edge+pad, soft ? S : g);
+  });
+  PT.forEach(function(p){ stamp(p.x,p.y,p.x,p.y, DRAW.node+pad, g); });
+  for(j=0;j<H;j++) for(i=0;i<W;i++){
+    k = j*W+i;
+    /* the frame is an obstacle too: nothing may be drawn outside it */
+    D[k] = g[k] ? 0 : Math.min(cx(i)-FRAME.x0, FRAME.x1-cx(i),
+                               cy(j)-FRAME.y0, FRAME.y1-cy(j));
+  }
+  for(j=0;j<H;j++) for(i=0;i<W;i++){
+    k = j*W+i; if(!D[k]) continue;
+    m = D[k];
+    if(i>0) m = Math.min(m, D[k-1]+a);
+    if(j>0) m = Math.min(m, D[k-W]+a);
+    if(i>0 && j>0) m = Math.min(m, D[k-W-1]+b);
+    if(i<W-1 && j>0) m = Math.min(m, D[k-W+1]+b);
+    D[k] = m;
+  }
+  for(j=H-1;j>=0;j--) for(i=W-1;i>=0;i--){
+    k = j*W+i; if(!D[k]) continue;
+    m = D[k];
+    if(i<W-1) m = Math.min(m, D[k+1]+a);
+    if(j<H-1) m = Math.min(m, D[k+W]+a);
+    if(i<W-1 && j<H-1) m = Math.min(m, D[k+W+1]+b);
+    if(i>0 && j<H-1) m = Math.min(m, D[k+W-1]+b);
+    D[k] = m;
+  }
+  return { g:g, D:D, S:S, W:W, H:H, cell:cell, cx:cx, cy:cy, pad:pad };
+}
+function angleIn(a, lo, hi){
+  var TAU = 2*Math.PI;
+  while(a < lo) a += TAU;
+  while(a > lo + TAU) a -= TAU;
+  if(hi <= lo) hi += TAU;
+  return a > lo && a < hi;
+}
+/* Where a route may set off from a dot: the free cells around it, the nearest
+   ones first. The dot itself is not an obstacle for its own line, so this is
+   usually the ring just outside the drawn circle. */
+function ports(gr, v, wedge, thr, soft){
+  var out = [], r0 = DRAW.node + gr.pad, r1 = r0 + 3.5*gr.cell;
+  var i0 = Math.max(0, Math.floor((PT[v].x - r1 - FRAME.x0)/gr.cell));
+  var i1 = Math.min(gr.W-1, Math.ceil((PT[v].x + r1 - FRAME.x0)/gr.cell));
+  var j0 = Math.max(0, Math.floor((PT[v].y - r1 - FRAME.y0)/gr.cell));
+  var j1 = Math.min(gr.H-1, Math.ceil((PT[v].y + r1 - FRAME.y0)/gr.cell));
+  for(var j=j0;j<=j1;j++) for(var i=i0;i<=i1;i++){
+    var c = j*gr.W+i;
+    if(gr.g[c] || gr.D[c] < thr) continue;
+    var x = gr.cx(i), y = gr.cy(j), d = dist(x,y,PT[v].x,PT[v].y);
+    if(d < r0 || d > r1) continue;
+    if(wedge && !angleIn(Math.atan2(y-PT[v].y, x-PT[v].x), wedge[0], wedge[1])) continue;
+    if(soft ? hardVerdict([PT[v], {x:x,y:y}], v, -1)
+            : curveVerdict([PT[v], {x:x,y:y}], v, -1)) continue;
+    out.push(c);
+  }
+  return out;
+}
+var STEP = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
+function bfs(gr, from, goal, thr){
+  var prev = new Int32Array(gr.W*gr.H).fill(-2), q = [], head = 0, i, isGoal = {};
+  goal.forEach(function(c){ isGoal[c] = 1; });
+  from.forEach(function(c){ if(prev[c] === -2){ prev[c] = -1; q.push(c); } });
+  while(head < q.length){
+    var c = q[head++];
+    if(isGoal[c]){
+      var path = [], x = c;
+      while(x >= 0){ path.push(x); x = prev[x]; }
+      return path.reverse();
+    }
+    var ci = c % gr.W, cj = (c - ci)/gr.W;
+    /* eight-connected, but a diagonal step is only allowed when both of the
+       orthogonal cells beside it are free — otherwise a route could slip
+       through the corner between two blocked cells */
+    for(i=0;i<8;i++){
+      var ni = ci + STEP[i][0], nj = cj + STEP[i][1];
+      if(ni<0||nj<0||ni>=gr.W||nj>=gr.H) continue;
+      var nc = nj*gr.W + ni;
+      if(gr.g[nc] || gr.D[nc] < thr || prev[nc] !== -2) continue;
+      if(STEP[i][0] && STEP[i][1] &&
+         (gr.g[cj*gr.W + ni] || gr.g[nj*gr.W + ci])) continue;
+      prev[nc] = c; q.push(nc);
+    }
+  }
+  return null;
+}
+/* Pull the polyline taut, but never tighter than the corridor it was routed
+   down: a shortcut is only taken if it keeps the same room the route had. */
+function tighten(pts, u, v, ce, cv){
+  var out = [pts[0]], i = 0, j, last;
+  while(i < pts.length-1){
+    last = i+1;
+    for(j = i+2; j < pts.length && j <= i+30; j++){
+      var a = (i === 0) ? u : -1, b = (j === pts.length-1) ? v : -1;
+      if(curveVerdict([pts[i], pts[j]], a, b, ce, cv)) break;
+      last = j;
+    }
+    out.push(pts[last]);
+    i = last;
+  }
+  return out;
+}
+/* how much room there is at a point, and which way is roomier */
+function roomAt(gr, x, y){
+  var i = Math.round((x-FRAME.x0)/gr.cell - 0.5), j = Math.round((y-FRAME.y0)/gr.cell - 0.5);
+  i = Math.max(1, Math.min(gr.W-2, i)); j = Math.max(1, Math.min(gr.H-2, j));
+  var k = j*gr.W+i;
+  return { d: gr.D[k],
+           gx: (gr.D[k+1] - gr.D[k-1]) / (2*gr.cell),
+           gy: (gr.D[k+gr.W] - gr.D[k-gr.W]) / (2*gr.cell) };
+}
+/* A rubber band with a fear of walls. Grid routes come out as staircases that
+   hug whatever they squeezed past, and a line that hugs the last line closes the
+   gap the next one needs — so every interior point is pulled straight by its
+   neighbours and pushed off the walls by the room field until it settles in the
+   middle of its corridor. This is what makes the drawn curves look drawn. */
+function relax(pts, gr, target, iters){
+  var k, i, g, m, push;
+  for(k=0;k<iters;k++){
+    for(i=1;i<pts.length-1;i++){
+      var p = pts[i], a = pts[i-1], b = pts[i+1];
+      g = roomAt(gr, p.x, p.y);
+      if(g.d < target){
+        m = Math.sqrt(g.gx*g.gx + g.gy*g.gy);
+        if(m > 1e-6){
+          push = Math.min(target - g.d, gr.cell*1.2) * 0.5;
+          p.x += push*g.gx/m; p.y += push*g.gy/m;
+        }
+      }
+      p.x += 0.30*((a.x+b.x)/2 - p.x);
+      p.y += 0.30*((a.y+b.y)/2 - p.y);
+    }
+  }
+  return pts;
+}
+var TENSIONS = [0.5, 0.3, 0.15];
+var ROOM = [16, 12, 9, 6.5, 4.5, 3, 2, 1.2, 0.6, 0];
+function routeCurve(u, v, wedgeU, wedgeV){
+  var cells = [DRAW.cell, Math.max(2, Math.round(DRAW.cell/2)), 1], ci, t, k, sm;
+  for(ci=0; ci<cells.length; ci++){
+    var gr = buildField(cells[ci]);
+    for(t=0;t<ROOM.length;t++){
+      var thr = ROOM[t];
+      var pu = ports(gr, u, wedgeU, thr), pv = ports(gr, v, wedgeV, thr), path = null;
+      if(pu.length && pv.length) path = bfs(gr, pu, pv, thr);
+      if(!path && (wedgeU || wedgeV)){        /* the corner it wanted is walled in */
+        pu = ports(gr, u, null, thr); pv = ports(gr, v, null, thr);
+        if(pu.length && pv.length) path = bfs(gr, pu, pv, thr);
+      }
+      if(!path) continue;
+      var raw = [PT[u]], i;
+      for(i=0;i<path.length;i++)
+        raw.push({ x: gr.cx(path[i] % gr.W), y: gr.cy((path[i] - path[i]%gr.W)/gr.W) });
+      raw.push(PT[v]);
+      /* first choice: the rubber band, run down the middle of the corridor */
+      var band = relax(resample(rdp(raw, gr.cell), 8).map(function(q){ return {x:q.x,y:q.y}; }),
+                       gr, Math.max(thr, 15), 80);
+      band[0] = PT[u]; band[band.length-1] = PT[v];
+      for(k=0;k<TENSIONS.length;k++){
+        sm = smoothPath(rdp(band, 1.2), TENSIONS[k], DRAW.step);
+        sm[0] = PT[u]; sm[sm.length-1] = PT[v];
+        if(!curveVerdict(sm, u, v)) return sm;
+      }
+      /* then the plain taut route, and last of all the bare grid path */
+      var tight = tighten(rdp(raw, gr.cell), u, v,
+                          DRAW.edge + thr*0.7, DRAW.node + thr*0.7);
+      for(k=0;k<TENSIONS.length;k++){
+        sm = smoothPath(tight, TENSIONS[k], DRAW.step);
+        sm[0] = PT[u]; sm[sm.length-1] = PT[v];
+        if(!curveVerdict(sm, u, v)) return sm;
+      }
+      sm = resample(tight, DRAW.step);
+      sm[0] = PT[u]; sm[sm.length-1] = PT[v];
+      if(!curveVerdict(sm, u, v)) return sm;
+      sm = resample(raw, DRAW.step);
+      sm[0] = PT[u]; sm[sm.length-1] = PT[v];
+      if(!curveVerdict(sm, u, v)) return sm;
+    }
+  }
+  return null;
+}
+
+/* ---------- the approximate router ----------
+   Professor, 2026-08-05: "it would be preferable to display any legal curve. Even if
+   there is a bit of a visual discrepancy in the sense that the sketch lines cross or
+   touch in the current computer view, that is okay."
+
+   So when the router above cannot fit a clean curve at this size, the move is still
+   played and still drawn — by a second search over the SAME grid with the drawn lines
+   demoted from walls to tolls. Dijkstra rather than breadth-first, because now the
+   cost of a route is how many lines it has to cross; the dots and the frame stay
+   walls, so an approximate curve still never runs through a dot. Whatever comes back
+   is smoothed the same three ways as a clean route, and the version that crosses the
+   fewest lines is the one drawn. */
+var CROSSTOLL = 4000;
+function dijkstra(gr, from, goal, thr){
+  var n = gr.W*gr.H, dist = new Float64Array(n), prev = new Int32Array(n);
+  var heap = [], isGoal = {}, i;
+  for(i=0;i<n;i++){ dist[i] = Infinity; prev[i] = -2; }
+  goal.forEach(function(c){ isGoal[c] = 1; });
+  function push(c, d){
+    heap.push({c:c, d:d});
+    var i = heap.length-1, p, t;
+    while(i > 0){
+      p = (i-1) >> 1;
+      if(heap[p].d <= heap[i].d) break;
+      t = heap[p]; heap[p] = heap[i]; heap[i] = t; i = p;
+    }
+  }
+  function pop(){
+    var top = heap[0], last = heap.pop(), i = 0, l, r, m, t;
+    if(heap.length){
+      heap[0] = last;
+      for(;;){
+        l = 2*i+1; r = l+1; m = i;
+        if(l < heap.length && heap[l].d < heap[m].d) m = l;
+        if(r < heap.length && heap[r].d < heap[m].d) m = r;
+        if(m === i) break;
+        t = heap[m]; heap[m] = heap[i]; heap[i] = t; i = m;
+      }
+    }
+    return top;
+  }
+  from.forEach(function(c){
+    var d = 1 + CROSSTOLL*gr.S[c];
+    if(d < dist[c]){ dist[c] = d; prev[c] = -1; push(c, d); }
+  });
+  while(heap.length){
+    var top = pop(), c = top.c;
+    if(top.d > dist[c]) continue;
+    if(isGoal[c]){
+      var path = [], x = c;
+      while(x >= 0){ path.push(x); x = prev[x]; }
+      return path.reverse();
+    }
+    var ci = c % gr.W, cj = (c - ci)/gr.W;
+    for(i=0;i<8;i++){
+      var ni = ci + STEP[i][0], nj = cj + STEP[i][1];
+      if(ni<0||nj<0||ni>=gr.W||nj>=gr.H) continue;
+      var nc = nj*gr.W + ni;
+      if(gr.g[nc] || gr.D[nc] < thr) continue;
+      if(STEP[i][0] && STEP[i][1] &&
+         (gr.g[cj*gr.W + ni] || gr.g[nj*gr.W + ci])) continue;
+      var nd = dist[c] + (STEP[i][0] && STEP[i][1] ? 1.4142136 : 1) + CROSSTOLL*gr.S[nc];
+      if(nd < dist[nc]){ dist[nc] = nd; prev[nc] = c; push(nc, nd); }
+    }
+  }
+  return null;
+}
+/* the last resort: plain arcs, widening either way, the first that clears every dot.
+   Only reached if the grid itself has nothing, which needs a board tighter than any
+   the verifier will pass. */
+function bowFallback(u, v){
+  var a = PT[u], b = PT[v], nx = -(b.y-a.y), ny = b.x-a.x;
+  var L = Math.sqrt(nx*nx+ny*ny) || 1, span = dist(a.x,a.y,b.x,b.y);
+  var best = null, bestCross = Infinity, bows = [0], k, i, n, t, s, pts, c;
+  for(k=1;k<=14;k++){ bows.push(k*24); bows.push(-k*24); }
+  for(k=0;k<bows.length;k++){
+    n = Math.max(2, Math.ceil((span + Math.abs(bows[k]))/DRAW.step));
+    pts = [];
+    for(i=0;i<=n;i++){
+      t = i/n; s = Math.sin(Math.PI*t)*bows[k];
+      pts.push({ x: a.x + (b.x-a.x)*t + nx/L*s, y: a.y + (b.y-a.y)*t + ny/L*s });
+    }
+    pts[0] = a; pts[n] = b;
+    if(hardVerdict(pts, u, v)) continue;
+    c = crossingCount(pts, u, v);
+    if(c < bestCross){ best = pts; bestCross = c; if(!c) return pts; }
+  }
+  return best;
+}
+function routeApprox(u, v, wedgeU, wedgeV){
+  var cells = [DRAW.cell, Math.max(2, Math.round(DRAW.cell/2))];
+  var best = null, bestCross = Infinity, ci, k, sm;
+  /* offered best-looking first, so among routes that cross the same number of lines
+     the smoothed one wins */
+  function offer(p){
+    if(!p || p.length < 2 || bestCross === 0) return;
+    if(hardVerdict(p, u, v)) return;
+    var c = crossingCount(p, u, v);
+    if(c < bestCross){ best = p; bestCross = c; }
+  }
+  for(ci=0; ci<cells.length && bestCross !== 0; ci++){
+    var gr = buildField(cells[ci], true);
+    var pu = ports(gr, u, wedgeU, 0, true), pv = ports(gr, v, wedgeV, 0, true);
+    if(!pu.length) pu = ports(gr, u, null, 0, true);
+    if(!pv.length) pv = ports(gr, v, null, 0, true);
+    if(!pu.length || !pv.length) continue;
+    var path = dijkstra(gr, pu, pv, 0);
+    if(!path) continue;
+    var raw = [PT[u]], i;
+    for(i=0;i<path.length;i++)
+      raw.push({ x: gr.cx(path[i] % gr.W), y: gr.cy((path[i] - path[i]%gr.W)/gr.W) });
+    raw.push(PT[v]);
+    var band = relax(resample(rdp(raw, gr.cell), 8).map(function(q){ return {x:q.x,y:q.y}; }),
+                     gr, 15, 60);
+    band[0] = PT[u]; band[band.length-1] = PT[v];
+    for(k=0;k<TENSIONS.length;k++){
+      sm = smoothPath(rdp(band, 1.2), TENSIONS[k], DRAW.step);
+      sm[0] = PT[u]; sm[sm.length-1] = PT[v];
+      offer(sm);
+    }
+    sm = resample(rdp(raw, gr.cell), DRAW.step);      /* the bare grid route, always there */
+    sm[0] = PT[u]; sm[sm.length-1] = PT[v];
+    offer(sm);
+  }
+  return best || bowFallback(u, v);
+}
+/* Every move the model calls legal gets a curve: the clean one if the screen can
+   hold it, an approximate one if it cannot. The renderer never vetoes a move. */
+function routeAny(u, v, wedgeU, wedgeV){
+  return routeCurve(u, v, wedgeU, wedgeV) || routeApprox(u, v, wedgeU, wedgeV);
+}
+/* the wedge a chosen move wants to leave a dot through, so the drawn curve
+   realises the corner the search picked and not some other one */
+function wedgeAt(fi, wi, pi, v){
+  var f = FACES[fi];
+  if(!f || wi >= f.walks.length) return null;      /* a loose dot: any way out will do */
+  var hs = f.walks[wi][pi];
+  if(hs === undefined || heTail(hs) !== v) return null;
+  var r = ROT[v], k = r.indexOf(hs);
+  if(k < 0 || r.length < 2) return null;
+  return [HE[r[(k - 1 + r.length) % r.length]].ang, HE[hs].ang];
+}
+function straightBetween(u,v){
+  var s = resample([PT[u], PT[v]], DRAW.step);
+  s[0] = PT[u]; s[s.length-1] = PT[v];
+  return s;
+}
+
+/* ================================================================
+   6. GAME
+   ================================================================ */
+var UI = {
+  boardIdx: 0,
+  first: (String(CFG.defaultFirst)==="computer") ? "computer" : "you",
+  strength: (String(CFG.strength)==="greedy") ? "greedy" : "planner"
+};
+var G = null;
+var YOU = 0, COMP = 1;
+
+function newGame(){
+  clearDrawing();
+  memo = {};
+  G = { score:[0,0], turn:(UI.first==="you"?YOU:COMP), log:[],
+        last:null, over:false, pending:null, way:[], gesture:null, busy:false };
+  verdict("", "");
+  render();
+  if(G.turn === COMP) scheduleComputer();
+}
+
+function play(u, v, pts, who){
+  var r = moveScore(ADJ, u, v);
+  var approx = crossingCount(pts, u, v) > 0;
+  var err = addDrawnEdge(u, v, pts, who);
+  if(err){
+    /* the drawing and the face structure disagreed — refuse the move rather than
+       carry a wrong position forward. Nothing has been changed at this point. */
+    verdict("no", "That line confused the drawing (" + err + ") — try another route.");
+    return false;
+  }
+  EDGES[EDGES.length-1].approx = approx;
+  G.score[who] += r.points;
+  G.last = { u:u, v:v, who:who, points:r.points, cliques:r.cliques, edge:EDGES.length-1 };
+  var byLen = {}, breakdown = [];
+  r.cliques.forEach(function(c){ byLen[c.length] = (byLen[c.length]||0) + 1; });
+  [2,3,4].forEach(function(L){ if(byLen[L]) breakdown.push(byLen[L] + "x" + SCORES[L]); });
+  var straightish = pts.length <= 2 ||
+      polyPtD(straightBetween(u,v), pts[Math.floor(pts.length/2)]) < DRAW.snap;
+  G.log.push((who===YOU ? "you " : "cpu ") + pairName(u,v) +
+             (approx ? " ≈" : straightish ? "  " : " ~") + "  +" + r.points +
+             "   (" + breakdown.join(" + ") + ")");
+  if(!playablePairs().length){
+    G.over = true;
+    finish();
+  } else {
+    G.turn = 1 - G.turn;
+  }
+  render();
+  if(!G.over && G.turn === COMP) scheduleComputer();
+  return true;
+}
+
+function finish(){
+  var y = G.score[YOU], c = G.score[COMP];
+  var kind = y > c ? "won" : (y < c ? "lost" : "tie");
+  var head = y > c ? msg("wonYou","You win.")
+           : y < c ? msg("wonComputer","The computer wins this one.")
+                   : msg("tie","A dead heat.");
+  verdict(kind, head + "  " + y + " to " + c + ".", B.lesson);
+}
+
+function scheduleComputer(){
+  if(G.over || G.busy) return;
+  G.busy = true;
+  renderScore();
+  var wait = reducedMotion() ? 0 : Math.max(0, Math.min(3000, +CFG.thinkMs || 0));
+  setTimeout(function(){
+    G.busy = false;
+    if(G.over) return;
+    computerMove();
+  }, wait);
+}
+function computerMove(){
+  var ranked = rankedMoves(), i;
+  for(i=0;i<ranked.length;i++){
+    var m = ranked[i];
+    var pts = null;
+    var st = straightBetween(m.u, m.v);
+    if(!curveVerdict(st, m.u, m.v)) pts = st;
+    if(!pts) pts = routeAny(m.u, m.v, wedgeAt(m.fi, m.wi, m.pi, m.u),
+                                      wedgeAt(m.fi, m.wj, m.pj, m.v));
+    if(pts && play(m.u, m.v, pts, COMP)) return;
+  }
+  /* Unreachable: routeAny always returns a curve for a move the model calls legal,
+     approximate if that is what the screen size demands. Kept as a floor. */
+  G.over = true;
+  finish();
+  render();
+}
+
+/* ---------- a move the student is attempting ---------- */
+function precheck(u, v){
+  if(G.over) return msg("gameOver","This game is over.");
+  if(G.turn !== YOU) return msg("notYourTurn","Not your turn yet.");
+  if(u === v) return msg("sameDot","Pick two different dots.");
+  if(joined(u,v)) return msg("alreadyJoined","Those two are already joined.");
+  return null;
+}
+/* Refuse a sketch only for a reason a bigger sheet of paper would not fix. Crossing
+   an existing line is not one of those reasons any more (professor, 2026-08-05); the
+   only question left is whether the model has a move joining these two dots at all. */
+function refuseSketch(pts, u, v){
+  var bad = hardVerdict(pts, u, v);
+  if(bad) return verdictText(bad);
+  if(!pairIsPlayable(u,v))
+    return fill(msg("noRoute","No way through."), { what: pairName(u,v) });
+  return null;
+}
+/* two taps, or the keyboard: the page finds the route */
+function attemptAuto(u, v, waypoints){
+  var stop = precheck(u,v);
+  if(stop){ verdict("no", stop); return; }
+  var pts, no;
+  if(waypoints && waypoints.length){
+    pts = smoothPath(rdp([PT[u]].concat(waypoints, [PT[v]]), 0.5), 0.5, DRAW.step);
+    pts[0] = PT[u]; pts[pts.length-1] = PT[v];
+    no = refuseSketch(pts, u, v);
+    if(no){ verdict("no", no); return; }
+    verdict("", "");
+    play(u, v, pts, YOU);
+    return;
+  }
+  pts = straightBetween(u,v);
+  if(curveVerdict(pts, u, v)) pts = routeCurve(u, v, null, null);
+  if(!pts){
+    /* no clean curve fits at this size — but if the move exists, it is drawn */
+    if(!pairIsPlayable(u,v)){
+      verdict("no", fill(msg("noRoute","No way through."), { what: pairName(u,v) }));
+      return;
+    }
+    pts = routeApprox(u, v, null, null);
+    if(!pts){
+      verdict("no", fill(msg("noRoute","No way through."), { what: pairName(u,v) }));
+      return;
+    }
+  }
+  verdict("", "");
+  play(u, v, pts, YOU);
+}
+/* a curve the student drew with a finger or the mouse */
+function attemptDrawn(u, v, raw){
+  var stop = precheck(u,v);
+  if(stop){ verdict("no", stop); return; }
+  var simp = rdp(raw, DRAW.simp);
+  var pts = smoothPath(simp, 0.5, DRAW.step);
+  pts[0] = PT[u]; pts[pts.length-1] = PT[v];
+  /* meant a straight line? give them one */
+  var st = straightBetween(u,v);
+  var far = 0, i;
+  for(i=0;i<pts.length;i++) far = Math.max(far, polyPtD(st, pts[i]));
+  if(far <= DRAW.snap && !curveVerdict(st, u, v)){ verdict("", ""); play(u, v, st, YOU); return; }
+  /* the smoothed sketch, else the plain simplified one — whichever crosses nothing,
+     and failing that the smoothed one as drawn */
+  var alt = resample(simp, DRAW.step);
+  alt[0] = PT[u]; alt[alt.length-1] = PT[v];
+  if(curveVerdict(pts, u, v) && !curveVerdict(alt, u, v)) pts = alt;
+  else if(hardVerdict(pts, u, v) && !hardVerdict(alt, u, v)) pts = alt;
+  var no = refuseSketch(pts, u, v);
+  if(no){ verdict("no", no); return; }
+  verdict("", "");
+  play(u, v, pts, YOU);
+}
+
+/* ================================================================
+   7. RENDER
+   ================================================================ */
+var svg = document.getElementById("board");
+
+function pathD(pts){
+  var d = "M" + pts[0].x.toFixed(1) + " " + pts[0].y.toFixed(1), i;
+  for(i=1;i<pts.length;i++) d += "L" + pts[i].x.toFixed(1) + " " + pts[i].y.toFixed(1);
+  return d;
+}
+function render(){
+  var ink=css("--ink"), gold=css("--gold"), gray=css("--gray-text"),
+      paper=css("--paper"), line=css("--gray-line");
+  var focusKey = document.activeElement && document.activeElement.getAttribute
+      ? document.activeElement.getAttribute("data-k") : null;
+  var out = "", i;
+
+  out += '<rect class="frame" x="'+(FRAME.x0+3)+'" y="'+(FRAME.y0+3)+'" width="'+
+         (FRAME.x1-FRAME.x0-6)+'" height="'+(FRAME.y1-FRAME.y0-6)+'" rx="6"/>';
+
+  /* the cliques the last line finished, lit up underneath */
+  if(G.last){
+    var lit = {};
+    G.last.cliques.forEach(function(c){
+      if(c.length < 3) return;
+      c.forEach(function(a){ c.forEach(function(b){ if(a<b) lit[a+"-"+b] = 1; }); });
+    });
+    EDGES.forEach(function(e){
+      if(!lit[Math.min(e.u,e.v)+"-"+Math.max(e.u,e.v)]) return;
+      out += '<path d="'+e.d+'" fill="none" stroke="'+gold+
+             '" stroke-opacity="0.22" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>';
+    });
+  }
+
+  /* Drawn lines. An APPROXIMATE one — a legal move the screen could only fit by
+     letting it cross something — keeps its own colour but is drawn lighter and
+     broken, and carries the reason as a tooltip. Quiet, not a warning. */
+  var anyApprox = false;
+  EDGES.forEach(function(e, ei){
+    var mine = e.who === YOU, isLast = G.last && G.last.edge === ei;
+    if(e.approx) anyApprox = true;
+    out += '<path data-e="'+ei+'" d="'+e.d+'" fill="none" stroke="'+(mine?gold:ink)+
+           '" stroke-width="'+(mine ? (isLast?7:5) : (isLast?3.2:2.2))+'"'+
+           (e.approx ? ' data-approx="1" stroke-opacity="0.45" stroke-dasharray="'+
+                       (mine ? "9 6" : "2 5")+'"'
+                     : (mine ? '' : ' stroke-dasharray="2 5"'))+
+           ' stroke-linecap="round" stroke-linejoin="round">'+
+           (e.approx ? '<title>'+esc(msg("crossTitle","Drawn approximately."))+'</title>' : '')+
+           '</path>';
+  });
+
+  /* the curve being drawn right now */
+  if(G.gesture && G.gesture.moved && G.gesture.raw.length > 1){
+    var g = G.gesture;
+    out += '<path d="'+pathD(g.raw)+'" fill="none" stroke="'+(g.bad ? line : gold)+
+           '" stroke-width="'+(g.bad ? 2 : 3)+'" stroke-dasharray="'+(g.bad ? "3 5" : "6 5")+
+           '" stroke-linecap="round" stroke-linejoin="round" pointer-events="none"/>';
+  }
+  /* the bends a two-tap move has been given so far */
+  if(G.pending !== null && G.way.length){
+    var chain = [PT[G.pending]].concat(G.way);
+    out += '<path d="'+pathD(chain)+'" fill="none" stroke="'+gold+
+           '" stroke-width="2" stroke-dasharray="5 5" pointer-events="none"/>';
+    G.way.forEach(function(w){
+      out += '<circle cx="'+w.x+'" cy="'+w.y+'" r="4" fill="'+paper+'" stroke="'+gold+'" stroke-width="2"/>';
+    });
+  }
+
+  /* dots */
+  PT.forEach(function(p, vi){
+    var pend = G.pending === vi;
+    out += '<g class="vgrab" data-k="v'+vi+'" tabindex="0" role="button" aria-label="'+
+           esc("dot " + p.label + ", " + degOf(vi) + " lines so far") + '">';
+    out += '<circle cx="'+p.x+'" cy="'+p.y+'" r="20" fill="rgba(0,0,0,0)"/>';
+    if(pend) out += '<circle cx="'+p.x+'" cy="'+p.y+'" r="19" fill="none" stroke="'+gold+
+                    '" stroke-width="2.5" stroke-dasharray="3 3"/>';
+    out += '<circle cx="'+p.x+'" cy="'+p.y+'" r="12" fill="'+paper+'" stroke="'+ink+'" stroke-width="1.8"/>';
+    out += '<text x="'+p.x+'" y="'+(p.y+4)+'" text-anchor="middle" font-size="11" font-weight="600" fill="'+
+           ink+'" pointer-events="none">'+esc(p.label)+'</text>';
+    out += '</g>';
+  });
+
+  svg.innerHTML = out;
+  svg.setAttribute("data-check", topologyNote());
+  if(focusKey){
+    var el = svg.querySelector('[data-k="'+focusKey+'"]'); if(el) el.focus();
+  }
+  var note = document.getElementById("crossNote");
+  note.textContent = anyApprox ? msg("crossNote", "") : "";
+  note.hidden = !anyApprox;
+  renderScore();
+  renderLegend(ink, gold, gray, anyApprox);
+  renderPricelist(ink, gold);
+  renderMath();
+  renderValue();
+  document.getElementById("movelog").textContent = G.log.length ? G.log.join("\n") : "";
+}
+
+function renderScore(){
+  var el = document.getElementById("scoreboard");
+  var left = TOTALMOVES - EDGES.length;
+  var head;
+  if(G.over){
+    head = '<span class="who">Nothing left to draw.</span>';
+  } else if(G.busy){
+    head = '<span class="who">'+esc(exactActive
+      ? msg("turnComputerSolving","The computer is solving the rest of the game…")
+      : msg("turnComputer","The computer is thinking…"))+'</span>';
+  } else if(G.turn === YOU){
+    head = '<span class="who">'+esc(msg("turnYou","Your turn."))+'</span>';
+  } else {
+    head = '<span class="who">'+esc(msg("turnComputer","The computer is thinking…"))+'</span>';
+  }
+  var last = "";
+  if(G.last){
+    var parts = [], byLen = {};
+    G.last.cliques.forEach(function(c){ byLen[c.length] = (byLen[c.length]||0)+1; });
+    if(byLen[2]) parts.push(byLen[2] + " × 1 (the line)");
+    if(byLen[3]) parts.push(byLen[3] + " × " + SCORES[3] + (byLen[3]===1?" (a triangle)":" (triangles)"));
+    if(byLen[4]) parts.push(byLen[4] + " × " + SCORES[4] + (byLen[4]===1?" (a four)":" (fours)"));
+    last = '<span class="left">last: ' + esc(pairName(G.last.u, G.last.v)) + " by " +
+           (G.last.who===YOU ? "you" : "the computer") + " — " +
+           esc(parts.join(" + ")) + " = " + G.last.points + '</span>';
+  }
+  el.innerHTML = head +
+    '<span class="big">you ' + G.score[YOU] + ' · computer ' + G.score[COMP] + '</span>' +
+    '<span class="left">' + left + ' move' + (left===1?"":"s") + ' left</span>' + last;
+}
+
+function renderLegend(ink, gold, gray, anyApprox){
+  document.getElementById("legend").innerHTML =
+    '<span><svg aria-hidden="true" viewBox="0 0 40 14"><path d="M2 11 Q20 -3 38 11" fill="none" stroke="'+gold+'" stroke-width="5" stroke-linecap="round"/></svg> your lines</span>'+
+    '<span><svg aria-hidden="true" viewBox="0 0 40 14"><path d="M2 11 Q20 -3 38 11" fill="none" stroke="'+ink+'" stroke-width="2.2" stroke-dasharray="2 5" stroke-linecap="round"/></svg> the computer’s</span>'+
+    '<span><svg aria-hidden="true" viewBox="0 0 40 14"><line x1="2" y1="7" x2="38" y2="7" stroke="'+gold+'" stroke-opacity="0.22" stroke-width="12" stroke-linecap="round"/><line x1="2" y1="7" x2="38" y2="7" stroke="'+ink+'" stroke-width="2"/></svg> the clique the last line finished</span>'+
+    (anyApprox
+      ? '<span><svg aria-hidden="true" viewBox="0 0 40 14"><path d="M2 11 Q20 -3 38 11" fill="none" stroke="'+gold+'" stroke-opacity="0.45" stroke-width="5" stroke-dasharray="9 6" stroke-linecap="round"/></svg> drawn approximately — crosses on screen only</span>'
+      : '');
+}
+
+/* The price list: the picture and what it pays, nothing else.
+   Professor, 2026-08-03: "should just show the image of the clique and give the
+   point value '1 point' etc. Remove descriptors 'a line - 2 dots joined'." */
+function renderPricelist(ink, gold){
+  var el = document.getElementById("pricelist");
+  function shape(k){
+    if(k===2) return '<svg aria-hidden="true" viewBox="0 0 34 26"><line x1="4" y1="13" x2="30" y2="13" stroke="'+ink+'" stroke-width="2"/>'+
+      '<circle cx="4" cy="13" r="3" fill="'+ink+'"/><circle cx="30" cy="13" r="3" fill="'+ink+'"/></svg>';
+    if(k===3) return '<svg aria-hidden="true" viewBox="0 0 34 26"><polygon points="17,3 31,23 3,23" fill="'+gold+'" fill-opacity="0.18" stroke="'+ink+'" stroke-width="2"/>'+
+      '<circle cx="17" cy="3" r="3" fill="'+ink+'"/><circle cx="31" cy="23" r="3" fill="'+ink+'"/><circle cx="3" cy="23" r="3" fill="'+ink+'"/></svg>';
+    return '<svg aria-hidden="true" viewBox="0 0 34 26"><polygon points="17,3 31,23 3,23" fill="'+gold+'" fill-opacity="0.18" stroke="'+ink+'" stroke-width="2"/>'+
+      '<line x1="17" y1="3" x2="17" y2="17" stroke="'+ink+'" stroke-width="2"/>'+
+      '<line x1="31" y1="23" x2="17" y2="17" stroke="'+ink+'" stroke-width="2"/>'+
+      '<line x1="3" y1="23" x2="17" y2="17" stroke="'+ink+'" stroke-width="2"/>'+
+      '<circle cx="17" cy="3" r="3" fill="'+ink+'"/><circle cx="31" cy="23" r="3" fill="'+ink+'"/>'+
+      '<circle cx="3" cy="23" r="3" fill="'+ink+'"/><circle cx="17" cy="17" r="3" fill="'+ink+'"/></svg>';
+  }
+  function pay(k){ return SCORES[k] + (SCORES[k]===1 ? " point" : " points"); }
+  el.innerHTML = '<span>'+shape(2)+' <b>'+pay(2)+'</b></span>'+
+                 '<span>'+shape(3)+' <b>'+pay(3)+'</b></span>'+
+                 '<span>'+shape(4)+' <b>'+pay(4)+'</b></span>';
+}
+
+function cliqueName(c){ return c.map(function(v){ return labelOf(v); }).join(""); }
+
+function renderMath(){
+  var L = [];
+  L.push("the price list");
+  L.push("");
+  L.push("  a clique of 2 (one line)      " + SCORES[2]);
+  L.push("  a clique of 3 (a triangle)    " + SCORES[3]);
+  L.push("  a clique of 4                 " + SCORES[4]);
+  L.push("  a clique of 5                 cannot happen — see below");
+  L.push("");
+  if(G.last){
+    var byLen = {};
+    G.last.cliques.forEach(function(c){ byLen[c.length] = (byLen[c.length]||0)+1; });
+    L.push("last line: " + pairName(G.last.u, G.last.v) + "  by " + (G.last.who===YOU?"you":"the computer"));
+    L.push("");
+    var sum = [], names = [];
+    [2,3,4].forEach(function(k){
+      if(!byLen[k]) return;
+      sum.push(byLen[k] + " x " + SCORES[k]);
+      G.last.cliques.forEach(function(c){ if(c.length===k) names.push(cliqueName(c)); });
+    });
+    L.push("  cliques completed:  " + names.join(", "));
+    L.push("  " + sum.join("  +  ") + "   =  " + G.last.points + " points");
+  } else {
+    L.push("(no line drawn yet)");
+  }
+  L.push("");
+  L.push("──────────────────────────────────");
+  L.push("running total   you " + G.score[YOU] + "   computer " + G.score[COMP]);
+  document.getElementById("mathbox").textContent = L.join("\n");
+}
+
+function renderValue(){
+  var L = [], left = TOTALMOVES - EDGES.length;
+  L.push(B.name);
+  L.push("");
+  L.push(N + " dots · " + TOTALMOVES + " moves, every game, however it is played");
+  L.push("");
+  L.push("3n − 6  =  3×" + N + " − 6  =  " + TOTALMOVES);
+  L.push("  the finished drawing is a triangulation: every face a triangle,");
+  L.push("  the outside one included, because a line may loop right round it.");
+  L.push("");
+  L.push("Where the dots are does not come into it. Any " + N + " dots start as " + N);
+  L.push("loose dots on one blank page, so every " + N + "-dot board is this same game.");
+  L.push("The layout decides how the curves have to be drawn, nothing more.");
+  L.push("");
+  var open = !document.getElementById("valueReveal").hidden;
+  if(G.over){
+    L.push("Final: you " + G.score[YOU] + ", computer " + G.score[COMP] + ".");
+  } else if(open && left <= EXACT_FROM && isConnectedModel(modelNow())){
+    var faces = modelNow(), adj = ADJ.slice();
+    var v = solveExact(faces, adj);
+    L.push("From here the rest of the game is worth " + (v>=0?"+":"") + v +
+           " to whoever moves next,");
+    L.push("with both sides perfect — " + left + " moves left, " +
+           Object.keys(memo).length + " positions solved.");
+  } else {
+    L.push("A whole " + N + "-dot game is far too big to solve here. Once the drawing is");
+    L.push("in one piece and " + EXACT_FROM + " moves are left, the rest is solved exactly.");
+  }
+  document.getElementById("valuebox").textContent = L.join("\n");
+}
+
+function verdict(kind, text, lesson){
+  var el = document.getElementById("verdict");
+  el.className = "verdict" + (kind ? " "+kind : "");
+  el.textContent = "";
+  if(!text) return;
+  var s = document.createElement("span");
+  s.className = "sym";
+  s.textContent = kind==="won" ? "✓" : kind==="no" ? "✗" : "·";
+  el.appendChild(s);
+  el.appendChild(document.createTextNode(text));
+  if(lesson){
+    el.appendChild(document.createElement("br"));
+    var em = document.createElement("em");
+    em.textContent = lesson;
+    el.appendChild(em);
+  }
+}
+
+/* ================================================================
+   8. INPUT — one gesture at a time, matched on pointerId, ended in one place.
+   There is no "ignore the next click" flag anywhere: a flag like that goes
+   stale the moment a drag ends without a click behind it, and then it eats a
+   real tap (the graph sandbox's "needs to be selected twice" bug).
+   ================================================================ */
+function svgPoint(ev){
+  var pt = svg.createSVGPoint(); pt.x = ev.clientX; pt.y = ev.clientY;
+  var m = svg.getScreenCTM(); if(!m) return {x:0,y:0};
+  var p = pt.matrixTransform(m.inverse());
+  return { x: Math.max(FRAME.x0, Math.min(FRAME.x1, p.x)),
+           y: Math.max(FRAME.y0, Math.min(FRAME.y1, p.y)) };
+}
+function hitDot(p){
+  for(var i=N-1;i>=0;i--){
+    var d = PT[i], dx = p.x-d.x, dy = p.y-d.y;
+    if(dx*dx + dy*dy <= 22*22) return i;
+  }
+  return -1;
+}
+function keyOf(el){
+  while(el && el!==svg){
+    if(el.getAttribute && el.getAttribute("data-k")) return el.getAttribute("data-k");
+    el = el.parentNode;
+  }
+  return null;
+}
+var MOVE2 = 36;                 /* 6px, squared — under this a press is a tap */
+
+function endGesture(commit, ev){
+  var g = G.gesture; G.gesture = null;
+  if(!g) return;
+  try{ if(svg.hasPointerCapture && svg.hasPointerCapture(g.id)) svg.releasePointerCapture(g.id); }
+  catch(err){}
+  if(!commit || !ev){ render(); return; }
+  if(!g.moved){ tap(ev); return; }
+  var v = hitDot(svgPoint(ev));
+  if(g.u >= 0 && v >= 0 && v !== g.u){
+    G.pending = null; G.way = [];
+    var raw = g.raw.slice();
+    raw.push(PT[v]);
+    attemptDrawn(g.u, v, raw);
+    return;
+  }
+  verdict("", "");
+  render();
+}
+function tap(ev){
+  var p = svgPoint(ev), v = hitDot(p);
+  if(v >= 0){
+    if(G.pending === null){
+      if(G.over){ verdict("no", msg("gameOver","This game is over.")); return; }
+      if(G.turn !== YOU){ verdict("no", msg("notYourTurn","Not your turn yet.")); return; }
+      G.pending = v; G.way = [];
+      verdict("", fill(msg("pickedUp","Started at {what}."), {what:"dot "+labelOf(v)}));
+      render(); return;
+    }
+    if(G.pending === v){ G.pending = null; G.way = []; verdict("", ""); render(); return; }
+    var from = G.pending, way = G.way;
+    G.pending = null; G.way = [];
+    attemptAuto(from, v, way);
+    return;
+  }
+  if(G.pending !== null){
+    /* an empty-space tap while a dot is held is a bend in the line. A bend on top of
+       another line is fine now — only a bend on a dot, or off the board, is not. */
+    if(hardVerdict([p, p], -1, -1)){ verdict("no", msg("badWaypoint","Pick somewhere clear.")); return; }
+    G.way.push(p);
+    verdict("", fill(msg("waypoint","Bend added."),
+                     {what: Math.round(p.x) + ", " + Math.round(p.y)}));
+    render(); return;
+  }
+  render();
+}
+svg.addEventListener("pointerdown", function(ev){
+  if(ev.button !== undefined && ev.button > 0) return;
+  if(G.gesture) endGesture(false);          /* a second finger never strands the first */
+  var p = svgPoint(ev), v = hitDot(p);
+  G.gesture = { id: ev.pointerId, x0: ev.clientX, y0: ev.clientY,
+                u: v, moved: false, raw: v >= 0 ? [PT[v]] : [p], bad: null };
+  try{ svg.setPointerCapture(ev.pointerId); }catch(err){}
+  if(ev.preventDefault) ev.preventDefault();
+});
+window.addEventListener("pointermove", function(ev){
+  var g = G && G.gesture;
+  if(!g || ev.pointerId !== g.id) return;
+  /* a mouse with no button down cannot be dragging: if an "up" ever escapes us,
+     the next hover move ends the gesture instead of leaving a trail on screen */
+  if(ev.buttons === 0 && ev.pointerType !== "touch"){ endGesture(false); return; }
+  var dx = ev.clientX-g.x0, dy = ev.clientY-g.y0;
+  if(!g.moved){
+    if(dx*dx+dy*dy < MOVE2) return;
+    g.moved = true;
+  }
+  if(g.u < 0) return;                        /* a drag from empty space draws nothing */
+  var p = svgPoint(ev), tip = g.raw[g.raw.length-1];
+  if(dist(p.x,p.y,tip.x,tip.y) < DRAW.step*0.75) return;
+  g.raw.push(p);
+  /* the trace goes grey only for something a bigger board would not fix — through a
+     dot, off the edge, back over itself. Crossing another line is left alone. */
+  if(!g.bad && g.raw.length - (g.checked||0) >= 3){
+    g.checked = g.raw.length;
+    var bad = hardVerdict(g.raw, g.u, -1);
+    if(bad) g.bad = bad;
+  }
+  render();
+});
+window.addEventListener("pointerup", function(ev){
+  if(G && G.gesture && ev.pointerId === G.gesture.id) endGesture(true, ev);
+});
+window.addEventListener("pointercancel", function(ev){
+  if(G && G.gesture && ev.pointerId === G.gesture.id) endGesture(false);
+});
+window.addEventListener("blur", function(){ if(G) endGesture(false); });
+
+/* The only click path left: activation that did NOT come from a pointer —
+   Enter or Space relayed by assistive technology, which reports detail === 0. */
+svg.addEventListener("click", function(ev){
+  if(ev.detail) return;
+  var k = keyOf(ev.target);
+  if(k && k.charAt(0) === "v") pick(+k.slice(1));
+});
+function pick(v){
+  if(G.pending === null){
+    G.pending = v; G.way = [];
+    verdict("", fill(msg("pickedUp","Started at {what}."), {what:"dot "+labelOf(v)}));
+    render(); return;
+  }
+  if(G.pending === v){ G.pending = null; G.way = []; verdict("", ""); render(); return; }
+  var from = G.pending, way = G.way;
+  G.pending = null; G.way = [];
+  attemptAuto(from, v, way);
+}
+svg.addEventListener("keydown", function(ev){
+  if(ev.key === "Escape"){
+    endGesture(false);
+    G.pending = null; G.way = []; verdict("", ""); render(); return;
+  }
+  if(ev.key === "Backspace" || ev.key === "Delete"){
+    if(G.way.length){ G.way.pop(); if(ev.preventDefault) ev.preventDefault(); render(); }
+    return;
+  }
+  if(ev.key !== "Enter" && ev.key !== " ") return;
+  var k = keyOf(ev.target);
+  if(k && k.charAt(0) === "v"){ if(ev.preventDefault) ev.preventDefault(); pick(+k.slice(1)); }
+});
+
+/* ================================================================
+   9. SETUP CONTROLS
+   ================================================================ */
+var boardSel = document.getElementById("boardSel");
+BOARDS.forEach(function(b, i){
+  var o = document.createElement("option");
+  o.value = String(i); o.textContent = b.name;
+  boardSel.appendChild(o);
+});
+function setBoard(i){
+  UI.boardIdx = Math.max(0, Math.min(BOARDS.length-1, i));
+  boardSel.value = String(UI.boardIdx);
+  loadBoard(UI.boardIdx);
+  document.getElementById("boardBlurb").textContent = B.blurb;
+  newGame();
+}
+boardSel.addEventListener("change", function(){ setBoard(+boardSel.value); });
+
+function segSet(id, attr, val){
+  Array.prototype.forEach.call(document.getElementById(id).querySelectorAll("button"), function(x){
+    x.setAttribute("aria-pressed", String(x.dataset[attr]===String(val)));
+  });
+}
+document.getElementById("firstSeg").addEventListener("click", function(ev){
+  var b = ev.target.closest ? ev.target.closest("button") : null; if(!b) return;
+  UI.first = b.dataset.f === "computer" ? "computer" : "you";
+  segSet("firstSeg","f",UI.first);
+  newGame();
+});
+document.getElementById("strengthSeg").addEventListener("click", function(ev){
+  var b = ev.target.closest ? ev.target.closest("button") : null; if(!b) return;
+  UI.strength = b.dataset.p === "greedy" ? "greedy" : "planner";
+  segSet("strengthSeg","p",UI.strength);
+  newGame();
+});
+document.getElementById("newGame").addEventListener("click", function(){ newGame(); });
+
+var mt = document.getElementById("mathToggle"), mr = document.getElementById("mathReveal");
+mt.addEventListener("click", function(){
+  var open = mr.hidden;
+  mr.hidden = !open;
+  mt.setAttribute("aria-expanded", String(open));
+  mt.textContent = open ? "Hide the scoring ▾" : "Show the scoring ▸";
+});
+var vt = document.getElementById("valueToggle"), vr = document.getElementById("valueReveal");
+vt.addEventListener("click", function(){
+  var open = vr.hidden;
+  vr.hidden = !open;
+  vt.setAttribute("aria-expanded", String(open));
+  vt.textContent = open ? "Hide it ▾" : "How long is this game? ▸";
+});
+
+/* Reset: opening board, opening settings, blank game.
+   Two-press confirm once anything has been drawn (design-system §4). */
+var resetBtn = document.getElementById("reset"), resetTimer = null, resetArmed = false;
+resetBtn.addEventListener("click", function(){
+  if(G && G.log.length && !resetArmed){
+    resetArmed = true; resetBtn.textContent = "Really reset?";
+    resetTimer = setTimeout(function(){ resetArmed=false; resetBtn.textContent="Reset"; }, 2000);
+    return;
+  }
+  if(resetTimer) clearTimeout(resetTimer);
+  resetArmed = false; resetBtn.textContent = "Reset";
+  UI.first = (String(CFG.defaultFirst)==="computer") ? "computer" : "you";
+  UI.strength = (String(CFG.strength)==="greedy") ? "greedy" : "planner";
+  segSet("firstSeg","f",UI.first);
+  segSet("strengthSeg","p",UI.strength);
+  mr.hidden = true; mt.setAttribute("aria-expanded","false"); mt.textContent = "Show the scoring ▸";
+  vr.hidden = true; vt.setAttribute("aria-expanded","false");
+  vt.textContent = "How long is this game? ▸";
+  setBoard(Math.round(+CFG.startBoard) || 0);
+});
+
+segSet("firstSeg","f",UI.first);
+segSet("strengthSeg","p",UI.strength);
+setBoard(Math.round(+CFG.startBoard) || 0);
+})();
+</script>
+</body>
+</html>
