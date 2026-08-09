@@ -1,0 +1,981 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The four cousins of if-then · MATH 170</title>
+
+<!-- ================================================================
+     DESIGN-SYSTEM v2 TOKEN BLOCK — copied verbatim into every file.
+     A global tweak stays a find-replace across the set.
+     This file is the EXEMPLAR: builders copy its <style> and skeleton.
+     ================================================================ -->
+<style>
+/* hidden must always win — author display rules on these classes would otherwise beat the attribute */
+[hidden]{display:none !important}
+:root{
+  /* color — light */
+  --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+  --gold-soft:rgba(218,165,32,.12);
+  --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  /* type */
+  --font-body: ui-serif, Georgia, "Times New Roman", serif;
+  --font-ui:   system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+  --text-xl:1.75rem; --text-lg:1.25rem; --text-base:1rem; --text-sm:.875rem; --text-xs:.75rem;
+  --leading-prose:1.6; --leading-ui:1.3;
+  /* spacing */
+  --space-1:4px; --space-2:8px; --space-3:16px; --space-4:24px; --space-5:32px; --space-6:48px;
+  /* motion */
+  --ease:cubic-bezier(0.16,1,0.3,1); --dur:200ms;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+    --gold-soft:rgba(227,179,65,.16);
+    --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+  --gold-soft:rgba(227,179,65,.16);
+  --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+}
+@media (prefers-reduced-motion: reduce){ :root{ --dur:0ms; } }
+@media print{
+  :root, :root[data-theme="dark"]{
+    --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+    --gold-soft:rgba(218,165,32,.12);
+    --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  }
+  .theme-btn{display:none}
+  .stage{break-inside:avoid}
+}
+
+/* ================= base skin (design-system §3–§4) ================= */
+*{box-sizing:border-box}
+html{color-scheme:light dark}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--font-body); font-size:var(--text-base); line-height:var(--leading-prose);
+  -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:820px; margin:0 auto; padding:var(--space-5) var(--space-4) var(--space-6);}
+.topbar{display:flex; align-items:baseline; justify-content:space-between; gap:var(--space-3);
+  border-bottom:1px solid var(--gray-line); padding-bottom:var(--space-2); margin-bottom:var(--space-4);}
+.eyebrow{font-family:var(--font-ui); font-size:var(--text-xs); letter-spacing:.08em; text-transform:uppercase; color:var(--gray-text);}
+h1{font-family:var(--font-body); font-weight:600; font-size:var(--text-xl); line-height:1.2; margin:.2em 0 .1em;}
+h2{font-family:var(--font-ui); font-weight:600; font-size:var(--text-lg); line-height:1.3; margin:var(--space-5) 0 var(--space-2);}
+p{margin:0 0 var(--space-3);}
+.prose{max-width:66ch;}
+.muted{color:var(--gray-text);}
+.mono,code{font-family:var(--font-mono); font-variant-numeric:tabular-nums;}
+a{color:inherit;}
+:focus-visible{outline:2px solid var(--ink); outline-offset:2px; box-shadow:0 0 0 5px var(--gold-soft);}
+
+.theme-btn{font-family:var(--font-ui); font-size:var(--text-xs); background:none;
+  border:1px solid var(--gray-line); color:var(--gray-text); padding:6px 10px; cursor:pointer; border-radius:2px;}
+.theme-btn:hover{background:var(--gray-fill);}
+
+/* spec header */
+details.spec{border:1px solid var(--gray-line); border-radius:2px; margin:0 0 var(--space-4); background:var(--gray-fill);}
+details.spec>summary{font-family:var(--font-ui); font-size:var(--text-sm); cursor:pointer;
+  padding:var(--space-2) var(--space-3); list-style:none; color:var(--gray-text);}
+details.spec>summary::-webkit-details-marker{display:none}
+details.spec>summary::before{content:"▸ "; color:var(--gold);}
+details.spec[open]>summary::before{content:"▾ ";}
+.spec-body{padding:0 var(--space-3) var(--space-3); font-family:var(--font-ui); font-size:var(--text-sm); line-height:1.5;}
+.spec-body dt{font-weight:600; margin-top:var(--space-2);}
+.spec-body dd{margin:0; color:var(--gray-text);}
+
+/* stage */
+.stage{margin:var(--space-4) 0; text-align:center;}
+svg{max-width:100%; height:auto; font-family:var(--font-ui);}
+figcaption{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); margin-top:var(--space-2);}
+
+/* controls */
+.controls{border-top:1px solid var(--gray-line); padding-top:var(--space-3); margin-top:var(--space-4);
+  display:grid; grid-template-columns:1fr 1fr; gap:var(--space-3) var(--space-4);}
+.controls .full{grid-column:1/-1;}
+@media(max-width:560px){ .controls{grid-template-columns:1fr;} }
+.ctl label{display:flex; justify-content:space-between; align-items:baseline;
+  font-family:var(--font-ui); font-size:var(--text-sm); line-height:var(--leading-ui);}
+.ctl .val{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm); color:var(--ink);}
+.ctl .val.gold{color:var(--gold); font-weight:600;}
+.ctl .note{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); margin-top:4px;}
+
+/* range slider — filled track works in ALL engines (design-system v2 fix):
+   wireSlider() paints the webkit track with a two-stop gradient on input. */
+input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:18px;
+  background:transparent; margin:6px 0 0; cursor:pointer;}
+input[type=range]::-webkit-slider-runnable-track{height:2px; border-radius:1px;
+  background:var(--track, var(--gray-line));}
+input[type=range]::-moz-range-track{height:2px; background:var(--gray-line);}
+input[type=range]::-moz-range-progress{height:2px; background:var(--gold);}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; appearance:none;
+  width:18px; height:18px; margin-top:-8px; border-radius:50%; background:var(--gold); border:1px solid var(--ink);}
+input[type=range]::-moz-range-thumb{width:18px; height:18px; border-radius:50%; background:var(--gold); border:1px solid var(--ink);}
+
+/* buttons + segmented + stepper */
+.btn{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:1px solid var(--ink); padding:8px 14px; cursor:pointer; border-radius:2px;}
+.btn:hover{background:var(--gray-fill);}
+.btn.primary{background:var(--gold); border-color:var(--gold); color:#111111;}
+.btn[disabled]{border-color:var(--gray-line); color:var(--gray-line); cursor:default; background:var(--paper);}
+.seg{display:inline-flex; border:1px solid var(--ink); border-radius:2px; overflow:hidden;}
+.seg button{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:0; border-left:1px solid var(--ink); padding:7px 12px; cursor:pointer;}
+.seg button:first-child{border-left:0;}
+.seg button[aria-pressed="true"]{background:var(--gold); color:#111111;}
+.stepper{display:inline-flex; align-items:center; gap:var(--space-2); font-family:var(--font-ui); font-size:var(--text-sm);}
+.stepper .count{font-family:var(--font-mono); font-variant-numeric:tabular-nums; color:var(--gray-text);}
+
+.foot{display:flex; align-items:center; gap:var(--space-3); margin-top:var(--space-5);
+  border-top:1px solid var(--gray-line); padding-top:var(--space-3); flex-wrap:wrap;}
+.foot .btn{margin-right:auto;}
+.hint{font-family:var(--font-ui); font-size:var(--text-sm); color:var(--gray-text);}
+
+/* math reveal */
+.mathbox{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm);
+  background:var(--gray-fill); border-left:2px solid var(--gold); padding:var(--space-3);
+  margin:var(--space-3) 0; overflow-x:auto; white-space:pre; line-height:1.7; text-align:left;}
+.attach{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text);
+  border-top:1px dotted var(--gray-line); margin-top:var(--space-6); padding-top:var(--space-3);}
+.tag{display:inline-block; font-family:var(--font-ui); font-size:var(--text-xs);
+  border:1px solid var(--gray-line); border-radius:999px; padding:1px 8px; color:var(--gray-text); margin-left:6px;}
+.callout{font-family:var(--font-ui); font-size:var(--text-sm); border:1px solid var(--gray-line);
+  border-left:2px solid var(--gold); padding:var(--space-2) var(--space-3); margin:var(--space-3) 0; background:var(--paper);}
+</style>
+
+<!-- ============ bespoke styles for THIS manipulative only ============
+     (the block above is the shared skin, unchanged) -->
+<style>
+.legend{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text);
+  margin:0 0 var(--space-2); text-align:left;}
+.legend .mono{font-size:var(--text-sm);}
+
+/* current-world banner */
+.world{border:1px solid var(--ink); border-radius:2px; padding:var(--space-2) var(--space-3);
+  font-family:var(--font-ui); font-size:var(--text-sm); text-align:left;
+  display:flex; flex-wrap:wrap; align-items:baseline; gap:var(--space-1) var(--space-3);
+  margin-bottom:var(--space-3);}
+.world .wlbl{font-size:var(--text-xs); letter-spacing:.08em; text-transform:uppercase; color:var(--gray-text);}
+.world .tv{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-weight:600;}
+.world em{font-family:var(--font-body);}
+.flag{display:inline-block; font-family:var(--font-ui); font-size:var(--text-xs);
+  border:1px solid var(--gold); background:var(--gold-soft); border-radius:999px; padding:1px 8px; color:var(--ink);}
+
+/* the four statement cards, paired with a tie */
+.pair{display:grid; grid-template-columns:1fr 28px 1fr; gap:var(--space-2);
+  align-items:stretch; margin-bottom:var(--space-2); text-align:left;}
+.tie{position:relative;}
+.tie::before{content:""; position:absolute; top:50%; left:0; right:0; border-top:2px solid transparent;}
+.pair.tied .tie::before{border-top-color:var(--gold);}
+.pair.tied .card{border-color:var(--gold); box-shadow:inset 2px 0 0 var(--gold); background:var(--gold-soft);}
+.card{border:1px solid var(--gray-line); border-radius:2px; background:var(--paper);
+  padding:var(--space-2) var(--space-3); display:flex; gap:var(--space-3); justify-content:space-between;}
+.cardmain{min-width:0;}
+.card .kind{font-family:var(--font-ui); font-size:var(--text-xs); letter-spacing:.06em;
+  text-transform:uppercase; color:var(--gray-text);}
+.card .kind .sym{font-family:var(--font-mono); font-size:var(--text-sm); text-transform:none;
+  letter-spacing:0; color:var(--ink); margin-left:6px;}
+.card .sentence{font-family:var(--font-body); margin:4px 0;}
+.card .eval{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text);}
+.stampwrap{flex:0 0 auto; align-self:center; text-align:center;}
+.stamp{width:52px; height:52px; border:2px solid var(--ink); border-radius:4px; margin:0 auto;
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--font-mono); font-size:1.9rem; font-weight:700;}
+.stamp.f{transform:rotate(-8deg);}
+.stamplbl{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); margin-top:3px;}
+.pairnote{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text);
+  text-align:center; margin:0 0 var(--space-3);}
+.pairnote .mono{color:var(--gold); font-weight:700;}
+@media(max-width:560px){
+  .pair{grid-template-columns:1fr;}
+  .tie{height:16px;}
+  .tie::before{top:0; bottom:0; left:50%; right:auto; border-top:none; border-left:2px solid transparent;}
+  .pair.tied .tie::before{border-left-color:var(--gold);}
+}
+
+/* earned truth table */
+.ttable{border-collapse:collapse; margin:0 auto; font-family:var(--font-ui); font-size:var(--text-sm);}
+.ttable th,.ttable td{border:1px solid var(--gray-line); padding:5px 14px; text-align:center;}
+.ttable th{font-size:var(--text-xs); color:var(--gray-text); font-weight:600;}
+.ttable th.mono{font-size:var(--text-sm); color:var(--ink);}
+.ttable td{font-family:var(--font-mono); font-variant-numeric:tabular-nums;}
+.ttable td.blank{color:var(--gray-line);}
+
+/* ---- cells the student fills in (round 2: earned, not given) ---- */
+.ttable td.cell{padding:3px 6px; white-space:nowrap;}
+.cellin{width:2.1em; height:1.9em; text-align:center; text-transform:uppercase;
+  font-family:var(--font-mono); font-size:var(--text-sm); font-variant-numeric:tabular-nums;
+  color:var(--ink); background:var(--paper);
+  border:1px solid var(--gray-line); border-radius:2px; padding:0;}
+.cellin::placeholder{color:var(--gray-line);}
+.ttable td.ok .cellin{background:var(--gold-soft); border:1px solid var(--gold); font-weight:700;}
+.ttable td.ok .cellin{cursor:default;}
+.ttable td.bad .cellin{border:2px dashed var(--ink); background:var(--paper);}
+.stat{display:inline-block; width:1.1em; font-family:var(--font-ui); font-size:var(--text-xs);
+  color:var(--gray-text); text-align:left;}
+.ttable td.ok .stat{color:var(--ink);}
+.scoreline{font-family:var(--font-ui); font-size:var(--text-sm); color:var(--gray-text);
+  margin:0 0 var(--space-2); display:flex; align-items:center; gap:var(--space-2); justify-content:center;}
+.scoreline .bar{display:inline-block; width:120px; height:8px; border:1px solid var(--ink);
+  border-radius:2px; overflow:hidden; background:var(--paper);}
+.scoreline .fill{display:block; height:100%; width:0; background:var(--gold);
+  transition:width var(--dur) var(--ease);}
+.tfpad{display:flex; flex-wrap:wrap; gap:var(--space-3); align-items:center;
+  justify-content:center; margin-top:var(--space-3);}
+.tfpad .grp{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text);}
+.tfpad .seg button{min-width:3em; font-family:var(--font-mono); font-weight:700;}
+.feedback{font-family:var(--font-ui); font-size:var(--text-sm); text-align:left;
+  max-width:66ch; margin:var(--space-3) auto 0; min-height:1.6em;}
+.feedback .sym{font-family:var(--font-mono); font-weight:700; margin-right:6px;}
+.feedback.good{border-left:2px solid var(--gold); background:var(--gold-soft);
+  padding:var(--space-2) var(--space-3);}
+.feedback.bad{border-left:2px dashed var(--ink); padding:var(--space-2) var(--space-3);}
+.stamp.unknown{border-style:dashed; color:var(--gray-text);}
+.ttable .markcol{border:0; padding:0 6px; color:var(--gold); font-family:var(--font-ui); width:1.2em;}
+.ttable tr.here td:not(.markcol){background:var(--gold-soft);}
+.ttable.hl-sc .col-stmt,.ttable.hl-sc .col-contra{background:var(--gold-soft);}
+.ttable.hl-ci .col-conv,.ttable.hl-ci .col-inv{background:var(--gold-soft);}
+.ttable.hl-sc th.col-stmt,.ttable.hl-sc th.col-contra,
+.ttable.hl-ci th.col-conv,.ttable.hl-ci th.col-inv{box-shadow:inset 0 -2px 0 var(--gold);}
+.tblhint{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); margin:0 0 var(--space-2);}
+
+/* locked toggles read as "not yours to move" — soft gold instead of full gold */
+.seg button[disabled]{cursor:not-allowed; color:var(--gray-text);}
+.seg button[disabled][aria-pressed="true"]{background:var(--gold-soft); color:var(--ink);}
+.picker{display:flex; flex-wrap:wrap; gap:var(--space-2); margin-top:6px; align-items:center;}
+.picker .grp{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); margin-right:2px;}
+.ctl .seg{margin-top:6px;}
+
+/* modus ponens / tollens strip */
+.striprow{display:flex; flex-wrap:wrap; gap:var(--space-2); align-items:center; margin-bottom:var(--space-2);
+  font-family:var(--font-ui); font-size:var(--text-sm);}
+.striprow .grp{font-size:var(--text-xs); color:var(--gray-text);}
+.chain{display:grid; grid-template-columns:1fr 1fr 1fr; gap:var(--space-2); margin-top:var(--space-3); text-align:left;}
+@media(max-width:560px){ .chain{grid-template-columns:1fr;} }
+.chainbox{border:1px solid var(--gray-line); border-radius:2px; padding:var(--space-2) var(--space-3);}
+.chainbox .lbl{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text);}
+.chainbox .lbl .mono{color:var(--ink);}
+.chainbox .txt{font-family:var(--font-body); margin-top:2px;}
+.chainbox.conc{border-left:2px solid var(--gold); opacity:0; transform:translateY(4px);
+  transition:opacity var(--dur) var(--ease), transform var(--dur) var(--ease);}
+.chainbox.conc.shown{opacity:1; transform:none;}
+
+.sr{position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden;
+  clip:rect(0 0 0 0); white-space:nowrap; border:0;}
+</style>
+
+<!-- theme boot: apply stored choice before first paint (no flash) -->
+<script>
+try{var t=localStorage.getItem("m170-theme");if(t)document.documentElement.dataset.theme=t;}catch(e){}
+</script>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="eyebrow">MATH 170 · Logic · If-Then Conditional Statements</div>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Color theme">◑ auto</button>
+  </div>
+
+  <h1 data-edit="title">The four cousins of if-then <span class="tag">conditional logic</span></h1>
+  <p class="prose muted" data-edit="intro">You are the logic engine. An if-then statement is a
+  <strong>promise</strong>, and a promise only lives in four possible worlds.
+  Nothing on this page tells you the answers. Stand in a world, decide for yourself
+  whether the promise and its three look-alike cousins hold, and <strong>type T or F</strong>
+  into the table. A stamp appears on a card only once you have earned it.</p>
+
+  <div data-slot="notes-top"></div>
+
+
+  <div class="stage">
+    <p class="legend" data-edit="legend">symbols, beside their English at all times:
+      <span class="mono">→</span> means "if … then" · <span class="mono">¬</span> means "not"</p>
+
+    <div class="world" id="worldBanner" aria-live="polite">
+      <span class="wlbl">this world</span>
+      <span><span class="mono">P</span> = <span class="tv" id="wP">T</span></span>
+      <span><span class="mono">Q</span> = <span class="tv" id="wQ">T</span></span>
+      <em id="wEng"></em>
+      <span class="flag" id="wFlag" hidden>the only world where P → Q is false</span>
+    </div>
+
+    <div class="pair" id="pairRow1">
+      <div class="card">
+        <div class="cardmain">
+          <div class="kind">statement<span class="sym">P → Q</span></div>
+          <p class="sentence" id="sent-stmt"></p>
+          <div class="eval" id="eval-stmt"></div>
+        </div>
+        <div class="stampwrap">
+          <div class="stamp" id="stamp-stmt" aria-hidden="true">T</div>
+          <div class="stamplbl" id="stamplbl-stmt">true</div>
+        </div>
+      </div>
+      <div class="tie" aria-hidden="true"></div>
+      <div class="card">
+        <div class="cardmain">
+          <div class="kind">contrapositive<span class="sym">¬Q → ¬P</span></div>
+          <p class="sentence" id="sent-contra"></p>
+          <div class="eval" id="eval-contra"></div>
+        </div>
+        <div class="stampwrap">
+          <div class="stamp" id="stamp-contra" aria-hidden="true">T</div>
+          <div class="stamplbl" id="stamplbl-contra">true</div>
+        </div>
+      </div>
+    </div>
+    <p class="pairnote" id="note1" hidden><span class="mono">≡</span> the statement and its
+      contrapositive get the same stamp in <em>every</em> world — logically equivalent</p>
+
+    <div class="pair" id="pairRow2">
+      <div class="card">
+        <div class="cardmain">
+          <div class="kind">converse<span class="sym">Q → P</span></div>
+          <p class="sentence" id="sent-conv"></p>
+          <div class="eval" id="eval-conv"></div>
+        </div>
+        <div class="stampwrap">
+          <div class="stamp" id="stamp-conv" aria-hidden="true">T</div>
+          <div class="stamplbl" id="stamplbl-conv">true</div>
+        </div>
+      </div>
+      <div class="tie" aria-hidden="true"></div>
+      <div class="card">
+        <div class="cardmain">
+          <div class="kind">inverse<span class="sym">¬P → ¬Q</span></div>
+          <p class="sentence" id="sent-inv"></p>
+          <div class="eval" id="eval-inv"></div>
+        </div>
+        <div class="stampwrap">
+          <div class="stamp" id="stamp-inv" aria-hidden="true">T</div>
+          <div class="stamplbl" id="stamplbl-inv">true</div>
+        </div>
+      </div>
+    </div>
+    <p class="pairnote" id="note2" hidden><span class="mono">≡</span> the converse and the inverse
+      always match <em>each other</em> — but not the statement</p>
+  </div>
+
+  <h2 data-edit="h2-table">The truth table — earned, not given</h2>
+  <div class="stage">
+    <p class="tblhint" data-edit="table-hint">Fill every cell yourself. Type <span class="mono">T</span> or
+      <span class="mono">F</span>, or tap the pad below. Arrow keys move between cells; a wrong
+      answer is marked and stays open for another try.</p>
+    <p class="scoreline"><span class="mono" id="scoreN">0</span> of
+      <span class="mono" id="scoreTot">16</span> cells earned
+      <span class="bar" aria-hidden="true"><span class="fill" id="scoreFill"></span></span></p>
+    <table class="ttable" id="ttable">
+      <caption class="sr">Truth table for the statement, contrapositive, converse and inverse. Each cell is yours to fill in: type T or F.</caption>
+      <thead><tr>
+        <th class="markcol" aria-hidden="true"></th>
+        <th class="mono">P</th><th class="mono">Q</th>
+        <th class="mono col-stmt">P→Q</th><th class="mono col-contra">¬Q→¬P</th>
+        <th class="mono col-conv">Q→P</th><th class="mono col-inv">¬P→¬Q</th>
+      </tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+
+    <div class="tfpad">
+      <span class="grp" id="padLbl">answer the focused cell</span>
+      <div class="seg" role="group" aria-labelledby="padLbl">
+        <button type="button" id="padT">T</button>
+        <button type="button" id="padF">F</button>
+      </div>
+      <button class="btn" id="clearBtn" type="button">Clear my answers</button>
+    </div>
+
+    <p class="feedback" id="feedback" aria-live="polite"></p>
+
+    <p class="tblhint" id="tableDone" hidden style="margin-top:var(--space-2)">
+      All sixteen earned. Read down the columns: <span class="mono">P→Q</span> and
+      <span class="mono">¬Q→¬P</span> are identical; <span class="mono">Q→P</span> and
+      <span class="mono">¬P→¬Q</span> are identical to each other — a different pair.</p>
+  </div>
+
+  <div class="controls">
+    <div class="ctl">
+      <label>P — the hypothesis <span class="val" id="pname"></span></label>
+      <div class="seg" role="group" aria-label="Set P true or false">
+        <button type="button" id="btnPT" aria-pressed="true">P is true</button>
+        <button type="button" id="btnPF" aria-pressed="false">P is false</button>
+      </div>
+      <div class="note" id="pLock" hidden>arithmetic decides P here — you can't toggle math</div>
+    </div>
+    <div class="ctl">
+      <label>Q — the conclusion <span class="val" id="qname"></span></label>
+      <div class="seg" role="group" aria-label="Set Q true or false">
+        <button type="button" id="btnQT" aria-pressed="true">Q is true</button>
+        <button type="button" id="btnQF" aria-pressed="false">Q is false</button>
+      </div>
+      <div class="note" id="qLock" hidden>geometry decides Q here — you can't toggle triangles</div>
+    </div>
+    <div class="full ctl">
+      <label>Load a worksheet sentence</label>
+      <div class="picker">
+        <span class="grp">everyday</span>
+        <div class="seg" role="group" aria-label="Everyday worksheet sentences">
+          <button type="button" data-sid="key" aria-pressed="true">key / door</button>
+          <button type="button" data-sid="study" aria-pressed="false">study / A</button>
+          <button type="button" data-sid="dairy" aria-pressed="false">dairy / sick</button>
+        </div>
+        <span class="grp">formal logic</span>
+        <div class="seg" role="group" aria-label="Formal logic pairs — these lock the world">
+          <button type="button" data-sid="f73" aria-pressed="false">3+4=7 → 3 sides</button>
+          <button type="button" data-sid="f74" aria-pressed="false">3+4=7 → 4 sides</button>
+          <button type="button" data-sid="f123" aria-pressed="false">3+4=12 → 3 sides</button>
+          <button type="button" data-sid="f124" aria-pressed="false">3+4=12 → 4 sides</button>
+        </div>
+      </div>
+      <div class="note" data-edit="note-picker">the formal pairs stage the worksheet's vacuous-truth rows — arithmetic and geometry set the world and lock the toggles</div>
+    </div>
+    <div class="full ctl">
+      <label>Highlight a pair</label>
+      <div class="seg" role="group" aria-label="Highlight a pair of cards">
+        <button type="button" id="hlOff" aria-pressed="true">off</button>
+        <button type="button" id="hlSC" aria-pressed="false">statement + contrapositive</button>
+        <button type="button" id="hlCI" aria-pressed="false">converse + inverse</button>
+      </div>
+    </div>
+  </div>
+
+  <h2 data-edit="h2-deduction">One new fact, one deduction hop</h2>
+  <p class="prose muted" style="font-family:var(--font-ui); font-size:var(--text-sm)" data-edit="deduction-intro">
+    Suppose the promise <span class="mono">P → Q</span> itself is trustworthy. Then a single
+    new fact buys you exactly one deduction. Learning P is true pushes <em>forward</em>
+    (modus ponens); learning Q is false pushes <em>backward</em> along the contrapositive
+    <span class="mono">¬Q → ¬P</span> (modus tollens).</p>
+  <div class="striprow">
+    <button class="btn" id="btnPonens" type="button">I learned P is true ▸</button>
+    <button class="btn" id="btnTollens" type="button">I learned Q is false ▸</button>
+    <span class="hint" id="stripNote" hidden>arithmetic and geometry already decided this world — nothing left to learn; pick an everyday sentence or run a worksheet example</span>
+  </div>
+  <div class="striprow">
+    <span class="grp">the worksheet's two examples:</span>
+    <button class="btn" id="btnExPonens" type="button">work / party ▸ ponens</button>
+    <button class="btn" id="btnExTollens" type="button">dairy / sick ▸ tollens</button>
+  </div>
+  <div class="chain" id="chain" aria-live="polite" hidden>
+    <div class="chainbox">
+      <div class="lbl">the promise · <span class="mono">P → Q</span></div>
+      <div class="txt" id="ch1t"></div>
+    </div>
+    <div class="chainbox">
+      <div class="lbl" id="ch2l"></div>
+      <div class="txt" id="ch2t"></div>
+    </div>
+    <div class="chainbox conc" id="ch3">
+      <div class="lbl" id="ch3l"></div>
+      <div class="txt" id="ch3t"></div>
+    </div>
+  </div>
+
+  <div data-slot="notes-bottom"></div>
+
+  <div class="foot">
+    <button class="btn" id="reset" type="button">Reset</button>
+    <span class="hint" data-edit="hint-try">Try: earn all sixteen cells. Only one world breaks the promise. Which cousin's column never disagrees with the statement's?</span>
+  </div>
+
+</div>
+
+<script type="application/json" id="m170-config">
+{
+  "_v": 1,
+  "openSentence": "key",
+  "sentences": {
+    "key": {
+      "label": "key / door", "locked": null,
+      "pT": "you have a key",          "pF": "you do not have a key",
+      "qT": "you can unlock the door", "qF": "you cannot unlock the door",
+      "cards": {
+        "stmt":   "If you have a key, then you can unlock the door.",
+        "contra": "If you cannot unlock the door, then you do not have a key.",
+        "conv":   "If you can unlock the door, then you have a key.",
+        "inv":    "If you do not have a key, then you cannot unlock the door."
+      },
+      "ponens":  {"fact": "You have a key.",             "conc": "So you can unlock the door."},
+      "tollens": {"fact": "You cannot unlock the door.", "conc": "So you do not have a key."}
+    },
+    "study": {
+      "label": "study / A", "locked": null,
+      "pT": "I study",    "pF": "I do not study",
+      "qT": "I get an A", "qF": "I do not get an A",
+      "cards": {
+        "stmt":   "If I study, then I get an A.",
+        "contra": "If I do not get an A, then I did not study.",
+        "conv":   "If I get an A, then I studied.",
+        "inv":    "If I do not study, then I do not get an A."
+      },
+      "ponens":  {"fact": "I studied.",          "conc": "So I get an A."},
+      "tollens": {"fact": "I did not get an A.", "conc": "So I did not study."}
+    },
+    "dairy": {
+      "label": "dairy / sick", "locked": null,
+      "pT": "I eat dairy", "pF": "I do not eat dairy",
+      "qT": "I get sick",  "qF": "I do not get sick",
+      "cards": {
+        "stmt":   "If I eat dairy, then I get sick.",
+        "contra": "If I do not get sick, then I did not eat dairy.",
+        "conv":   "If I get sick, then I ate dairy.",
+        "inv":    "If I do not eat dairy, then I do not get sick."
+      },
+      "ponens":  {"fact": "I ate dairy.",        "conc": "So I will get sick."},
+      "tollens": {"fact": "I did not get sick.", "conc": "So I did not eat dairy."}
+    },
+    "f73": {
+      "label": "3+4=7 → 3 sides", "locked": {"P": true, "Q": true},
+      "pT": "3 + 4 = 7", "pF": "3 + 4 ≠ 7",
+      "qT": "triangles have 3 sides", "qF": "triangles do not have 3 sides",
+      "cards": {
+        "stmt":   "If 3 + 4 = 7, then triangles have 3 sides.",
+        "contra": "If triangles do not have 3 sides, then 3 + 4 ≠ 7.",
+        "conv":   "If triangles have 3 sides, then 3 + 4 = 7.",
+        "inv":    "If 3 + 4 ≠ 7, then triangles do not have 3 sides."
+      }
+    },
+    "f74": {
+      "label": "3+4=7 → 4 sides", "locked": {"P": true, "Q": false},
+      "pT": "3 + 4 = 7", "pF": "3 + 4 ≠ 7",
+      "qT": "triangles have 4 sides", "qF": "triangles do not have 4 sides",
+      "cards": {
+        "stmt":   "If 3 + 4 = 7, then triangles have 4 sides.",
+        "contra": "If triangles do not have 4 sides, then 3 + 4 ≠ 7.",
+        "conv":   "If triangles have 4 sides, then 3 + 4 = 7.",
+        "inv":    "If 3 + 4 ≠ 7, then triangles do not have 4 sides."
+      }
+    },
+    "f123": {
+      "label": "3+4=12 → 3 sides", "locked": {"P": false, "Q": true},
+      "pT": "3 + 4 = 12", "pF": "3 + 4 ≠ 12",
+      "qT": "triangles have 3 sides", "qF": "triangles do not have 3 sides",
+      "cards": {
+        "stmt":   "If 3 + 4 = 12, then triangles have 3 sides.",
+        "contra": "If triangles do not have 3 sides, then 3 + 4 ≠ 12.",
+        "conv":   "If triangles have 3 sides, then 3 + 4 = 12.",
+        "inv":    "If 3 + 4 ≠ 12, then triangles do not have 3 sides."
+      }
+    },
+    "f124": {
+      "label": "3+4=12 → 4 sides", "locked": {"P": false, "Q": false},
+      "pT": "3 + 4 = 12", "pF": "3 + 4 ≠ 12",
+      "qT": "triangles have 4 sides", "qF": "triangles do not have 4 sides",
+      "cards": {
+        "stmt":   "If 3 + 4 = 12, then triangles have 4 sides.",
+        "contra": "If triangles do not have 4 sides, then 3 + 4 ≠ 12.",
+        "conv":   "If triangles have 4 sides, then 3 + 4 = 12.",
+        "inv":    "If 3 + 4 ≠ 12, then triangles do not have 4 sides."
+      }
+    }
+  },
+  "examples": {
+    "ponens": {
+      "rule": "If I finish my work, then I can go to the party.",
+      "factLbl": "the new fact — P is T",
+      "fact": "I finished my work.",
+      "concLbl": "⇒ deduce — Q is T · modus ponens",
+      "conc": "So I can go to the party."
+    },
+    "tollens": {
+      "rule": "If I eat dairy, then I get sick.",
+      "factLbl": "the new fact — Q is F (¬Q)",
+      "fact": "I did not get sick.",
+      "concLbl": "⇒ deduce — P is F (¬P) · modus tollens",
+      "conc": "So I did not eat dairy."
+    }
+  },
+  "feedback": {
+    "right": "Right. {col} in the world P = {p}, Q = {q} is {ans}.",
+    "wrong": "Not yet. You are looking at the row where P is {p} and Q is {q}. Read {col} out loud as a promise in that world, and ask the only question that matters: is there a case here where the promise is actually broken? The cell is open again.",
+    "done": "All sixteen earned. Now read down the columns.",
+    "cleared": "Cleared. Every cell is open again.",
+    "symRight": "✓",
+    "symWrong": "✗"
+  },
+  "_meta": {
+    "openSentence": {"label": "Sentence loaded at start", "kind": "choice",
+      "options": ["key", "study", "dairy", "f73", "f74", "f123", "f124"]},
+    "sentences": {"label": "The worksheet's sentences",
+      "help": "Each entry needs pT/pF/qT/qF (the English for each literal) and the four cards. `locked` pins the world (the formal arithmetic rows); ponens/tollens are optional and only used by the deduction strip. Truth values are never stored here — the page computes them, and the student has to type them."},
+    "examples": {"label": "The worksheet's two fixed deduction examples"},
+    "feedback": {"label": "What the page says after each answer", "kind": "text",
+      "help": "Placeholders: {col} the column name, {p} and {q} the world's truth values, {ans} the correct letter, {hyp} T or F for that column's hypothesis in this world. Keep {ans} and {hyp} OUT of the wrong message — either one gives the answer away."}
+  }
+}
+</script>
+
+<script>
+(function(){
+"use strict";
+
+var CFG = JSON.parse(document.getElementById("m170-config").textContent);
+
+/* ================= data — every English variant hand-written =================
+   (grammar is authored, not generated: tense and negation read naturally) */
+var SENTENCES = CFG.sentences || {};
+
+/* the worksheet's two fixed deduction examples */
+var EXAMPLES = CFG.examples || {};
+var MSG = CFG.feedback || {};
+
+/* the four cousins: hypothesis and conclusion as literals [letter, positive?] */
+var CARDS = [
+  { id:"stmt",   hyp:["P",true],  conc:["Q",true]  },
+  { id:"contra", hyp:["Q",false], conc:["P",false] },
+  { id:"conv",   hyp:["Q",true],  conc:["P",true]  },
+  { id:"inv",    hyp:["P",false], conc:["Q",false] }
+];
+/* the four worlds, table row order */
+var WORLDS = [ {P:true,Q:true}, {P:true,Q:false}, {P:false,Q:true}, {P:false,Q:false} ];
+
+/* ---------- theme: auto → light → dark (design-system v2, exemplar pattern) ---------- */
+var root = document.documentElement, themeBtn = document.getElementById("themeBtn");
+function themeLabel(){
+  var m = root.dataset.theme || "auto";
+  themeBtn.textContent = m==="dark" ? "● dark" : m==="light" ? "○ light" : "◑ auto";
+}
+themeBtn.addEventListener("click", function(){
+  var cur = root.dataset.theme || "auto";
+  var next = cur==="auto" ? "light" : cur==="light" ? "dark" : "auto";
+  if(next==="auto"){ delete root.dataset.theme; try{localStorage.removeItem("m170-theme");}catch(e){} }
+  else { root.dataset.theme = next; try{localStorage.setItem("m170-theme", next);}catch(e){} }
+  themeLabel(); render();
+});
+if(window.matchMedia){ window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function(){ render(); }); }
+themeLabel();
+
+/* ---------- state (initial teaching state: first sentence, P=T Q=T, table empty) ----
+   ROUND 2 (professor, 2026-07-27): "It should be earned not given." Nothing in this
+   state records a truth value the student has been shown — `earned` records only which
+   cells they typed correctly, and every stamp on the page is gated behind it. */
+var SIDS = Object.keys(SENTENCES);
+var OPEN = SENTENCES[CFG.openSentence] ? CFG.openSentence : SIDS[0];
+var COLNAME = {stmt:"P→Q", contra:"¬Q→¬P", conv:"Q→P", inv:"¬P→¬Q"};
+var state = {
+  sid: OPEN, P:true, Q:true,
+  earned:{},        /* "world-card" → true, once typed correctly */
+  bad:{},           /* "world-card" → true while the last attempt was wrong */
+  hl:"off"
+};
+
+function cur(){ return SENTENCES[state.sid] || {cards:{}}; }
+function widx(P,Q){ return (P?0:2)+(Q?0:1); }        /* TT=0 TF=1 FT=2 FF=3 */
+function imp(h,c){ return !h || c; }                 /* the whole truth of if-then */
+function litVal(lit, P, Q){ var v = lit[0]==="P" ? P : Q; return lit[1] ? v : !v; }
+function litSym(lit){ return (lit[1] ? "" : "¬") + lit[0]; }
+function cap(s){ return String(s).charAt(0).toUpperCase()+String(s).slice(1)+"."; }
+function key(i,cid){ return i+"-"+cid; }
+function cardById(cid){
+  for(var i=0;i<CARDS.length;i++) if(CARDS[i].id===cid) return CARDS[i];
+  return CARDS[0];
+}
+function answerOf(i,cid){
+  var w=WORLDS[i], c=cardById(cid);
+  return imp(litVal(c.hyp,w.P,w.Q), litVal(c.conc,w.P,w.Q)) ? "T" : "F";
+}
+function isEarned(i,cid){ return !!state.earned[key(i,cid)]; }
+function nEarned(){ var n=0; for(var k in state.earned){ if(state.earned[k]) n++; } return n; }
+function fill(tpl, vars){
+  return String(tpl||"").replace(/\{(\w+)\}/g, function(m,k){
+    return vars[k]!==undefined ? vars[k] : m;
+  });
+}
+function interact(action){ if(action) action(); render(); }
+
+/* ---------- DOM refs ---------- */
+function $(id){ return document.getElementById(id); }
+var btnPT=$("btnPT"), btnPF=$("btnPF"), btnQT=$("btnQT"), btnQF=$("btnQF");
+var pickBtns = Array.prototype.slice.call(document.querySelectorAll("[data-sid]"));
+var hlBtns = { off:$("hlOff"), sc:$("hlSC"), ci:$("hlCI") };
+var chain=$("chain"), ch3=$("ch3");
+
+/* build the table body once: marker + P + Q + four cells the STUDENT fills in */
+var COLS = ["stmt","contra","conv","inv"];
+var tbody = $("tbody");
+var inputs = [];                       /* flat, in tab/arrow order */
+var grid = [];                         /* grid[i][j] → the input element */
+WORLDS.forEach(function(w, i){
+  var tr = document.createElement("tr");
+  var mk = document.createElement("td"); mk.className="markcol"; mk.id="mark"+i; tr.appendChild(mk);
+  [w.P, w.Q].forEach(function(v){
+    var td = document.createElement("td"); td.textContent = v ? "T" : "F"; tr.appendChild(td);
+  });
+  grid[i] = [];
+  COLS.forEach(function(c, j){
+    var td = document.createElement("td");
+    td.className = "col-"+c+" cell"; td.id = "tt"+i+"-"+c;
+    var inp = document.createElement("input");
+    inp.type = "text"; inp.className = "cellin";
+    inp.setAttribute("maxlength","1");
+    inp.setAttribute("autocomplete","off");
+    inp.setAttribute("autocapitalize","characters");
+    inp.setAttribute("inputmode","text");
+    inp.setAttribute("aria-label",
+      COLNAME[c]+" in the world where P is "+(w.P?"true":"false")+
+      " and Q is "+(w.Q?"true":"false")+". Type T or F.");
+    inp.dataset.w = i; inp.dataset.c = c; inp.dataset.j = j;
+    var stat = document.createElement("span");
+    stat.className = "stat"; stat.setAttribute("aria-hidden","true");
+    stat.id = "st"+i+"-"+c;
+    td.appendChild(inp); td.appendChild(stat);
+    tr.appendChild(td);
+    inputs.push(inp); grid[i][j] = inp;
+  });
+  tr.id = "row"+i;
+  tbody.appendChild(tr);
+});
+$("scoreTot").textContent = String(WORLDS.length*COLS.length);
+
+/* ---------- render ---------- */
+function evalText(card){
+  var hv = litVal(card.hyp, state.P, state.Q), cv = litVal(card.conc, state.P, state.Q);
+  var hs = litSym(card.hyp), cs = litSym(card.conc);
+  if(!hv) return "hypothesis "+hs+" is F here — never tested, so the promise stands (vacuously true)";
+  return cv ? "hypothesis "+hs+" is T and conclusion "+cs+" is T — promise kept"
+            : "hypothesis "+hs+" is T but conclusion "+cs+" is F — promise broken";
+}
+
+function render(){
+  var s = cur(), locked = s.locked;
+
+  /* world banner */
+  $("wP").textContent = state.P ? "T" : "F";
+  $("wQ").textContent = state.Q ? "T" : "F";
+  $("wEng").textContent = cap(state.P ? s.pT : s.pF) + " " + cap(state.Q ? s.qT : s.qF);
+  $("wFlag").hidden = !(state.P && !state.Q);
+
+  /* four cards — a stamp appears ONLY once its cell has been earned in this world */
+  var hereIdx = widx(state.P, state.Q);
+  CARDS.forEach(function(card){
+    var val = imp(litVal(card.hyp, state.P, state.Q), litVal(card.conc, state.P, state.Q));
+    var got = isEarned(hereIdx, card.id);
+    $("sent-"+card.id).textContent = (s.cards||{})[card.id] || "";
+    $("eval-"+card.id).textContent = got ? evalText(card)
+      : "you have not filled in this world's " + COLNAME[card.id] + " cell yet";
+    var st = $("stamp-"+card.id);
+    st.textContent = got ? (val ? "T" : "F") : "?";
+    st.className = "stamp" + (got ? (val ? "" : " f") : " unknown");
+    $("stamplbl-"+card.id).textContent = got ? (val ? "true" : "false") : "not earned";
+  });
+
+  /* highlight pair: gold tie + notes + table columns */
+  $("pairRow1").className = "pair" + (state.hl==="sc" ? " tied" : "");
+  $("pairRow2").className = "pair" + (state.hl==="ci" ? " tied" : "");
+  $("note1").hidden = state.hl!=="sc";
+  $("note2").hidden = state.hl!=="ci";
+  $("ttable").className = "ttable" + (state.hl==="sc" ? " hl-sc" : state.hl==="ci" ? " hl-ci" : "");
+  Object.keys(hlBtns).forEach(function(k){ hlBtns[k].setAttribute("aria-pressed", String(state.hl===k)); });
+
+  /* toggles */
+  btnPT.setAttribute("aria-pressed", String(state.P));
+  btnPF.setAttribute("aria-pressed", String(!state.P));
+  btnQT.setAttribute("aria-pressed", String(state.Q));
+  btnQF.setAttribute("aria-pressed", String(!state.Q));
+  [btnPT,btnPF,btnQT,btnQF].forEach(function(b){ b.disabled = !!locked; });
+  $("pLock").hidden = !locked;
+  $("qLock").hidden = !locked;
+  $("pname").textContent = "“" + s.pT + "”";
+  $("qname").textContent = "“" + s.qT + "”";
+
+  /* sentence picker */
+  pickBtns.forEach(function(b){ b.setAttribute("aria-pressed", String(b.dataset.sid===state.sid)); });
+
+  /* earned truth table — cells carry ONLY what the student typed */
+  var here = hereIdx, n = 0;
+  WORLDS.forEach(function(w, i){
+    $("row"+i).className = (i===here) ? "here" : "";
+    $("mark"+i).textContent = (i===here) ? "▸" : "";
+    COLS.forEach(function(cid, j){
+      var td = $("tt"+i+"-"+cid), inp = grid[i][j], stat = $("st"+i+"-"+cid);
+      var got = isEarned(i,cid), bad = !!state.bad[key(i,cid)];
+      if(got) n++;
+      td.className = "col-"+cid+" cell" + (got ? " ok" : bad ? " bad" : "");
+      inp.value = got ? answerOf(i,cid) : inp.value;
+      inp.readOnly = got;
+      inp.setAttribute("aria-invalid", String(bad));
+      /* shape + symbol + text, never colour alone */
+      stat.textContent = got ? (MSG.symRight||"✓") : bad ? (MSG.symWrong||"✗") : "";
+    });
+  });
+  $("scoreN").textContent = String(n);
+  var tot = WORLDS.length*COLS.length;
+  $("scoreFill").style.width = (100*n/tot).toFixed(1)+"%";
+  $("tableDone").hidden = (n < tot);
+
+  /* deduction strip: the formal pair leaves nothing to learn */
+  $("btnPonens").disabled = !!locked;
+  $("btnTollens").disabled = !!locked;
+  $("stripNote").hidden = !locked;
+}
+
+/* ---------- world toggles ---------- */
+btnPT.addEventListener("click", function(){ interact(function(){ state.P = true;  }); });
+btnPF.addEventListener("click", function(){ interact(function(){ state.P = false; }); });
+btnQT.addEventListener("click", function(){ interact(function(){ state.Q = true;  }); });
+btnQF.addEventListener("click", function(){ interact(function(){ state.Q = false; }); });
+
+/* ---------- sentence picker (formal presets set + lock the world) ---------- */
+pickBtns.forEach(function(b){
+  b.addEventListener("click", function(){
+    interact(function(){
+      state.sid = b.dataset.sid;
+      var lk = SENTENCES[state.sid].locked;
+      if(lk){ state.P = lk.P; state.Q = lk.Q; }
+    });
+  });
+});
+
+/* ---------- the earned table: type it, get marked, try again ----------------
+   ROUND 2. There is no control anywhere on this page that fills a truth value in
+   for the student. A cell locks (✓, gold wash) only on a correct entry; a wrong
+   entry is marked (✗, dashed ink outline) and cleared so it can be retried, and
+   the message names the world and the column's hypothesis but never the answer. */
+function setFeedback(kind, text){
+  var el = $("feedback");
+  el.className = "feedback" + (kind ? " "+kind : "");
+  el.textContent = "";
+  if(!text) return;
+  var symTxt = kind==="good" ? (MSG.symRight||"✓") : kind==="bad" ? (MSG.symWrong||"✗") : "";
+  if(symTxt){
+    var sym = document.createElement("span");
+    sym.className = "sym"; sym.textContent = symTxt;
+    el.appendChild(sym);
+  }
+  el.appendChild(document.createTextNode(text));
+}
+function nextOpen(from){
+  for(var k=1;k<=inputs.length;k++){
+    var el = inputs[(from+k+inputs.length)%inputs.length];
+    if(!isEarned(+el.dataset.w, el.dataset.c)) return el;
+  }
+  return null;
+}
+function submit(inp, letter){
+  var i = +inp.dataset.w, cid = inp.dataset.c, k = key(i,cid);
+  if(state.earned[k]) return;
+  var right = answerOf(i,cid), w = WORLDS[i], card = cardById(cid);
+  var vars = { col:COLNAME[cid], p:(w.P?"T":"F"), q:(w.Q?"T":"F"), ans:right,
+               hyp:(litVal(card.hyp,w.P,w.Q)?"T":"F") };
+  if(letter===right){
+    state.earned[k] = true; delete state.bad[k];
+    render();
+    var nx = nextOpen(inputs.indexOf(inp));
+    if(nx){ setFeedback("good", fill(MSG.right, vars)); nx.focus(); }
+    else   { setFeedback("good", MSG.done || "All earned."); }
+  } else {
+    state.bad[k] = true; inp.value = "";
+    render();
+    setFeedback("bad", fill(MSG.wrong, vars));
+    inp.focus();
+  }
+}
+var lastCell = null;
+inputs.forEach(function(inp){
+  inp.addEventListener("focus", function(){ lastCell = inp; });
+  inp.addEventListener("keydown", function(e){
+    var i = +inp.dataset.w, j = +inp.dataset.j;
+    if(e.key==="ArrowRight"||e.key==="ArrowLeft"||e.key==="ArrowUp"||e.key==="ArrowDown"){
+      e.preventDefault();
+      var ni=i, nj=j;
+      if(e.key==="ArrowRight")      nj=(j+1)%COLS.length;
+      else if(e.key==="ArrowLeft")  nj=(j+COLS.length-1)%COLS.length;
+      else if(e.key==="ArrowDown")  ni=(i+1)%WORLDS.length;
+      else                          ni=(i+WORLDS.length-1)%WORLDS.length;
+      grid[ni][nj].focus();
+      return;
+    }
+    var ch = e.key.length===1 ? e.key.toUpperCase() : "";
+    if(ch==="T"||ch==="F"){ e.preventDefault(); submit(inp, ch); return; }
+    if(e.key==="Enter"){
+      e.preventDefault();
+      var v = inp.value.trim().toUpperCase();
+      if(v==="T"||v==="F") submit(inp, v);
+      return;
+    }
+    if(e.key.length===1) e.preventDefault();   /* only T and F may be typed */
+  });
+  /* touch keyboards that do not dispatch a usable keydown land here */
+  inp.addEventListener("input", function(){
+    var v = inp.value.trim().toUpperCase();
+    if(v==="T"||v==="F") submit(inp, v);
+    else if(v) inp.value = "";
+  });
+});
+function padPress(letter){
+  var inp = (lastCell && !lastCell.readOnly) ? lastCell : nextOpen(-1);
+  if(!inp){ setFeedback("good", MSG.done || "All earned."); return; }
+  inp.focus(); submit(inp, letter);
+}
+$("padT").addEventListener("click", function(){ padPress("T"); });
+$("padF").addEventListener("click", function(){ padPress("F"); });
+function clearAnswers(){
+  state.earned = {}; state.bad = {};
+  inputs.forEach(function(x){ x.value = ""; x.readOnly = false; });
+  render();
+}
+$("clearBtn").addEventListener("click", function(){
+  clearAnswers();
+  setFeedback("", MSG.cleared || "Cleared. Every cell is open again.");
+});
+
+/* ---------- highlight pair (a lens, not a visit) ---------- */
+Object.keys(hlBtns).forEach(function(k){
+  hlBtns[k].addEventListener("click", function(){ state.hl = k; render(); });
+});
+
+/* ---------- modus ponens / tollens: one animated deduction hop ---------- */
+var chainTimer = null;
+function runChain(rule, factLbl, fact, concLbl, conc){
+  $("ch1t").textContent = rule;
+  $("ch2l").textContent = factLbl;
+  $("ch2t").textContent = fact;
+  $("ch3l").textContent = concLbl;
+  $("ch3t").textContent = conc;
+  chain.hidden = false;
+  ch3.classList.remove("shown");
+  void ch3.offsetWidth; /* restart the transition */
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if(chainTimer) clearTimeout(chainTimer);
+  chainTimer = setTimeout(function(){ ch3.classList.add("shown"); }, reduce ? 0 : 350);
+}
+$("btnPonens").addEventListener("click", function(){
+  var s = cur(); if(s.locked || !s.ponens) return;
+  runChain(s.cards.stmt, "the new fact — P is T", s.ponens.fact,
+           "⇒ deduce — Q is T · modus ponens", s.ponens.conc);
+});
+$("btnTollens").addEventListener("click", function(){
+  var s = cur(); if(s.locked || !s.tollens) return;
+  runChain(s.cards.stmt, "the new fact — Q is F (¬Q)", s.tollens.fact,
+           "⇒ deduce — P is F (¬P) · modus tollens", s.tollens.conc);
+});
+$("btnExPonens").addEventListener("click", function(){
+  var e = EXAMPLES.ponens;  runChain(e.rule, e.factLbl, e.fact, e.concLbl, e.conc);
+});
+$("btnExTollens").addEventListener("click", function(){
+  var e = EXAMPLES.tollens; runChain(e.rule, e.factLbl, e.fact, e.concLbl, e.conc);
+});
+
+/* ---------- Reset: exact initial teaching state ---------- */
+$("reset").addEventListener("click", function(){
+  state.sid = OPEN; state.P = true; state.Q = true;
+  state.hl = "off";
+  var lk0 = (SENTENCES[OPEN]||{}).locked;
+  if(lk0){ state.P = !!lk0.P; state.Q = !!lk0.Q; }
+  chain.hidden = true;
+  ch3.classList.remove("shown");
+  if(chainTimer) clearTimeout(chainTimer);
+  clearAnswers();
+  setFeedback("", "");
+});
+
+(function boot(){
+  var lk = (SENTENCES[OPEN]||{}).locked;
+  if(lk){ state.P = !!lk.P; state.Q = !!lk.Q; }
+  render();
+})();
+})();
+</script>
+</body>
+</html>

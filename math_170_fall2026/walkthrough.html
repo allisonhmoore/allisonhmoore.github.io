@@ -1,0 +1,599 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Feedback Round — what changed &amp; how to drive it · MATH 170</title>
+
+<!-- Doc page (lint DOC_PAGES): the professor-facing walkthrough of the 2026-07
+     feedback round, plus operating guides for the Studio and the classroom app.
+     Self-contained; works from a double-click; every "before" link points into
+     archive/03-round1-build/gallery/ (the exact set the professor reviewed). -->
+<style>
+/* hidden must always win over any author display rule */
+[hidden]{display:none !important}
+:root{
+  /* color — light */
+  --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+  --gold-soft:rgba(218,165,32,.12);
+  --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  /* type */
+  --font-body: ui-serif, Georgia, "Times New Roman", serif;
+  --font-ui:   system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+  --text-xl:1.75rem; --text-lg:1.25rem; --text-base:1rem; --text-sm:.875rem; --text-xs:.75rem;
+  --leading-prose:1.6; --leading-ui:1.3;
+  /* spacing */
+  --space-1:4px; --space-2:8px; --space-3:16px; --space-4:24px; --space-5:32px; --space-6:48px;
+  /* motion */
+  --ease:cubic-bezier(0.16,1,0.3,1); --dur:200ms;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+    --gold-soft:rgba(227,179,65,.16);
+    --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+  --gold-soft:rgba(227,179,65,.16);
+  --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+}
+@media (prefers-reduced-motion: reduce){ :root{ --dur:0ms; } }
+@media print{
+  :root, :root[data-theme="dark"]{
+    --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+    --gold-soft:rgba(218,165,32,.12);
+    --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  }
+  .theme-btn, .tabs, .filters, .tourctl, .roles{display:none !important}
+  .panel[hidden]{display:block !important}
+  .card .more{display:block !important; max-height:none !important}
+  .station{display:grid !important}
+  .card{break-inside:avoid}
+}
+
+*{box-sizing:border-box}
+html{color-scheme:light dark}
+body{margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--font-body); font-size:var(--text-base); line-height:var(--leading-prose);
+  -webkit-text-size-adjust:100%;}
+.wrap{max-width:960px; margin:0 auto; padding:var(--space-5) var(--space-4) var(--space-6);}
+.topbar{display:flex; align-items:baseline; justify-content:space-between; gap:var(--space-3);
+  border-bottom:1px solid var(--gray-line); padding-bottom:var(--space-2); margin-bottom:var(--space-4);}
+.eyebrow{font-family:var(--font-ui); font-size:var(--text-xs); letter-spacing:.08em; text-transform:uppercase; color:var(--gray-text);}
+h1{font-weight:600; font-size:var(--text-xl); line-height:1.2; margin:.2em 0 .1em;}
+h2{font-family:var(--font-ui); font-weight:600; font-size:var(--text-lg); line-height:1.3; margin:var(--space-5) 0 var(--space-2);}
+h3{font-family:var(--font-ui); font-weight:600; font-size:var(--text-base); margin:var(--space-3) 0 var(--space-1);}
+p{margin:0 0 var(--space-3);}
+.prose{max-width:70ch;}
+.muted{color:var(--gray-text);}
+.mono,code{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:.92em;}
+code{background:var(--gray-fill); border:1px solid var(--gray-line); border-radius:2px; padding:0 .3em;}
+a{color:inherit;}
+:focus-visible{outline:2px solid var(--ink); outline-offset:2px; box-shadow:0 0 0 5px var(--gold-soft);}
+.theme-btn{font-family:var(--font-ui); font-size:var(--text-xs); background:none;
+  border:1px solid var(--gray-line); color:var(--gray-text); padding:6px 10px; cursor:pointer; border-radius:2px;}
+.theme-btn:hover{background:var(--gray-fill);}
+.btn{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:1px solid var(--gray-line); border-radius:2px; padding:6px 14px; cursor:pointer;}
+.btn:hover{background:var(--gold-soft);}
+.btn.primary{background:var(--gold); color:#111111; border:1px solid var(--ink); font-weight:600;}
+.btn[aria-pressed="true"]{border-color:var(--ink); font-weight:600; background:var(--gold-soft);}
+
+/* ---- tabs ---- */
+.tabs{display:flex; gap:var(--space-2); margin:var(--space-4) 0 var(--space-3); flex-wrap:wrap;
+  border-bottom:1px solid var(--gray-line); padding-bottom:var(--space-2);}
+.tabs button{font-family:var(--font-ui); font-size:var(--text-sm); background:none; color:var(--gray-text);
+  border:1px solid transparent; border-radius:2px; padding:8px 14px; cursor:pointer;}
+.tabs button:hover{color:var(--ink); background:var(--gray-fill);}
+.tabs button[aria-selected="true"]{color:var(--ink); font-weight:600; background:var(--gold-soft);
+  border-color:var(--gold);}
+.panel{animation:rise var(--dur) var(--ease);}
+@keyframes rise{from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none}}
+
+/* ---- summary strip ---- */
+.strip{display:flex; gap:var(--space-3); flex-wrap:wrap; margin:0 0 var(--space-4);}
+.stat{border:1px solid var(--gray-line); border-left:3px solid var(--gold); border-radius:2px;
+  padding:8px 14px; font-family:var(--font-ui);}
+.stat b{font-size:var(--text-lg); font-variant-numeric:tabular-nums; display:block; line-height:1.1;}
+.stat span{font-size:var(--text-xs); color:var(--gray-text);}
+
+/* ---- filter + cards ---- */
+.filters{display:flex; gap:var(--space-2); flex-wrap:wrap; margin:0 0 var(--space-3);
+  font-family:var(--font-ui);}
+.filters .count{align-self:center; font-size:var(--text-xs); color:var(--gray-text); margin-left:auto;}
+.cards{display:grid; grid-template-columns:repeat(auto-fill, minmax(280px,1fr)); gap:var(--space-2);}
+.card{border:1px solid var(--gray-line); border-radius:2px; padding:var(--space-3);
+  font-family:var(--font-ui); font-size:var(--text-sm); display:flex; flex-direction:column;}
+.card h3{margin:0 0 4px; font-size:var(--text-sm);}
+.card .verdict{display:inline-block; font-size:var(--text-xs); border-radius:999px; padding:0 9px;
+  margin-bottom:6px; border:1px solid var(--gray-line); color:var(--gray-text); align-self:flex-start;}
+.card[data-v="fixed"] .verdict{border-color:var(--gold); color:var(--ink); background:var(--gold-soft);}
+.card[data-v="reworked"] .verdict{border-color:var(--ink); color:var(--ink);}
+.card[data-v="new"] .verdict{background:var(--gold); color:#111111; border-color:var(--ink); font-weight:600;}
+.card[data-v="removed"]{background:var(--gray-fill);}
+.card[data-v="removed"] .verdict{text-decoration:line-through;}
+.card .sum{color:var(--gray-text); margin:0 0 6px; flex:1;}
+.card .more{max-height:0; overflow:hidden; transition:max-height var(--dur) var(--ease);}
+.card .more.open{max-height:30em;}
+.card .more p{margin:6px 0;}
+.card .ask{border-left:2px solid var(--gold); background:var(--gold-soft); padding:4px 8px;
+  font-style:italic;}
+.card .links{display:flex; gap:10px; margin-top:8px; font-size:var(--text-xs);}
+.card .links a{color:var(--gray-text);}
+.card .links a:hover{color:var(--ink);}
+.card .flip{font-family:var(--font-ui); font-size:var(--text-xs); background:none; border:none;
+  color:var(--gray-text); cursor:pointer; padding:2px 0; text-align:left; text-decoration:underline;}
+.card .flip:hover{color:var(--ink);}
+
+/* ---- tour ---- */
+.tourctl{display:flex; gap:var(--space-2); align-items:center; margin:var(--space-3) 0; font-family:var(--font-ui);}
+.pips{display:flex; gap:5px; margin-left:var(--space-2);}
+.pips span{width:9px; height:9px; border-radius:50%; border:1px solid var(--ink); display:inline-block;}
+.pips span.on{background:var(--gold);}
+.station{display:grid; grid-template-columns:minmax(240px,1fr) minmax(260px,1.2fr); gap:var(--space-4);
+  border:1px solid var(--gray-line); border-radius:2px; padding:var(--space-4); align-items:start;
+  animation:rise var(--dur) var(--ease);}
+@media(max-width:700px){ .station{grid-template-columns:1fr;} }
+.mock{border:1px solid var(--ink); border-radius:3px; background:var(--paper); padding:10px;
+  font-family:var(--font-ui); font-size:var(--text-xs); min-height:170px;}
+.mock .mbar{display:flex; gap:6px; border-bottom:1px solid var(--gray-line); padding-bottom:6px; margin-bottom:8px; color:var(--gray-text);}
+.mock .mrow{border:1px solid var(--gray-line); border-radius:2px; padding:6px 8px; margin-bottom:6px;}
+.mock .mbtn{display:inline-block; border:1px solid var(--gray-line); border-radius:2px; padding:2px 8px; margin:2px 3px 2px 0; background:var(--paper);}
+.mock .mbtn.gold{background:var(--gold); color:#111111; border-color:var(--ink); font-weight:600;}
+.mock .mtext{color:var(--gray-text); margin:4px 0;}
+.mock .hot{outline:2px solid var(--gold); outline-offset:2px; animation:pulse 1.6s var(--ease) infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 var(--gold-soft)} 50%{box-shadow:0 0 0 8px var(--gold-soft)}}
+@media (prefers-reduced-motion: reduce){ .mock .hot{animation:none} .panel,.station{animation:none} }
+.station .talk h3{margin-top:0;}
+.station .talk .tip{border-left:2px solid var(--gold); background:var(--gold-soft); padding:4px 8px;
+  font-size:var(--text-sm); font-family:var(--font-ui);}
+
+/* ---- classroom ---- */
+.roles{display:flex; gap:var(--space-2); margin:var(--space-3) 0; font-family:var(--font-ui);}
+.roomwrap{display:grid; grid-template-columns:minmax(260px,1.1fr) minmax(240px,1fr); gap:var(--space-4); align-items:start;}
+@media(max-width:700px){ .roomwrap{grid-template-columns:1fr;} }
+.roomsvg{border:1px solid var(--gray-line); border-radius:2px; width:100%; height:auto; display:block;}
+.modes{display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:var(--space-2); margin-top:var(--space-3);}
+.mode{border:1px solid var(--gray-line); border-left:3px solid var(--gold); border-radius:2px;
+  padding:var(--space-3); font-family:var(--font-ui); font-size:var(--text-sm);}
+.mode h3{margin-top:0;}
+.mode dl{margin:0;} .mode dt{font-weight:600; font-size:var(--text-xs); color:var(--gray-text);
+  text-transform:uppercase; letter-spacing:.05em; margin-top:6px;}
+.mode dd{margin:0 0 2px;}
+.ops{border:1px solid var(--gray-line); border-radius:2px; padding:var(--space-3);
+  font-family:var(--font-ui); font-size:var(--text-sm); margin-top:var(--space-4);}
+.foot{border-top:1px solid var(--gray-line); margin-top:var(--space-6); padding-top:var(--space-3);
+  font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text);}
+.foot a{color:inherit;}
+/* links that only make sense inside the repository disappear from published copies */
+body[data-published="1"] .repo-only{display:none}
+</style>
+<script>
+try{var t=localStorage.getItem("m170-theme"); if(t) document.documentElement.dataset.theme=t;}catch(e){}
+</script>
+</head>
+<body data-published="1">
+<div class="wrap">
+  <div class="topbar">
+    <div class="eyebrow">MATH 170 · The feedback round, walked through</div>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Color theme">◑ auto</button>
+  </div>
+
+  <h1>What changed, and how to drive it</h1>
+  <p class="prose muted">Your review of the gallery came back on July 27th; this page is the
+  round trip. Tab one is every verdict and what we did about it — each card can open the
+  page as it is now <em>and</em> as it was when you reviewed it. Tabs two and three are the
+  operating guides for the two tools that came out of the same round: the Studio (your
+  editing desk) and the Shared Plane (the classroom server).</p>
+
+  <div class="tabs" role="tablist" aria-label="Sections">
+    <button role="tab" id="tab-changes" aria-selected="true" aria-controls="panel-changes" type="button">1 · The gallery, before &amp; after</button>
+    <button role="tab" id="tab-studio" aria-selected="false" aria-controls="panel-studio" type="button">2 · Driving the Studio</button>
+    <button role="tab" id="tab-class" aria-selected="false" aria-controls="panel-class" type="button">3 · Running a classroom</button>
+  </div>
+
+  <!-- ================= TAB 1 · CHANGES ================= -->
+  <section class="panel" id="panel-changes" role="tabpanel" aria-labelledby="tab-changes">
+    <div class="strip">
+      <div class="stat"><b>32</b><span>pages reviewed</span></div>
+      <div class="stat"><b>11</b><span>edited or fixed</span></div>
+      <div class="stat"><b>5</b><span>reworked, replaced or split</span></div>
+      <div class="stat"><b>2</b><span>new games</span></div>
+      <div class="stat"><b>1</b><span>new this round, awaiting review</span></div>
+      <div class="stat"><b>8</b><span>retired (kept in the archive)</span></div>
+      <div class="stat"><b>7</b><span>kept exactly as they were</span></div>
+    </div>
+
+    <div class="filters" id="filters">
+      <button class="btn" data-f="all" aria-pressed="true" type="button">all</button>
+      <button class="btn" data-f="fixed" aria-pressed="false" type="button">edited / fixed</button>
+      <button class="btn" data-f="reworked" aria-pressed="false" type="button">reworked</button>
+      <button class="btn" data-f="new" aria-pressed="false" type="button">new</button>
+      <button class="btn" data-f="removed" aria-pressed="false" type="button">removed</button>
+      <button class="btn" data-f="kept" aria-pressed="false" type="button">kept</button>
+      <span class="count" id="fcount"></span>
+    </div>
+
+    <div class="cards" id="cards"></div>
+
+    <h2>Changes that touched every page at once</h2>
+    <div class="prose">
+      <p><b>The pedagogy is now instructor-only.</b> Every page still carries its teaching
+      spec and worksheet footer in the repo — but publishing strips them, so students never
+      see them. The Studio previews both views.</p>
+      <p><b>Week numbers are gone from everything students see.</b> Gallery sections are
+      topics, published filenames are plain slugs (<code>softmax.html</code>), so content
+      mixes and matches as the semester unfolds.</p>
+      <p><b>Every page became editable without code.</b> Each one now carries its data —
+      points, tables, labels, slider ranges — in one machine-readable block the Studio can
+      edit, generate, or replace from a spreadsheet. The words are annotated the same way.</p>
+      <p><b>One spot color runs the whole set.</b> Goldenrod is the default value of a single
+      knob; six audited alternates ship with it, all AA-checked in both themes.</p>
+      <p><b>Smaller but real:</b> a stronger keyboard-focus ring everywhere; a browser quirk
+      that could show "hidden" elements was fenced off set-wide after it bit twice.</p>
+    </div>
+  </section>
+
+  <!-- ================= TAB 2 · STUDIO ================= -->
+  <section class="panel" id="panel-studio" role="tabpanel" aria-labelledby="tab-studio" hidden>
+    <p class="prose muted">The Studio is the editing desk: a small local web app that lives in
+    the repo. It never edits the original pages — your changes are kept beside them and baked
+    in when you publish. Step through the eight stations; each one is something you can do
+    right now.</p>
+
+    <div class="tourctl">
+      <button class="btn" id="tourBack" type="button">◂ Back</button>
+      <button class="btn primary" id="tourStep" type="button">Step ▸</button>
+      <button class="btn" id="reset" type="button">Reset</button>
+      <div class="pips" id="tourPips" aria-hidden="true"></div>
+      <span class="muted mono" id="tourWhere" aria-live="polite"></span>
+    </div>
+    <div id="tourHost"></div>
+  </section>
+
+  <!-- ================= TAB 3 · CLASSROOM ================= -->
+  <section class="panel" id="panel-class" role="tabpanel" aria-labelledby="tab-class" hidden>
+    <p class="prose muted">The Shared Plane puts one coordinate plane on the projector and
+    makes every student a randomly named cursor on it from their own device. No accounts, no
+    installs — a room code on the board is the whole onboarding.</p>
+
+    <div class="roles" role="group" aria-label="See the room as">
+      <button class="btn" data-role="fac" aria-pressed="true" type="button">as the facilitator</button>
+      <button class="btn" data-role="stu" aria-pressed="false" type="button">as a student</button>
+      <button class="btn" data-role="board" aria-pressed="false" type="button">as the projector</button>
+    </div>
+
+    <div class="roomwrap">
+      <svg class="roomsvg" viewBox="0 0 440 260" aria-label="A mock classroom room">
+        <rect x="1" y="1" width="438" height="258" fill="none" stroke="var(--gray-line)"/>
+        <g stroke="var(--gray-line)" stroke-width="0.5">
+          <line x1="0" y1="65" x2="440" y2="65"/><line x1="0" y1="130" x2="440" y2="130"/>
+          <line x1="0" y1="195" x2="440" y2="195"/><line x1="110" y1="0" x2="110" y2="260"/>
+          <line x1="220" y1="0" x2="220" y2="260"/><line x1="330" y1="0" x2="330" y2="260"/>
+        </g>
+        <line x1="0" y1="130" x2="440" y2="130" stroke="var(--gray-line)" stroke-width="1.5"/>
+        <line x1="220" y1="0" x2="220" y2="260" stroke="var(--gray-line)" stroke-width="1.5"/>
+        <path d="M150 88 l9 22 l-9 -5 l-9 5 Z" fill="var(--gold)"/>
+        <text x="163" y="99" font-size="11" font-family="var(--font-ui)" fill="var(--gold)">Amber Owl (you)</text>
+        <path d="M300 170 l9 22 l-9 -5 l-9 5 Z" fill="var(--ink)"/>
+        <text x="313" y="181" font-size="11" font-family="var(--font-ui)" fill="var(--gray-text)">Plucky Heron</text>
+        <path d="M80 200 l9 22 l-9 -5 l-9 5 Z" fill="var(--ink)"/>
+        <text x="93" y="211" font-size="11" font-family="var(--font-ui)" fill="var(--gray-text)">Quiet Lynx</text>
+        <text id="roomCaption" x="12" y="24" font-size="12" font-family="var(--font-ui)" fill="var(--ink)"></text>
+      </svg>
+      <div>
+        <div id="roleText" class="prose" style="font-family:var(--font-ui); font-size:var(--text-sm)"></div>
+      </div>
+    </div>
+
+    <h2>The three modes</h2>
+    <div class="modes">
+      <div class="mode"><h3>1 · Cluster Yourselves</h3>
+        <dl><dt>You</dt><dd>Type a prompt ("stand by how you got to campus"), let them mill, press <b>freeze</b>, then step k-means live.</dd>
+        <dt>They</dt><dd>Walk their cursor somewhere honest.</dd>
+        <dt>The payoff</dt><dd>The Week 6 algorithm runs on <em>them</em> — same assign/update loop as the page, step by inspectable step.</dd></dl></div>
+      <div class="mode"><h3>2 · Human Coordinate Plane</h3>
+        <dl><dt>You</dt><dd>Set a rule — type any <code>y = mx + b</code> or use a preset — then press <b>check</b> once everyone commits.</dd>
+        <dt>They</dt><dd>Stand where the rule says. No feedback until the check.</dd>
+        <dt>The payoff</dt><dd>Commit-then-reveal: the line is drawn only <em>after</em> the check, so being right had to mean something.</dd></dl></div>
+      <div class="mode"><h3>3 · Rate &amp; Cluster Movies</h3>
+        <dl><dt>You</dt><dd>Collect rows, <b>lock</b>, then step k-means in all eight dimensions.</dd>
+        <dt>They</dt><dd>Rate eight movies −1/0/+1 on their own device and send the row (resend until lock).</dd>
+        <dt>The payoff</dt><dd>No scatterplot exists or is needed — clustering the class in 8-D is the Week 6 page's lesson, made personal.</dd></dl></div>
+    </div>
+
+    <div class="ops">
+      <h3 style="margin-top:0">Ops crib sheet</h3>
+      <p style="margin-bottom:6px"><code>cd classroom &amp;&amp; python3 -m venv venv &amp;&amp; . venv/bin/activate &amp;&amp; pip install -r requirements.txt &amp;&amp; uvicorn app:app --host 0.0.0.0 --port 8170</code></p>
+      <p class="muted" style="margin-bottom:6px">Create a room → your browser URL holds the facilitator key (keep that tab; reopening the same link takes control back). Students join at <code>/CODE</code>; the projector gets <code>/CODE/board</code> with the code huge. Rooms are memory-only: an hour idle and they vanish; a restart just means "make a new room." If your tab dies, anyone may claim the controls until you return. Dropped connections rejoin by themselves.</p>
+      <p class="muted" style="margin:0">Hosting for real: <code>classroom/deploy/</code> has the systemd unit and the nginx WebSocket snippet; there is a Dockerfile too.</p>
+    </div>
+  </section>
+
+  <div class="foot">
+    Companions: <a href="showcase.html">the project story &amp; numbers</a> ·
+    <a href="kinds.html">the eleven page archetypes &amp; the color system</a> ·
+    <a href="index.html">the gallery itself</a> ·
+    <span class="repo-only">the gallery exactly as reviewed (July&nbsp;4) ·
+    open questions we still owe you answers on.</span>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- theme: auto → light → dark (design-system v2) ---------- */
+var root=document.documentElement, themeBtn=document.getElementById("themeBtn");
+function themeLabel(){
+  var m=root.dataset.theme||"auto";
+  themeBtn.textContent = m==="dark" ? "● dark" : m==="light" ? "○ light" : "◑ auto";
+}
+themeBtn.addEventListener("click", function(){
+  var cur=root.dataset.theme||"auto";
+  var next = cur==="auto" ? "light" : cur==="light" ? "dark" : "auto";
+  if(next==="auto"){ delete root.dataset.theme; try{localStorage.removeItem("m170-theme");}catch(e){} }
+  else{ root.dataset.theme=next; try{localStorage.setItem("m170-theme",next);}catch(e){} }
+  themeLabel();
+});
+themeLabel();
+
+/* ---------- tabs ---------- */
+var tabs=[].slice.call(document.querySelectorAll('[role="tab"]'));
+function pick(tab){
+  tabs.forEach(function(t){
+    var on = t===tab;
+    t.setAttribute("aria-selected", String(on));
+    document.getElementById(t.getAttribute("aria-controls")).hidden = !on;
+  });
+}
+tabs.forEach(function(t,i){
+  t.addEventListener("click", function(){ pick(t); });
+  t.addEventListener("keydown", function(ev){
+    if(ev.key!=="ArrowRight" && ev.key!=="ArrowLeft") return;
+    ev.preventDefault();
+    var n=(i+(ev.key==="ArrowRight"?1:tabs.length-1))%tabs.length;
+    tabs[n].focus(); pick(tabs[n]);
+  });
+});
+
+/* ---------- tab 1: the verdicts ---------- */
+/* v: fixed | reworked | new | removed | kept.  was/now: one honest line each.
+   ask: the professor's request, abridged from the review document. */
+var OLD="../archive/03-round1-build/gallery/";
+/* In a published copy (data-published="1", set by studio/publish.py) the archive and
+   the week-numbered filenames don't exist: links use slugs and the before-links hide. */
+var PUB=document.body.getAttribute("data-published")==="1";
+function slugOf(f){ return f.replace(/^week-\d+-/,""); }
+var PAGES=[
+ {t:"Learning-Type Sorter", f:"week-01-learning-type-sorter.html", v:"fixed",
+  sum:"Your intro text, verbatim; worksheet wording restored on all four scenarios; 'supplemental' labels gone.",
+  ask:"Use the text description verbatim from the worksheet rather than paraphrasing it. Accept the 4 supplemental cards; remove 'supplemental' labels.",
+  did:"The four tasks now quote the worksheet word for word (only the what-if clause swaps). The extra cards stay, unlabeled — the spec header still says which four are ours."},
+ {t:"You Are the Machine: Sandwich Reveal", f:"week-01-sandwich-reveal.html", v:"fixed",
+  sum:"Clause-selector bug root-caused and fixed; the rule is explicitly an AND; tally in plain language.",
+  ask:"At threshold 250 it is not possible to toggle between 1 and 0… It is unclear whether the first clause is an AND or an OR.",
+  did:"The 0/1 selector was never actually hidden — a CSS quirk — and it was writing into the threshold. Separate fields now; AND is stated in the headers, between the clauses, and in the spoken rule; the tally reads '9 of 20 classified as Healthy'."},
+ {t:"One Line, Four Ways", f:"week-02-line-explorer.html", v:"reworked",
+  sum:"Now only the six word problems: train, diver, population, butterflies, trucking, signs — joined later by the two naturally negative-slope examples you asked for, a draining battery and a car losing value.",
+  ask:"Focus only on the word problems… Remove the x/y tab… remove the explore / table check toggler.",
+  did:"Every scenario keeps the four-way view (graph · notation · table · sentence) with real units, the sliders, the y=mx+b calculator and show-the-math. All six equations re-derived from the worksheets and pinned."},
+ {t:"Draw the Decision Line", f:"week-02-decision-line.html", v:"fixed",
+  sum:"Solid ink drag-handles, clearly distinct from the gold data dots; sliders and show-the-math removed.",
+  ask:"Use solid black dots for the handles… Remove slope and intercept sliders… Remove show the math.",
+  did:"Handles differ from data in fill, ring and size so they hold in dark mode too. Dragging the line is now the whole interface."},
+ {t:"Grid Digits → Binary Vectors → L1", f:"week-03-digit-vectors.html", v:"kept",
+  sum:"“This activity is good, do not change.” We didn't.", ask:"", did:""},
+ {t:"Trainable Machine", f:"week-03-trainable-machine.html", v:"fixed",
+  sum:"Pixels toggle back to white; real instructions; the decision criterion explained honestly; hold-back count fixed.",
+  ask:"It is unclear what criterion is actually being used… update text on button.",
+  did:"A show-the-math box states the truth: k-nearest-neighbors, k = 3, L1 distance on the 16×16 grid — with live neighbor distances, and a note on how that differs from the centroid method you guessed. The hold-back label now computes itself."},
+ {t:"What Counts as Close? (norms)", f:"week-04-norm-circles.html", v:"reworked",
+  sum:"Replaced outright with your two-mode design: Path mode and Circle mode.",
+  ask:"Replace with a simpler manipulative that allows students to gather data without giving away the answers.",
+  did:"Path mode: two draggable points, the L1 path, the L2 line (different color and dash), L∞ as the highlighted longer leg, live formulas below. Circle mode: radius slider, L1/L2/L∞ choice, diamond/circle/square. No c, d, u, v anywhere."},
+ {t:"Nearest Neighbors Playground", f:"week-04-knn-playground.html", v:"fixed",
+  sum:"Every point is draggable now; the worksheet-preset bar is gone; no worksheet mentions students can see.",
+  ask:"Make all points drag-able. Default settings can still be worksheet values, but no mention of worksheet a priori.",
+  did:"Defaults are silently the worksheet's; the attribution lives only in the instructor-only footer."},
+ {t:"Guess the Line, Then Beat It", f:"week-05-regression.html", v:"fixed",
+  sum:"Default curves now start honestly bad — the line opens near-flat, ~50× worse than the best fit.",
+  ask:"The default curves are quite close to the optimal ones. Have the default line start somewhere with slope near zero.",
+  did:"Every curve family now opens with the wrong shape (upward quadratic, falling cubic, inverted sine), so the fitting is earned."},
+ {t:"K-means, Step by Step", f:"week-06-kmeans-plane.html", v:"removed",
+  sum:"Retired on your 2026-08-05 answer; preserved in the archive. Replaced by a clustering activity built from nothing of yours.",
+  ask:"Rather than continue to workshop kmeans-plane.html and kmeans-line.html (which essentially demonstrate solutions to classroom worksheets), I would prefer to design a completely different activity card on the topic of clustering that is at the same level of difficulty, but not informed by my specific worksheets",
+  did:"Both pages went to archive/06-retired-pages/ with their specs. The replacement, <em>You Are the Algorithm</em>, has the student execute the loop instead of watching it: twelve invented plants, three markers, claim then move, every half-step marked right or wrong with hints that never name the answer. Its data, framing and four starting layouts are ours — awaiting your review."},
+ {t:"Two Runs, One Line", f:"week-06-kmeans-line.html", v:"removed",
+  sum:"Retired on your 2026-08-05 answer, with its companion; preserved in the archive.",
+  ask:"", did:""},
+ {t:"You Are the Algorithm", f:"week-06-cluster-by-hand.html", v:"new",
+  sum:"NEW, and awaiting your review: the clustering activity that replaces the two retired k-means pages.",
+  ask:"…design a completely different activity card on the topic of clustering that is at the same level of difficulty, but not informed by my specific worksheets",
+  did:"Twelve plants on a bench, plotted by sun and water — our invention, no worksheet data or wording anywhere. The student claims each plant for its nearest marker, moves each marker to its group's balance point, and repeats; the page marks each half-step and says what to look at, never what the answer is. Four starting layouts are offered: two settle on three groups of four, two settle on 8/2/2, which is the lesson. Same arithmetic ceiling as the pages it replaces — comparing two distances, and averaging whole numbers."},
+ {t:"Clustering What You Can't Plot", f:"week-06-movie-clusters.html", v:"fixed",
+  sum:"Your ask — can the whole class add themselves? — became classroom mode 3: Rate & Cluster Movies.",
+  ask:"Could it be revised so that all of the students in class can add themselves?",
+  did:"The page itself is unchanged except a pointer; the real answer is the Shared Plane mode where every student submits their own eight ratings and k-means runs on the class in 8-D. Both ran the same eight-movie list at the time; the static page has since grown to sixteen titles, while the room version still carries the original eight."},
+ {t:"Negation Checker", f:"week-07-negation-checker.html", v:"kept",
+  sum:"No comment in your review — untouched at the time; both flagged sheet patterns have since been settled by your 2026-08-05 answers.",
+  ask:"", did:"Round 6: you confirmed the typo, so the checker now teaches the corrected ∃x(P ∧ ¬Q) and says the worksheets will be fixed. Round 7: not a typo — the round now teaches the domain-of-discourse point and follows the restricted 'all birds' reading, under which the printed pattern is right."},
+ {t:"Truth Tables", f:"week-07-truth-tables.html", v:"reworked",
+  sum:"Students now type T or F themselves and are corrected when wrong — earned, not given.",
+  ask:"Rather than click buttons to show the answers… it should be earned not given.",
+  did:"Type t/f or use the touch pad; wrong answers get a dashed mark and a diagnostic question (never the answer); right ones lock in with a check. Arrow keys walk the grid; the score counts cells earned."},
+ {t:"Minimax Game Tree", f:"week-08-minimax.html", v:"fixed",
+  sum:"Depth-3 cells wrap instead of overflowing; each set of children sits in its own box.",
+  ask:"The cells do not all fit within the frame; carry onto the next line. Also put a box around each set of children.",
+  did:"Sibling groups are bordered and captioned ('O's 4 choices from the board above'); nothing else was touched — 'otherwise very nice' taken at its word."},
+ {t:"Build Me This Graph (sandbox)", f:"week-09-graph-sandbox.html", v:"reworked",
+  sum:"Trace and Euler are gone; the sandbox is now a commission board with a point tally.",
+  ask:"Prompt the user to create the graphs mentioned in 'special graphs'… They gain a point, then the sandbox is reset.",
+  did:"Ten commissions (K₃ through K₅, cycles, a path, a star, a 6-vertex tree, a 3-regular graph…). Submit-for-approval runs a real isomorphism check — two disjoint triangles cannot pass for C₆ — and failures say which property is off without giving the build away."},
+ {t:"Shannon Switching Game", f:"week-09-shannon-switching.html", v:"new",
+  sum:"Playable Short-vs-Cut on solved boards against an exact-play computer.",
+  ask:"Create two new activity cards wherein a student can play the graph theory 'Shannon Switching Game' and 'Cliquer' game against a computer.",
+  did:"Every board's winner is proven by exhaustive solve; the computer never blunders a won position (a 5,103-position adversarial sweep then; the ten-board set that replaced these six at your later request is swept over 3,407,574 positions). Three boards are the same dots gaining one edge at a time — and the game's class changes each time."},
+ {t:"Cliquer", f:"week-09-cliquer.html", v:"new",
+  sum:"The blog's clique-scoring game, faithfully — with an exact opponent and a beatable 'greedy' foil.",
+  ask:"(same request as above, with the reference post)",
+  did:"Rules follow the source; the ambiguities we had to resolve are stated in-page (fixed dots, ties are draws — and edges, straight then, are drawn as planar curves now at your later request). Why is there no prize above a 4-clique? Crossing-free drawings are planar and planar graphs have no K₅ — which became the page's lesson."},
+ {t:"Graph Centrality", f:"week-10-centrality.html", v:"kept", sum:"Kept as is, per your review.", ask:"", did:""},
+ {t:"Adjacency Matrix Walks", f:"week-11-adjacency.html", v:"fixed",
+  sum:"Walk enumeration now goes to 10 per cell; incidence matrices removed entirely.",
+  ask:"Increase threshold to 10 walks… Focus just on adjacency matrix.",
+  did:"Every A² and A³ cell now lists in full, with honest labels when longer powers truncate. A path-graph preset was added; every count re-verified against matrix powers."},
+ {t:"Markov: The Candy Chain", f:"week-12-markov-candy.html", old:"week-12-markov.html", v:"reworked",
+  sum:"One half of the split: candy only, every table cell starts at 0.25 for students to fill in.",
+  ask:"Split this activity card into two… defaults all equal to 0.25… initial vector should also be editable… Remove 'Race two starts'.",
+  did:"Row sums are shown and checked but never silently rebalanced — students' arithmetic is theirs. Editable row vector with its own sum check; graph, distribution-over-time and Back/Step/Run all kept."},
+ {t:"Markov: Animalia Politics", f:"week-12-markov-animalia.html", old:"week-12-markov.html", v:"reworked",
+  sum:"The other half: four cities, display-only, tied to the politics worksheet.",
+  ask:"…merely to display the given matrix and initial vector and provide a graph visualization and distribution over time.",
+  did:"Nothing editable, as asked. The St. Francis row was flagged and renormalized out loud (÷1.05, visibly) rather than quietly patched — and on 2026-08-05 you confirmed it was a worksheet typo, so the activity now carries your corrected Feline row [.7, .2, .05, .05]. The row-total check stays as a net for edited data."},
+ {t:"Embeddings Word Map", f:"week-13-embeddings.html", v:"fixed",
+  sum:"The coordinates now say what they are; single setting; the confusing recommender is gone.",
+  ask:"If hypothetical, state so or explain assumptions. Mysterious numbers do not help.",
+  did:"A callout says the positions are illustrative and hand-placed — a real model learns them (that page is Word2Vec, next door). The worksheet-vectors setting and the 'you like cats + dogs' button were removed; cosine stays."},
+ {t:"Softmax", f:"week-13-softmax.html", v:"kept",
+  sum:"Kept — and your question answered: 'signature' was our internal chip marking the design exemplar. Removed.", ask:"", did:""},
+ {t:"Word2Vec, Forward and Back", f:"week-13-word2vec.html", v:"kept",
+  sum:"“Excellent work Claude; keep these.” Kept.", ask:"", did:""},
+ {t:"Tangent &amp; Derivative", f:"week-14-tangent.html", v:"kept", sum:"Kept, per your review.", ask:"", did:""},
+ {t:"Gradient Descent", f:"week-14-gradient-descent.html", v:"fixed",
+  sum:"The show-the-math panel now updates on Back, not just forward steps.",
+  ask:"Possible bug: the expression only changes during forward steps but not backward steps.",
+  did:"Confirmed, and the same staleness affected curve switches and the rate slider. The panel is now drawn purely from current state, so it can never disagree with the picture."},
+ {t:"Tune the Machine", f:"week-14-tune-the-knob.html", v:"kept",
+  sum:"Kept — awaiting your promised comments.", ask:"", did:""},
+ {t:"Train a Tiny Agent (gridworld)", f:"week-14-gridworld.html", v:"kept",
+  sum:"Kept — awaiting your promised comments.", ask:"", did:""},
+ {t:"Set-Builder Region Shader", f:"week-02-region-shader.html", v:"removed",
+  sum:"Removed at your request; preserved in the archive.", ask:"This page and demonstration are not needed, simply remove.", did:""},
+ {t:"Who's Really Closest? Rescaling", f:"week-04-rescaling.html", v:"removed",
+  sum:"Removed at your request; preserved in the archive.", ask:"Remove activity.", did:""},
+ {t:"Decision Tree Grocery Carts", f:"week-08-decision-tree.html", v:"removed",
+  sum:"Removed — whiteboard + verbal, as you prefer it. Preserved in the archive.",
+  ask:"We don't need a digital version of this activity.", did:""},
+ {t:"Matrix Transformations", f:"week-12-transformations.html", v:"removed",
+  sum:"Removed at your request; preserved in the archive.", ask:"Remove.", did:""},
+ {t:"Important Functions Explorer", f:"week-13-functions.html", v:"removed",
+  sum:"Removed at your request; preserved in the archive.", ask:"Remove.", did:""},
+ {t:"Warmer / Colder", f:"week-14-warmer-colder.html", v:"removed",
+  sum:"Removed at your request — and, on your 2026-08-05 answer, so is the classroom mode of the same name. Both preserved in the archive and in git history.",
+  ask:"Remove.",
+  did:"The static page went to the archive in round 2. We kept the multi-student Shared Plane mode on our own reading and asked; you answered \"Drop it too,\" so the walker, the hidden target and the WARMER/colder vote are gone from the classroom app. It now has three modes."}
+];
+
+var cardsHost=document.getElementById("cards"), fcount=document.getElementById("fcount");
+function esc(s){ return String(s).replace(/&(?!amp;|lt;|gt;|nbsp;)/g,"&amp;").replace(/</g,"&lt;"); }
+function card(p){
+  var links='';
+  if(p.v!=="removed") links+='<a href="'+(PUB?slugOf(p.f):p.f)+'">open it now ↗</a>';
+  if(!PUB && p.v!=="new") links+='<a href="'+OLD+(p.old||p.f)+'">as you reviewed it ↗</a>';
+  var more='';
+  if(p.ask) more+='<p class="ask">“'+p.ask+'”</p>';
+  if(p.did) more+='<p>'+p.did+'</p>';
+  return '<div class="card" data-v="'+p.v+'">'+
+    '<span class="verdict">'+(p.v==="fixed"?"edited / fixed":p.v)+'</span>'+
+    '<h3>'+p.t+'</h3><p class="sum">'+p.sum+'</p>'+
+    (more?'<button class="flip" type="button" aria-expanded="false">your ask · what we did ▾</button><div class="more">'+more+'</div>':'')+
+    '<div class="links">'+links+'</div></div>';
+}
+cardsHost.innerHTML=PAGES.map(card).join("");
+[].forEach.call(cardsHost.querySelectorAll(".flip"), function(b){
+  b.addEventListener("click", function(){
+    var m=b.nextElementSibling, open=m.classList.toggle("open");
+    b.setAttribute("aria-expanded", String(open));
+    b.textContent = open ? "your ask · what we did ▴" : "your ask · what we did ▾";
+  });
+});
+var filterBtns=[].slice.call(document.querySelectorAll("#filters .btn"));
+function applyFilter(f){
+  var shown=0;
+  [].forEach.call(cardsHost.children, function(c){
+    var on = f==="all" || c.getAttribute("data-v")===f ||
+             (f==="reworked" && c.getAttribute("data-v")==="reworked");
+    c.style.display = on ? "" : "none";
+    if(on) shown++;
+  });
+  fcount.textContent = shown+" of "+PAGES.length+" pages";
+  filterBtns.forEach(function(b){ b.setAttribute("aria-pressed", String(b.getAttribute("data-f")===f)); });
+}
+filterBtns.forEach(function(b){
+  b.addEventListener("click", function(){ applyFilter(b.getAttribute("data-f")); });
+});
+applyFilter("all");
+
+/* ---------- tab 2: the Studio tour ---------- */
+function m(rows){ return '<div class="mock"><div class="mbar">Studio · 127.0.0.1:8171</div>'+rows+'</div>'; }
+var TOUR=[
+ {h:"Start it",
+  mock:m('<div class="mrow hot mono">cd studio &amp;&amp; ./run.sh</div><div class="mtext">…listening on http://127.0.0.1:8171</div>'),
+  talk:"<h3>Station 1 — start it</h3><p>One command from the repo: <code>cd studio &amp;&amp; ./run.sh</code>. First run builds its own little environment; after that it starts in a second. It listens on your machine only — nothing is on the internet.</p><p class='tip'>Nothing you do in the Studio touches the original pages. Ever. Your edits live beside them and there is always a revert.</p>"},
+ {h:"The dashboard",
+  mock:m('<div class="mrow"><b>Softmax</b> — <span class="mtext">card title · description · topic</span><br><span class="mbtn hot">visible from 📅</span><span class="mbtn hot">unlisted ☐</span><span class="mbtn">order</span></div><div class="mrow mtext">…one card per activity, grouped by topic</div>'),
+  talk:"<h3>Station 2 — the gallery list</h3><p>The dashboard is the gallery, editable: retitle a card, rewrite its description, move it to another topic, reorder it. Everything saves as you type.</p><p><b>Visible from</b> keeps a page off the student gallery until a date you pick (its direct link still works — so you can always share early with a group). <b>Unlisted</b> hides it from the gallery entirely while the link keeps working.</p>"},
+ {h:"Click any sentence",
+  mock:m('<div class="mrow mtext">One Line, Four Ways</div><div class="mrow hot" style="font-family:var(--font-body)">Drag the line; the equation, the table, and the sentence move together.<span class="mbtn" style="float:right">✎</span></div>'),
+  talk:"<h3>Station 3 — edit the words</h3><p>Open <b>edit page</b> on any card. Every editable sentence gets a dashed outline when you hover; click it, type, click away — saved. <kbd>Esc</kbd> abandons an edit; the <b>overrides</b> panel lists everything you've changed with a revert button per item.</p><p class='tip'>Bold, italics and the like survive; anything unsafe is quietly stripped.</p>"},
+ {h:"Notes for them, notes for you",
+  mock:m('<div class="mrow mtext">…end of the activity…</div><div class="mrow hot">+ add note &nbsp; <span class="mbtn">students see this</span><span class="mbtn gold">instructors only</span></div>'),
+  talk:"<h3>Station 4 — audience</h3><p>Two note slots on every page (top and bottom) accept new paragraphs — and each one is marked <b>students</b> or <b>instructors only</b>. Instructor notes render in your view and vanish from the published student site, along with the teaching spec and the worksheet footer.</p><p>The toolbar's <b>student view</b> toggle shows you exactly what they'll see.</p>"},
+ {h:"The data drawer",
+  mock:m('<div class="mrow"><b>Data &amp; parameters</b></div><div class="mrow hot mono">sleep&nbsp;&nbsp;score<br>5.5&nbsp;&nbsp;&nbsp;&nbsp;65<br>6.0&nbsp;&nbsp;&nbsp;&nbsp;70&nbsp; <span class="mbtn">+ row</span></div><div class="mrow"><span class="mbtn">Generate…</span><span class="mbtn">Import…</span><span class="mbtn">Drafts…</span></div>'),
+  talk:"<h3>Station 5 — edit the numbers</h3><p>The <b>data &amp; parameters</b> button opens everything the activity computes from, as forms and tables: data points, labels, slider ranges. Change a number, <b>Save data</b>, <b>re-render</b> — the page runs your data.</p><p><b>Generate…</b> makes a fresh dataset to your recipe (size, noise, seed — same seed, same data, so class and answer key agree). <b>Import…</b> reads your own .csv or .xlsx, first row as headers, with column matching. <b>Drafts…</b> keeps datasets you want to reuse.</p>"},
+ {h:"A second exercise, no code",
+  mock:m('<div class="mrow"><b>New exercise from a template</b></div><div class="mrow">Start from: <span class="mbtn">Guess the Line</span></div><div class="mrow hot">Title: <i>Regression practice 2</i> <span class="mtext">→ regression-practice-2.html</span></div>'),
+  talk:"<h3>Station 6 — clone with new data</h3><p>Every activity is a template. <b>New exercise from a template…</b> makes a second copy — its own title, its own link, its own data (the template's, generated, or a saved draft) — and the original stays put. A copy can be deleted; the originals can only be reverted, never lost.</p><p class='tip'>This is how 'the same regression page but with our class's data' takes two minutes, not a request to anyone.</p>"},
+ {h:"The one color knob",
+  mock:m('<div class="mrow">Colour: <span class="mbtn gold hot">goldenrod ✓</span><span class="mbtn">terracotta</span><span class="mbtn">verdigris</span><span class="mbtn">harbor</span>…</div><div class="mtext">every swatch shows light + dark and its contrast numbers</div>'),
+  talk:"<h3>Station 7 — pick the color</h3><p>Seven palettes, each shown in light and dark with its measured contrast. Pick one and the <em>entire</em> published set follows — thirty pages and the classroom app, one knob. All seven pass the same accessibility bar; goldenrod is simply the default.</p>"},
+ {h:"Publish",
+  mock:m('<div class="mrow hot"><span class="mbtn gold">Publish the site</span> <span class="mtext">→ writes ../site/ — 30 files</span></div><div class="mtext">student pages: no pedagogy, no week numbers, date-gated gallery with a “new” chip and an “n of N available” count</div>'),
+  talk:"<h3>Station 8 — publish</h3><p>One button, one confirmation, and <code>site/</code> is a folder of plain HTML: upload it anywhere that serves files (your GitHub Pages site works as-is, as a subfolder). Students get slug filenames, no teaching specs, and a gallery that quietly reveals pages on their dates.</p><p class='tip'>Prefer to keep the gallery private and hand out per-activity links instead? That works today — unlisted pages still build.</p>"}
+];
+var ti=0, host=document.getElementById("tourHost"), pips=document.getElementById("tourPips"),
+    where=document.getElementById("tourWhere");
+pips.innerHTML=TOUR.map(function(){ return "<span></span>"; }).join("");
+function showStation(){
+  var s=TOUR[ti];
+  host.innerHTML='<div class="station"><div>'+s.mock+'</div><div class="talk">'+s.talk+'</div></div>';
+  [].forEach.call(pips.children, function(p,i){ p.className = i<=ti ? "on":""; });
+  where.textContent=(ti+1)+" / "+TOUR.length+" · "+s.h;
+  document.getElementById("tourBack").disabled = ti===0;
+  document.getElementById("tourStep").textContent = ti===TOUR.length-1 ? "Done ✓" : "Step ▸";
+}
+document.getElementById("tourStep").addEventListener("click", function(){
+  if(ti<TOUR.length-1){ ti++; showStation(); }
+});
+document.getElementById("tourBack").addEventListener("click", function(){
+  if(ti>0){ ti--; showStation(); }
+});
+document.getElementById("reset").addEventListener("click", function(){ ti=0; showStation(); });
+showStation();
+
+/* ---------- tab 3: roles ---------- */
+var ROLES={
+ fac:{cap:"room KQXB · you hold the key",
+  txt:"<h3>You, the facilitator</h3><p><b>Create a room</b> from the lobby — the page you land on holds your key in its URL, so keep that tab (bookmarking it works; reopening it always takes the controls back, even if someone claimed them while you were gone).</p><p>Your control bar picks the mode and drives it: prompt and freeze in mode 1, set-rule and check in mode 2, lock and step in mode 3. Every control is enforced on the server — a student pressing your buttons gets 'facilitator only'.</p><p>Read the room code aloud, or put <code>/CODE/board</code> on the projector, which shows it huge.</p>"},
+ stu:{cap:"room KQXB · you are Amber Owl",
+  txt:"<h3>A student</h3><p>Go to the room address, type the four-letter code — that's all. You get a random name (Amber Owl, Plucky Heron…) and your cursor appears on the shared plane; moving your mouse or finger moves you for everyone.</p><p>In mode 3 you rate eight movies on your own screen and send the row. Nothing to install, no account, nothing saved about you anywhere — close the tab and you were never there.</p>"},
+ board:{cap:"room KQXB · projector view — join code huge, no cursor of its own",
+  txt:"<h3>The projector</h3><p><code>/CODE/board</code> is the big-type view: the join code stays visible, everything renders large, and it has no cursor of its own. It doesn't count against the room's 40 seats, joins silently, and reconnects by itself if the network blips — you can leave it alone all class.</p>"}
+};
+var roleBtns=[].slice.call(document.querySelectorAll(".roles .btn"));
+function setRole(r){
+  document.getElementById("roleText").innerHTML=ROLES[r].txt;
+  document.getElementById("roomCaption").textContent=ROLES[r].cap;
+  roleBtns.forEach(function(b){ b.setAttribute("aria-pressed", String(b.getAttribute("data-role")===r)); });
+}
+roleBtns.forEach(function(b){ b.addEventListener("click", function(){ setRole(b.getAttribute("data-role")); }); });
+setRole("fac");
+})();
+</script>
+</body>
+</html>

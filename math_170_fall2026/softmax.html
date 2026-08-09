@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Softmax — turning scores into a decision · MATH 170</title>
+
+<!-- ================================================================
+     DESIGN-SYSTEM v2 TOKEN BLOCK — copied verbatim into every file.
+     A global tweak stays a find-replace across the set.
+     This file is the EXEMPLAR: builders copy its <style> and skeleton.
+     ================================================================ -->
+<style>
+/* hidden must always win over any author display rule */
+[hidden]{display:none !important}
+:root{
+  /* color — light */
+  --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+  --gold-soft:rgba(218,165,32,.12);
+  --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  /* type */
+  --font-body: ui-serif, Georgia, "Times New Roman", serif;
+  --font-ui:   system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+  --text-xl:1.75rem; --text-lg:1.25rem; --text-base:1rem; --text-sm:.875rem; --text-xs:.75rem;
+  --leading-prose:1.6; --leading-ui:1.3;
+  /* spacing */
+  --space-1:4px; --space-2:8px; --space-3:16px; --space-4:24px; --space-5:32px; --space-6:48px;
+  /* motion */
+  --ease:cubic-bezier(0.16,1,0.3,1); --dur:200ms;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+    --gold-soft:rgba(227,179,65,.16);
+    --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+  --gold-soft:rgba(227,179,65,.16);
+  --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+}
+@media (prefers-reduced-motion: reduce){ :root{ --dur:0ms; } }
+@media print{
+  :root, :root[data-theme="dark"]{
+    --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+    --gold-soft:rgba(218,165,32,.12);
+    --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  }
+  .theme-btn{display:none}
+  .stage{break-inside:avoid}
+}
+
+/* ================= base skin (design-system §3–§4) ================= */
+*{box-sizing:border-box}
+html{color-scheme:light dark}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--font-body); font-size:var(--text-base); line-height:var(--leading-prose);
+  -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:820px; margin:0 auto; padding:var(--space-5) var(--space-4) var(--space-6);}
+.topbar{display:flex; align-items:baseline; justify-content:space-between; gap:var(--space-3);
+  border-bottom:1px solid var(--gray-line); padding-bottom:var(--space-2); margin-bottom:var(--space-4);}
+.eyebrow{font-family:var(--font-ui); font-size:var(--text-xs); letter-spacing:.08em; text-transform:uppercase; color:var(--gray-text);}
+h1{font-family:var(--font-body); font-weight:600; font-size:var(--text-xl); line-height:1.2; margin:.2em 0 .1em;}
+h2{font-family:var(--font-ui); font-weight:600; font-size:var(--text-lg); line-height:1.3; margin:var(--space-5) 0 var(--space-2);}
+p{margin:0 0 var(--space-3);}
+.prose{max-width:66ch;}
+.muted{color:var(--gray-text);}
+.mono,code{font-family:var(--font-mono); font-variant-numeric:tabular-nums;}
+a{color:inherit;}
+:focus-visible{outline:2px solid var(--ink); outline-offset:2px; box-shadow:0 0 0 5px var(--gold-soft);}
+
+.theme-btn{font-family:var(--font-ui); font-size:var(--text-xs); background:none;
+  border:1px solid var(--gray-line); color:var(--gray-text); padding:6px 10px; cursor:pointer; border-radius:2px;}
+.theme-btn:hover{background:var(--gray-fill);}
+
+/* spec header */
+details.spec{border:1px solid var(--gray-line); border-radius:2px; margin:0 0 var(--space-4); background:var(--gray-fill);}
+details.spec>summary{font-family:var(--font-ui); font-size:var(--text-sm); cursor:pointer;
+  padding:var(--space-2) var(--space-3); list-style:none; color:var(--gray-text);}
+details.spec>summary::-webkit-details-marker{display:none}
+details.spec>summary::before{content:"▸ "; color:var(--gold);}
+details.spec[open]>summary::before{content:"▾ ";}
+.spec-body{padding:0 var(--space-3) var(--space-3); font-family:var(--font-ui); font-size:var(--text-sm); line-height:1.5;}
+.spec-body dt{font-weight:600; margin-top:var(--space-2);}
+.spec-body dd{margin:0; color:var(--gray-text);}
+
+/* stage */
+.stage{margin:var(--space-4) 0; text-align:center;}
+svg{max-width:100%; height:auto; font-family:var(--font-ui);}
+figcaption{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); margin-top:var(--space-2);}
+
+/* controls */
+.controls{border-top:1px solid var(--gray-line); padding-top:var(--space-3); margin-top:var(--space-4);
+  display:grid; grid-template-columns:1fr 1fr; gap:var(--space-3) var(--space-4);}
+.controls .full{grid-column:1/-1;}
+@media(max-width:560px){ .controls{grid-template-columns:1fr;} }
+.ctl label{display:flex; justify-content:space-between; align-items:baseline;
+  font-family:var(--font-ui); font-size:var(--text-sm); line-height:var(--leading-ui);}
+.ctl .val{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm); color:var(--ink);}
+.ctl .val.gold{color:var(--gold); font-weight:600;}
+.ctl .note{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); margin-top:4px;}
+
+/* range slider — filled track works in ALL engines (design-system v2 fix):
+   wireSlider() paints the webkit track with a two-stop gradient on input. */
+input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:18px;
+  background:transparent; margin:6px 0 0; cursor:pointer;}
+input[type=range]::-webkit-slider-runnable-track{height:2px; border-radius:1px;
+  background:var(--track, var(--gray-line));}
+input[type=range]::-moz-range-track{height:2px; background:var(--gray-line);}
+input[type=range]::-moz-range-progress{height:2px; background:var(--gold);}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; appearance:none;
+  width:18px; height:18px; margin-top:-8px; border-radius:50%; background:var(--gold); border:1px solid var(--ink);}
+input[type=range]::-moz-range-thumb{width:18px; height:18px; border-radius:50%; background:var(--gold); border:1px solid var(--ink);}
+
+/* buttons + segmented + stepper */
+.btn{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:1px solid var(--ink); padding:8px 14px; cursor:pointer; border-radius:2px;}
+.btn:hover{background:var(--gray-fill);}
+.btn.primary{background:var(--gold); border-color:var(--gold); color:#111111;}
+.btn[disabled]{border-color:var(--gray-line); color:var(--gray-line); cursor:default; background:var(--paper);}
+.seg{display:inline-flex; border:1px solid var(--ink); border-radius:2px; overflow:hidden;}
+.seg button{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:0; border-left:1px solid var(--ink); padding:7px 12px; cursor:pointer;}
+.seg button:first-child{border-left:0;}
+.seg button[aria-pressed="true"]{background:var(--gold); color:#111111;}
+.stepper{display:inline-flex; align-items:center; gap:var(--space-2); font-family:var(--font-ui); font-size:var(--text-sm);}
+.stepper .count{font-family:var(--font-mono); font-variant-numeric:tabular-nums; color:var(--gray-text);}
+
+.foot{display:flex; align-items:center; gap:var(--space-3); margin-top:var(--space-5);
+  border-top:1px solid var(--gray-line); padding-top:var(--space-3); flex-wrap:wrap;}
+.foot .btn{margin-right:auto;}
+.hint{font-family:var(--font-ui); font-size:var(--text-sm); color:var(--gray-text);}
+
+/* math reveal */
+.mathbox{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm);
+  background:var(--gray-fill); border-left:2px solid var(--gold); padding:var(--space-3);
+  margin:var(--space-3) 0; overflow-x:auto; white-space:pre; line-height:1.7; text-align:left;}
+.attach{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text);
+  border-top:1px dotted var(--gray-line); margin-top:var(--space-6); padding-top:var(--space-3);}
+.tag{display:inline-block; font-family:var(--font-ui); font-size:var(--text-xs);
+  border:1px solid var(--gray-line); border-radius:999px; padding:1px 8px; color:var(--gray-text); margin-left:6px;}
+.callout{font-family:var(--font-ui); font-size:var(--text-sm); border:1px solid var(--gray-line);
+  border-left:2px solid var(--gold); padding:var(--space-2) var(--space-3); margin:var(--space-3) 0; background:var(--paper);}
+</style>
+
+<!-- theme boot: apply stored choice before first paint (no flash) -->
+<script>
+try{var t=localStorage.getItem("m170-theme");if(t)document.documentElement.dataset.theme=t;}catch(e){}
+</script>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="eyebrow">MATH 170 · From words to numbers · Important Functions, Part 4</div>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Color theme">◑ auto</button>
+  </div>
+
+  <h1 data-edit="title">Turning scores into a decision <span class="tag">softmax</span></h1>
+  <p class="prose muted" data-edit="intro">You are the AI. You have scored three possibilities —
+  <strong>cat, dog, bird</strong>. How do you turn raw scores into a confident
+  choice, and into a probability you can defend?</p>
+
+  <div data-slot="notes-top"></div>
+
+
+  <div class="stage">
+    <svg id="chart" viewBox="0 0 640 360" role="img" aria-label="Probability bars for cat, dog and bird"></svg>
+  </div>
+
+  <div class="controls">
+    <div class="ctl">
+      <label for="z0"><span>Score — <span id="z0lab">cat</span></span> <span class="val gold" id="z0v">1.0</span></label>
+      <input type="range" id="z0" min="-2" max="8" step="0.1" value="1">
+    </div>
+    <div class="ctl">
+      <label for="z1"><span>Score — <span id="z1lab">dog</span></span> <span class="val gold" id="z1v">2.0</span></label>
+      <input type="range" id="z1" min="-2" max="8" step="0.1" value="2">
+    </div>
+    <div class="ctl">
+      <label for="z2"><span>Score — <span id="z2lab">bird</span></span> <span class="val gold" id="z2v">5.0</span></label>
+      <input type="range" id="z2" min="-2" max="8" step="0.1" value="5">
+    </div>
+    <div class="ctl">
+      <label for="temp">Temperature <span class="val" id="tempv">1.00</span></label>
+      <input type="range" id="temp" min="0.2" max="3" step="0.05" value="1">
+      <div class="note" data-edit="note-temperature">low → confident · high → hedging <em>(supplement — not on the worksheet)</em></div>
+    </div>
+    <div class="full" style="display:flex; gap:var(--space-3); flex-wrap:wrap; align-items:center;">
+      <div class="seg" role="group" aria-label="Comparison">
+        <button type="button" id="ghostBtn" aria-pressed="false">what if it were proportional?</button>
+      </div>
+      <button class="btn" id="nudgeBtn" type="button">+0.5 to the leader</button>
+      <span class="hint mono" id="nudgeOut" aria-live="polite"></span>
+    </div>
+    <div class="full">
+      <button class="btn" id="mathToggle" type="button" aria-expanded="false">Show the math ▸</button>
+      <div id="mathReveal" hidden>
+        <div class="mathbox" id="mathbox" aria-live="polite"></div>
+        <p class="muted prose" style="font-family:var(--font-ui); font-size:var(--text-sm)" data-edit="math-explainer">
+          Every score is raised as a power of <em>e</em> — that keeps the weights positive and
+          makes gaps dramatic — then each weight is divided by the total, so the three shares
+          add to exactly 1. In symbols: p(i) = e<sup>z<sub>i</sub>/T</sup> ÷ Σ e<sup>z<sub>j</sub>/T</sup>,
+          and the Σ is just the three-term sum you can see above it.</p>
+      </div>
+    </div>
+  </div>
+
+  <div data-slot="notes-bottom"></div>
+
+  <div class="foot">
+    <button class="btn" id="reset" type="button">Reset</button>
+    <span class="hint" data-edit="hint-try">Try: nudge bird from 5 to 5.5 and watch the jump.</span>
+  </div>
+
+</div>
+
+<script type="application/json" id="m170-config">
+{
+  "_v": 1,
+  "classes": ["cat", "dog", "bird"],
+  "scores": [1, 2, 5],
+  "scoreSlider": {"min": -2, "max": 8, "step": 0.1},
+  "temperature": 1,
+  "tempSlider": {"min": 0.2, "max": 3, "step": 0.05},
+  "nudge": 0.5,
+  "axisTicks": [0, 0.25, 0.5, 0.75, 1],
+  "_meta": {
+    "classes": { "label": "The three things being scored", "kind": "list",
+      "help": "Exactly three names — the page has three score sliders. They are printed under the bars, beside each slider, and in the math reveal." },
+    "scores": { "label": "Opening scores (one per class)", "kind": "list",
+      "regen": "points-1d",
+      "help": "The worksheet's own z = [1, 2, 5]. Change these and the pinned check in the footer no longer applies." },
+    "scoreSlider": { "label": "Score slider range", "kind": "range-spec",
+      "help": "Shared by all three score sliders; its max is also the ceiling the nudge button clamps to." },
+    "temperature": { "label": "Opening temperature", "kind": "number" },
+    "tempSlider": { "label": "Temperature slider range", "kind": "range-spec" },
+    "nudge": { "label": "How much the nudge button adds to the leader", "kind": "number" },
+    "axisTicks": { "label": "Horizontal gridlines, as fractions of 1", "kind": "list",
+      "help": "Each is drawn as a percentage label down the left edge." }
+  }
+}
+</script>
+
+<script>
+(function(){
+"use strict";
+/* pinned check (course-data.md Week 13), for the DEFAULT data in the config island:
+   softmax([1,2,5]) = [0.0171, 0.0466, 0.9362] */
+
+/* ---------- theme: auto → light → dark (design-system v2) ---------- */
+var root = document.documentElement, themeBtn = document.getElementById("themeBtn");
+function themeLabel(){
+  var m = root.dataset.theme || "auto";
+  themeBtn.textContent = m==="dark" ? "● dark" : m==="light" ? "○ light" : "◑ auto";
+}
+themeBtn.addEventListener("click", function(){
+  var cur = root.dataset.theme || "auto";
+  var next = cur==="auto" ? "light" : cur==="light" ? "dark" : "auto";
+  if(next==="auto"){ delete root.dataset.theme; try{localStorage.removeItem("m170-theme");}catch(e){} }
+  else { root.dataset.theme = next; try{localStorage.setItem("m170-theme", next);}catch(e){} }
+  themeLabel(); render();
+});
+if(window.matchMedia){ window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function(){ render(); }); }
+themeLabel();
+
+/* ---------- shared slider helper (copy into every file) ---------- */
+function wireSlider(id, fmt, onInput){
+  var el = document.getElementById(id), out = document.getElementById(id+"v");
+  function paint(){
+    var p = (el.value - el.min) / (el.max - el.min) * 100;
+    el.style.setProperty("--track",
+      "linear-gradient(to right, var(--gold) "+p+"%, var(--gray-line) "+p+"%)");
+    if(out) out.textContent = fmt(+el.value);
+  }
+  el.addEventListener("input", function(){ paint(); onInput(); });
+  paint();
+  return { el: el, paint: paint,
+           set: function(v){ el.value = v; paint(); } };
+}
+
+function css(v){ return getComputedStyle(document.body).getPropertyValue(v).trim(); }
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+function txt(x,y,s,color,anchor,size,family,weight){
+  return '<text x="'+x+'" y="'+y+'" fill="'+color+'" text-anchor="'+(anchor||"start")+
+    '" font-size="'+(size||12)+'" font-family="'+(family||"var(--font-ui)")+'"'+
+    (weight?' font-weight="'+weight+'"':'')+
+    (family==="var(--font-mono)"?' style="font-variant-numeric:tabular-nums"':'')+'>'+esc(s)+'</text>';
+}
+function ln(x1,y1,x2,y2,color,w,dash){
+  return '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+color+
+    '" stroke-width="'+(w||1)+'"'+(dash?' stroke-dasharray="'+dash+'"':'')+'/>';
+}
+
+/* ---------- everything tunable comes from the config island ---------- */
+var CFG = JSON.parse(document.getElementById("m170-config").textContent);
+var N = 3;                                    /* the page ships three score sliders */
+function num(v, d){ v = +v; return isFinite(v) ? v : d; }
+function spec(o, d){
+  o = o || {};
+  return { min: num(o.min, d.min), max: num(o.max, d.max), step: num(o.step, d.step) };
+}
+var CLASSES = (function(){
+  var c = Array.isArray(CFG.classes) ? CFG.classes.slice(0, N) : [];
+  var dflt = ["cat","dog","bird"];
+  for(var i=0;i<N;i++) c[i] = (c[i]==null || c[i]==="") ? dflt[i] : String(c[i]);
+  return c;
+})();
+var ZSPEC = spec(CFG.scoreSlider, {min:-2, max:8, step:0.1});
+var TSPEC = spec(CFG.tempSlider,  {min:0.2, max:3, step:0.05});
+function clampTo(s, v){ return Math.min(s.max, Math.max(s.min, v)); }
+var DEFAULTS = {
+  z: (function(){
+    var z = Array.isArray(CFG.scores) ? CFG.scores : [];
+    var dflt = [1,2,5], out = [];
+    for(var i=0;i<N;i++) out.push(clampTo(ZSPEC, num(z[i], dflt[i])));
+    return out;
+  })(),
+  T: clampTo(TSPEC, num(CFG.temperature, 1))
+};
+var NUDGE = num(CFG.nudge, 0.5);
+var TICKS = (function(){
+  var t = Array.isArray(CFG.axisTicks) ? CFG.axisTicks.map(Number).filter(function(v){
+    return isFinite(v) && v >= 0 && v <= 1;
+  }) : [];
+  return t.length ? t : [0,.25,.5,.75,1];
+})();
+
+/* class names appear beside each slider and in the chart's label */
+for(var ci=0; ci<N; ci++){
+  var lab = document.getElementById("z"+ci+"lab");
+  if(lab) lab.textContent = CLASSES[ci];
+}
+document.getElementById("chart").setAttribute("aria-label",
+  "Probability bars for " + CLASSES.slice(0,-1).join(", ") + " and " + CLASSES[N-1]);
+document.getElementById("nudgeBtn").textContent = "+" + NUDGE + " to the leader";
+
+/* ---------- model ---------- */
+function softmax(z, T){
+  var ex = z.map(function(v){ return Math.exp(v/T); });
+  var s = ex.reduce(function(a,b){ return a+b; }, 0);
+  return { ex:ex, sum:s, p: ex.map(function(v){ return v/s; }) };
+}
+function proportional(z){
+  // only meaningful when all scores are positive
+  if(z.some(function(v){ return v <= 0; })) return null;
+  var s = z.reduce(function(a,b){ return a+b; },0);
+  return z.map(function(v){ return v/s; });
+}
+
+/* ---------- state ---------- */
+var ghost = false;
+var svg = document.getElementById("chart");
+
+/* island → the range inputs, before wiring, so the first paint is already right */
+(function(){
+  ["z0","z1","z2"].forEach(function(id, i){
+    var el = document.getElementById(id);
+    el.min = ZSPEC.min; el.max = ZSPEC.max; el.step = ZSPEC.step; el.value = DEFAULTS.z[i];
+  });
+  var t = document.getElementById("temp");
+  t.min = TSPEC.min; t.max = TSPEC.max; t.step = TSPEC.step; t.value = DEFAULTS.T;
+})();
+
+var sliders = [
+  wireSlider("z0", function(v){return v.toFixed(1);}, render),
+  wireSlider("z1", function(v){return v.toFixed(1);}, render),
+  wireSlider("z2", function(v){return v.toFixed(1);}, render)
+];
+var tempS = wireSlider("temp", function(v){return v.toFixed(2);}, render);
+
+function values(){
+  return { z: sliders.map(function(s){ return +s.el.value; }), T: +tempS.el.value };
+}
+
+/* ---------- render ---------- */
+function render(){
+  var v = values(), r = softmax(v.z, v.T), prop = ghost ? proportional(v.z) : null;
+  var ink=css("--ink"), gold=css("--gold"), gray=css("--gray-text"),
+      line=css("--gray-line"), fill=css("--gray-fill");
+
+  var W=640,H=360,padL=70,padR=30,padT=34,padB=72;
+  var plotW=W-padL-padR, plotH=H-padT-padB, n=N, gap=44;
+  var bw=(plotW-gap*(n-1))/n;
+  var out="";
+
+  out += ln(padL,H-padB,W-padR,H-padB,ink,1.5);
+  TICKS.forEach(function(t){
+    var y=(H-padB)-t*plotH;
+    if(t>0) out += ln(padL,y,W-padR,y,line,1);
+    out += txt(padL-10,y+4,(t*100)+"%",gray,"end",11);
+  });
+
+  var maxP = Math.max.apply(null, r.p);
+  for(var i=0;i<n;i++){
+    var x=padL+i*(bw+gap), h=r.p[i]*plotH, y=(H-padB)-h;
+    var win = r.p[i]===maxP;
+    // ghost proportional bar behind the real one
+    if(prop){
+      var gh=prop[i]*plotH, gy=(H-padB)-gh;
+      out += '<rect x="'+(x+6)+'" y="'+gy+'" width="'+(bw-12)+'" height="'+Math.max(gh,.5)+
+             '" fill="none" stroke="'+gray+'" stroke-width="1" stroke-dasharray="4 3"/>';
+    }
+    out += '<rect x="'+x+'" y="'+y+'" width="'+bw+'" height="'+Math.max(h,.5)+
+           '" fill="'+(win?gold:fill)+'" stroke="'+ink+'" stroke-width="1"/>';
+    out += txt(x+bw/2, y-8, (r.p[i]*100).toFixed(1)+"%", ink, "middle", 15, "var(--font-mono)", win?"600":"400");
+    out += txt(x+bw/2, H-padB+22, CLASSES[i], ink, "middle", 14);
+    out += txt(x+bw/2, H-padB+40, "score "+v.z[i].toFixed(1), gray, "middle", 11, "var(--font-mono)");
+  }
+  out += txt(W-padR, padT-12, "sum = "+r.p.reduce(function(a,b){return a+b;},0).toFixed(2),
+             gray, "end", 12, "var(--font-mono)");
+  if(ghost && !prop){
+    out += txt(padL, padT-12, "proportional needs all-positive scores — another reason for exp",
+               gray, "start", 11);
+  } else if(ghost){
+    out += txt(padL, padT-12, "dashed = plain zᵢ/Σz shares (no exponential)", gray, "start", 11);
+  }
+  svg.innerHTML = out;
+
+  /* math reveal */
+  var L=[];
+  L.push("temperature T = "+v.T.toFixed(2));
+  L.push("");
+  for(var j=0;j<n;j++)
+    L.push("e^("+v.z[j].toFixed(1)+" / "+v.T.toFixed(2)+")  =  e^"+(v.z[j]/v.T).toFixed(2)+"  =  "+r.ex[j].toFixed(3));
+  L.push("──────────────────────────────────");
+  L.push("sum  =  "+r.ex[0].toFixed(3)+" + "+r.ex[1].toFixed(3)+" + "+r.ex[2].toFixed(3)+"  =  "+r.sum.toFixed(3));
+  L.push("");
+  for(var k=0;k<n;k++)
+    L.push("p("+CLASSES[k]+")  =  "+r.ex[k].toFixed(3)+" / "+r.sum.toFixed(3)+"  =  "+r.p[k].toFixed(3));
+  document.getElementById("mathbox").textContent = L.join("\n");
+}
+
+/* ---------- beats ---------- */
+var ghostBtn = document.getElementById("ghostBtn");
+ghostBtn.addEventListener("click", function(){
+  ghost = !ghost; ghostBtn.setAttribute("aria-pressed", String(ghost)); render();
+});
+
+document.getElementById("nudgeBtn").addEventListener("click", function(){
+  var v = values(), r0 = softmax(v.z, v.T);
+  var li = r0.p.indexOf(Math.max.apply(null, r0.p));
+  var nz = v.z.slice(); nz[li] = Math.min(ZSPEC.max, nz[li]+NUDGE);
+  sliders[li].set(nz[li]);
+  var r1 = softmax(nz, v.T);
+  document.getElementById("nudgeOut").textContent =
+    CLASSES[li]+" score +"+NUDGE+" → probability "+(r0.p[li]*100).toFixed(1)+"% → "+(r1.p[li]*100).toFixed(1)+"%";
+  render();
+});
+
+var mt=document.getElementById("mathToggle"), mr=document.getElementById("mathReveal");
+mt.addEventListener("click", function(){
+  var open = mr.hidden; mr.hidden = !open;
+  mt.setAttribute("aria-expanded", String(open));
+  mt.textContent = open ? "Hide the math ▾" : "Show the math ▸";
+});
+
+document.getElementById("reset").addEventListener("click", function(){
+  sliders[0].set(DEFAULTS.z[0]); sliders[1].set(DEFAULTS.z[1]); sliders[2].set(DEFAULTS.z[2]);
+  tempS.set(DEFAULTS.T);
+  ghost=false; ghostBtn.setAttribute("aria-pressed","false");
+  document.getElementById("nudgeOut").textContent="";
+  render();
+});
+
+render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,780 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>You are the machine — the sandwich reveal · MATH 170</title>
+
+<!-- BUILD VERIFICATION (python3, 2026-07-03) — every rule this UI can express was enumerated:
+     single clauses over Calories 250–1100 step 10 (< / ≥), Fat 0–50 step 1 (< / ≥),
+     Fiber 3–12 step 1 (< / ≥), Vegetarian is / is-not, plus every AND pair of those clauses.
+     · Default rule (Feature 1 < 600): 18/20 once labels show — misses #4 Mediterranean and
+       #7 Chicken Caesar Wrap. (The spec's parenthetical said 15/20; 15/20 is the score of the
+       spec's TWO-clause example "calories < 600 AND fiber ≥ 7". The single-clause default
+       verifies at 18/20. Data unchanged; number pinned here and in the footnote.)
+     · Best single clause: 19/20 (e.g. calories < 620 — misses only #4 Mediterranean).
+     · Best two-clause AND rule: 19/20 (no improvement over the best single clause).
+     · NO offered rule reaches 20/20 — provably: every clause satisfied by all 11 healthy rows
+       (which include #4 Mediterranean 670 cal/17 fat/11 fiber/veg and #13 Egg Salad
+       510/14/4/veg) is also satisfied by #16 Tuna Melt (620/19/5/not veg), so any AND of such
+       clauses wrongly flags Tuna Melt. No adjustment to the offered clause options was needed.
+     · Vegetarian alone: 17/20. Spec example calories < 600 AND fiber ≥ 7: 15/20.
+     · Mystery-tray predictions under the default rule: Tuna Salad → Healthy, Garden Light →
+       Healthy, Buffalo "Chkn" Melt → Not healthy, Mama's Meatball → Not healthy,
+       Bread-Lover's Loaf → Not healthy. -->
+
+<!-- ================================================================
+     DESIGN-SYSTEM v2 TOKEN BLOCK — copied verbatim into every file.
+     A global tweak stays a find-replace across the set.
+     Copied UNCHANGED from the exemplar (week-13-softmax.html).
+     ================================================================ -->
+<style>
+/* hidden must always win over any author display rule */
+[hidden]{display:none !important}
+
+:root{
+  /* color — light */
+  --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+  --gold-soft:rgba(218,165,32,.12);
+  --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  /* type */
+  --font-body: ui-serif, Georgia, "Times New Roman", serif;
+  --font-ui:   system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+  --text-xl:1.75rem; --text-lg:1.25rem; --text-base:1rem; --text-sm:.875rem; --text-xs:.75rem;
+  --leading-prose:1.6; --leading-ui:1.3;
+  /* spacing */
+  --space-1:4px; --space-2:8px; --space-3:16px; --space-4:24px; --space-5:32px; --space-6:48px;
+  /* motion */
+  --ease:cubic-bezier(0.16,1,0.3,1); --dur:200ms;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+    --gold-soft:rgba(227,179,65,.16);
+    --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+  --gold-soft:rgba(227,179,65,.16);
+  --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+}
+@media (prefers-reduced-motion: reduce){ :root{ --dur:0ms; } }
+@media print{
+  :root, :root[data-theme="dark"]{
+    --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+    --gold-soft:rgba(218,165,32,.12);
+    --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  }
+  .theme-btn{display:none}
+  .stage{break-inside:avoid}
+}
+
+/* ================= base skin (design-system §3–§4) ================= */
+*{box-sizing:border-box}
+html{color-scheme:light dark}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--font-body); font-size:var(--text-base); line-height:var(--leading-prose);
+  -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:820px; margin:0 auto; padding:var(--space-5) var(--space-4) var(--space-6);}
+.topbar{display:flex; align-items:baseline; justify-content:space-between; gap:var(--space-3);
+  border-bottom:1px solid var(--gray-line); padding-bottom:var(--space-2); margin-bottom:var(--space-4);}
+.eyebrow{font-family:var(--font-ui); font-size:var(--text-xs); letter-spacing:.08em; text-transform:uppercase; color:var(--gray-text);}
+h1{font-family:var(--font-body); font-weight:600; font-size:var(--text-xl); line-height:1.2; margin:.2em 0 .1em;}
+h2{font-family:var(--font-ui); font-weight:600; font-size:var(--text-lg); line-height:1.3; margin:var(--space-5) 0 var(--space-2);}
+p{margin:0 0 var(--space-3);}
+.prose{max-width:66ch;}
+.muted{color:var(--gray-text);}
+.mono,code{font-family:var(--font-mono); font-variant-numeric:tabular-nums;}
+a{color:inherit;}
+:focus-visible{outline:2px solid var(--ink); outline-offset:2px; box-shadow:0 0 0 5px var(--gold-soft);}
+
+.theme-btn{font-family:var(--font-ui); font-size:var(--text-xs); background:none;
+  border:1px solid var(--gray-line); color:var(--gray-text); padding:6px 10px; cursor:pointer; border-radius:2px;}
+.theme-btn:hover{background:var(--gray-fill);}
+
+/* spec header */
+details.spec{border:1px solid var(--gray-line); border-radius:2px; margin:0 0 var(--space-4); background:var(--gray-fill);}
+details.spec>summary{font-family:var(--font-ui); font-size:var(--text-sm); cursor:pointer;
+  padding:var(--space-2) var(--space-3); list-style:none; color:var(--gray-text);}
+details.spec>summary::-webkit-details-marker{display:none}
+details.spec>summary::before{content:"▸ "; color:var(--gold);}
+details.spec[open]>summary::before{content:"▾ ";}
+.spec-body{padding:0 var(--space-3) var(--space-3); font-family:var(--font-ui); font-size:var(--text-sm); line-height:1.5;}
+.spec-body dt{font-weight:600; margin-top:var(--space-2);}
+.spec-body dd{margin:0; color:var(--gray-text);}
+
+/* stage */
+.stage{margin:var(--space-4) 0; text-align:center;}
+svg{max-width:100%; height:auto; font-family:var(--font-ui);}
+figcaption{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); margin-top:var(--space-2);}
+
+/* controls */
+.controls{border-top:1px solid var(--gray-line); padding-top:var(--space-3); margin-top:var(--space-4);
+  display:grid; grid-template-columns:1fr 1fr; gap:var(--space-3) var(--space-4);}
+.controls .full{grid-column:1/-1;}
+@media(max-width:560px){ .controls{grid-template-columns:1fr;} }
+.ctl label{display:flex; justify-content:space-between; align-items:baseline;
+  font-family:var(--font-ui); font-size:var(--text-sm); line-height:var(--leading-ui);}
+.ctl .val{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm); color:var(--ink);}
+.ctl .val.gold{color:var(--gold); font-weight:600;}
+.ctl .note{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); margin-top:4px;}
+
+/* range slider — filled track works in ALL engines (design-system v2 fix):
+   wireSlider() paints the webkit track with a two-stop gradient on input. */
+input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:18px;
+  background:transparent; margin:6px 0 0; cursor:pointer;}
+input[type=range]::-webkit-slider-runnable-track{height:2px; border-radius:1px;
+  background:var(--track, var(--gray-line));}
+input[type=range]::-moz-range-track{height:2px; background:var(--gray-line);}
+input[type=range]::-moz-range-progress{height:2px; background:var(--gold);}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; appearance:none;
+  width:18px; height:18px; margin-top:-8px; border-radius:50%; background:var(--gold); border:1px solid var(--ink);}
+input[type=range]::-moz-range-thumb{width:18px; height:18px; border-radius:50%; background:var(--gold); border:1px solid var(--ink);}
+
+/* buttons + segmented + stepper */
+.btn{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:1px solid var(--ink); padding:8px 14px; cursor:pointer; border-radius:2px;}
+.btn:hover{background:var(--gray-fill);}
+.btn.primary{background:var(--gold); border-color:var(--gold); color:#111111;}
+.btn[disabled]{border-color:var(--gray-line); color:var(--gray-line); cursor:default; background:var(--paper);}
+.seg{display:inline-flex; border:1px solid var(--ink); border-radius:2px; overflow:hidden;}
+.seg button{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:0; border-left:1px solid var(--ink); padding:7px 12px; cursor:pointer;}
+.seg button:first-child{border-left:0;}
+.seg button[aria-pressed="true"]{background:var(--gold); color:#111111;}
+.stepper{display:inline-flex; align-items:center; gap:var(--space-2); font-family:var(--font-ui); font-size:var(--text-sm);}
+.stepper .count{font-family:var(--font-mono); font-variant-numeric:tabular-nums; color:var(--gray-text);}
+
+.foot{display:flex; align-items:center; gap:var(--space-3); margin-top:var(--space-5);
+  border-top:1px solid var(--gray-line); padding-top:var(--space-3); flex-wrap:wrap;}
+.foot .btn{margin-right:auto;}
+.hint{font-family:var(--font-ui); font-size:var(--text-sm); color:var(--gray-text);}
+
+/* math reveal */
+.mathbox{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm);
+  background:var(--gray-fill); border-left:2px solid var(--gold); padding:var(--space-3);
+  margin:var(--space-3) 0; overflow-x:auto; white-space:pre; line-height:1.7; text-align:left;}
+.attach{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text);
+  border-top:1px dotted var(--gray-line); margin-top:var(--space-6); padding-top:var(--space-3);}
+.tag{display:inline-block; font-family:var(--font-ui); font-size:var(--text-xs);
+  border:1px solid var(--gray-line); border-radius:999px; padding:1px 8px; color:var(--gray-text); margin-left:6px;}
+.callout{font-family:var(--font-ui); font-size:var(--text-sm); border:1px solid var(--gray-line);
+  border-left:2px solid var(--gold); padding:var(--space-2) var(--space-3); margin:var(--space-3) 0; background:var(--paper);}
+</style>
+
+<!-- ============ bespoke styles — week-01 sandwich reveal only ============ -->
+<style>
+/* epistemic-state band */
+.stateband{display:flex; flex-wrap:wrap; align-items:center; gap:var(--space-3); margin:var(--space-4) 0 var(--space-3);}
+.lockhint{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text);}
+.seg button[disabled]{color:var(--gray-line); cursor:default;}
+.seg button[disabled]:hover{background:var(--paper);}
+
+/* the rule, in words, always readable aloud */
+.rulesent{font-family:var(--font-body); font-size:var(--text-lg); line-height:1.4; margin:0 0 var(--space-1); max-width:66ch;}
+.rulesent .mono{font-size:.95em;}
+.scoreline{font-family:var(--font-ui); font-size:var(--text-sm); color:var(--gray-text); margin:0 0 var(--space-2);}
+.scoreline strong{color:var(--ink);}
+
+/* the data table stage (mono numerals) */
+.tablewrap{overflow-x:auto;}
+table.data{border-collapse:collapse; margin:0 auto; font-family:var(--font-ui);
+  font-size:var(--text-sm); line-height:1.35;}
+table.data th{font-family:var(--font-ui); font-size:var(--text-xs); font-weight:600; color:var(--gray-text);
+  text-transform:uppercase; letter-spacing:.05em; padding:4px 10px; border-bottom:1px solid var(--ink);
+  text-align:right; white-space:nowrap;}
+table.data td{padding:3px 10px; border-bottom:1px solid var(--gray-fill); white-space:nowrap;}
+table.data td.num{font-family:var(--font-mono); font-variant-numeric:tabular-nums; text-align:right;}
+table.data th.c-name, table.data td.c-name{text-align:left;}
+table.data th.c-mid, table.data td.c-mid{text-align:center;}
+table.data td.idx{color:var(--gray-text);}
+table.data tr.flag{background:var(--gold-soft);}
+table.data tr.flag td:first-child{box-shadow:inset 3px 0 0 var(--gold);}
+.mk-flag{color:var(--gold); font-weight:700;}
+.mk-none{color:var(--gray-line);}
+td.mk-yes{color:var(--gray-text);}
+td.mk-no{font-weight:700;}
+/* state 1 hides the label + match columns entirely */
+table.st1 .c-lab, table.st1 .c-match{display:none;}
+.cap{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text);
+  margin-top:var(--space-2); text-align:center;}
+
+/* mystery tray */
+.tray h2{margin-top:var(--space-4);}
+
+/* ---- ROOT-CAUSE FIX (2026-07-27, professor bug report) ----------------------
+   `.seg{display:inline-flex}` is an AUTHOR rule and therefore beat the user-agent
+   rule `[hidden]{display:none}`. Result: the vegetarian "is 1 / is 0" segment was
+   painted for EVERY clause even when the clause was on a numeric feature, and its
+   click handler wrote 1 or 0 into the numeric threshold, which the range input then
+   clamped to its own min (250 for Calories) — the "clicking 0 snaps the threshold to
+   250" report. The two side-by-side comparison selectors also made clause 1 read as
+   an OR of two tests. One declaration restores the intent everywhere on the page. */
+[hidden]{display:none !important;}
+
+/* rule-builder clauses */
+.clause{border:1px solid var(--gray-line); border-radius:2px; padding:var(--space-2) var(--space-3) var(--space-3);}
+.conn{grid-column:1/-1; font-family:var(--font-ui); font-size:var(--text-sm); font-weight:600;
+  letter-spacing:.08em; color:var(--ink); text-align:center; margin:calc(-1 * var(--space-2)) 0;}
+.crow .cname.andlabel{color:var(--ink); font-weight:700;}
+.crow{display:flex; align-items:center; gap:var(--space-2); flex-wrap:wrap;
+  font-family:var(--font-ui); font-size:var(--text-sm); margin-bottom:var(--space-2);}
+.crow .cname{color:var(--gray-text); font-size:var(--text-xs); text-transform:uppercase; letter-spacing:.05em;}
+.clause select{font-family:var(--font-ui); font-size:var(--text-sm); color:var(--ink); background:var(--paper);
+  border:1px solid var(--ink); border-radius:2px; padding:5px 8px;}
+.xbtn{margin-left:auto; font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text);
+  background:none; border:1px solid var(--gray-line); border-radius:2px; padding:4px 8px; cursor:pointer;}
+.xbtn:hover{background:var(--gray-fill);}
+</style>
+
+<!-- theme boot: apply stored choice before first paint (no flash) -->
+<script>
+try{var t=localStorage.getItem("m170-theme");if(t)document.documentElement.dataset.theme=t;}catch(e){}
+</script>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="eyebrow">MATH 170 · What type of learning is it? · Sandwich Classifier Activities 1 &amp; 2</div>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Color theme">◑ auto</button>
+  </div>
+
+  <h1 data-edit="title">You are the machine <span class="tag">classification</span></h1>
+  <p class="prose muted" data-edit="intro">You are the AI. You have twenty rows of numbers — four
+  features, no meanings — and a rule to write. The goal is to classify: healthy or not healthy.
+  Build the rule, watch what it flags, then reveal what you were actually looking at, one pass at
+  a time.</p>
+
+  <div data-slot="notes-top"></div>
+
+
+  <div class="stateband">
+    <div class="seg" role="group" aria-label="What you can see — the worksheet's three passes" id="stateSeg">
+      <button type="button" data-s="1" aria-pressed="true">1 · numbers only</button>
+      <button type="button" data-s="2" aria-pressed="false" disabled>2 · labels revealed</button>
+      <button type="button" data-s="3" aria-pressed="false" disabled>3 · names revealed</button>
+    </div>
+    <span class="lockhint" id="lockHint"></span>
+  </div>
+
+  <p class="rulesent" id="sent" aria-live="polite"></p>
+  <p class="scoreline" id="score" aria-live="polite"></p>
+
+  <figure class="stage">
+    <div class="tablewrap">
+      <table class="data st1" id="dataTable">
+        <thead><tr>
+          <th class="c-mid">#</th>
+          <th class="c-name" id="thName">item</th>
+          <th id="thF0">Feature 1</th>
+          <th id="thF1">Feature 2</th>
+          <th id="thF2">Feature 3</th>
+          <th class="c-mid" id="thF3">Feature 4</th>
+          <th class="c-mid c-lab" id="thLab">Healthy?</th>
+          <th class="c-mid">flag</th>
+          <th class="c-mid c-match">match</th>
+        </tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <figcaption data-edit="caption-table">The worksheet's 20 items. Rows the rule flags slide to the top — the flag is the rule's doing, nothing else.</figcaption>
+  </figure>
+
+  <section class="tray" id="tray" hidden>
+    <h2 data-edit="mystery-heading">The five mystery sandwiches</h2>
+    <div class="tablewrap">
+      <table class="data" id="mysteryTable">
+        <thead><tr>
+          <th class="c-name">sandwich</th>
+          <th id="mh0">Calories</th>
+          <th id="mh1">Fat (g)</th>
+          <th id="mh2">Fiber</th>
+          <th class="c-mid" id="mh3">Vegetarian</th>
+          <th class="c-name">rule says</th>
+        </tr></thead>
+        <tbody id="mtbody"></tbody>
+      </table>
+    </div>
+    <p class="cap" data-edit="caption-mystery">New sandwiches the rule has never seen. No labels exist here — the rule can only stamp what it would say.</p>
+  </section>
+
+  <div class="controls">
+    <div class="ctl clause full" id="cl0">
+      <div class="crow">
+        <span class="cname andlabel">clause 1 — AND</span>
+        <select id="feat0" aria-label="Feature for clause 1">
+          <option value="0">Feature 1</option>
+          <option value="1">Feature 2</option>
+          <option value="2">Feature 3</option>
+          <option value="3">Feature 4</option>
+        </select>
+        <span class="seg" role="group" aria-label="Comparison for clause 1" id="ops0">
+          <button type="button" data-op="&lt;" aria-pressed="true">&lt;</button>
+          <button type="button" data-op="&gt;=" aria-pressed="false">≥</button>
+        </span>
+        <span class="seg" role="group" aria-label="Vegetarian test for clause 1" id="vops0" hidden>
+          <button type="button" data-v="1" aria-pressed="true">is 1</button>
+          <button type="button" data-v="0" aria-pressed="false">is 0</button>
+        </span>
+      </div>
+      <div id="srow0">
+        <label for="t0">threshold <span class="val gold" id="t0v">600</span></label>
+        <input type="range" id="t0" min="250" max="1100" step="10" value="600">
+      </div>
+      <div class="note" data-edit="note-and">The rule is an <b>AND</b> of its clauses: a row is flagged
+      only when <b>every</b> clause below is true of it. With one clause there is nothing to combine yet —
+      add a second and both must hold.</div>
+    </div>
+
+    <div class="conn" id="conn" hidden>AND</div>
+
+    <div class="ctl full" id="addwrap">
+      <button class="btn" id="addBtn" type="button">＋ AND a second clause</button>
+      <div class="note" data-edit="note-add">two tests joined by AND — a row is flagged only if it passes both</div>
+    </div>
+
+    <div class="ctl clause full" id="cl1" hidden>
+      <div class="crow">
+        <span class="cname andlabel">clause 2 — AND</span>
+        <select id="feat1" aria-label="Feature for clause 2">
+          <option value="0">Feature 1</option>
+          <option value="1">Feature 2</option>
+          <option value="2">Feature 3</option>
+          <option value="3">Feature 4</option>
+        </select>
+        <span class="seg" role="group" aria-label="Comparison for clause 2" id="ops1">
+          <button type="button" data-op="&lt;" aria-pressed="false">&lt;</button>
+          <button type="button" data-op="&gt;=" aria-pressed="true">≥</button>
+        </span>
+        <span class="seg" role="group" aria-label="Vegetarian test for clause 2" id="vops1" hidden>
+          <button type="button" data-v="1" aria-pressed="true">is 1</button>
+          <button type="button" data-v="0" aria-pressed="false">is 0</button>
+        </span>
+        <button class="xbtn" id="rmBtn" type="button" aria-label="Remove second clause">× remove</button>
+      </div>
+      <div id="srow1">
+        <label for="t1">threshold <span class="val gold" id="t1v">7</span></label>
+        <input type="range" id="t1" min="3" max="12" step="1" value="7">
+      </div>
+    </div>
+  </div>
+
+  <div data-slot="notes-bottom"></div>
+
+  <div class="foot">
+    <button class="btn" id="reset" type="button">Reset</button>
+    <span class="hint" data-edit="hint-try">Try: after the reveal, rule <span class="mono">fat (g) &lt; 20</span> — a fine score. Then look at the last mystery sandwich.</span>
+  </div>
+
+</div>
+
+<script type="application/json" id="m170-config">
+{
+  "_v": 1,
+  "rows": [
+    [ 1, "Avocado Turkey",        540, 24, 11, 0, 1],
+    [ 2, "Bacon, Egg & Cheddar",  780, 38,  4, 0, 0],
+    [ 3, "Grilled Cheese",        640, 30,  4, 1, 0],
+    [ 4, "Mediterranean",         670, 17, 11, 1, 1],
+    [ 5, "Grilled Chicken Club",  690, 23,  5, 0, 0],
+    [ 6, "Tofu Banh Mi",          400, 10,  8, 1, 1],
+    [ 7, "Chicken Caesar Wrap",   600, 18,  7, 0, 1],
+    [ 8, "Avocado Toast",         510, 20,  5, 1, 1],
+    [ 9, "Smokestack Pork",      1020, 48,  5, 0, 0],
+    [10, "Veggie Delight",        290,  4,  9, 1, 1],
+    [11, "Roast Beef Classic",    700, 28,  6, 0, 0],
+    [12, "Caprese Panini",        430, 11,  5, 1, 1],
+    [13, "Egg Salad Sandwich",    510, 14,  4, 1, 1],
+    [14, "Pulled Pork BBQ",       850, 40,  7, 0, 0],
+    [15, "Spicy Black Bean Wrap", 370,  8, 11, 1, 1],
+    [16, "Tuna Melt",             620, 19,  5, 0, 0],
+    [17, "Seitan Reuben",         440, 13,  8, 1, 1],
+    [18, "Fried Chicken Biscuit", 780, 32,  4, 0, 0],
+    [19, "Falafel Pita",          390,  9,  7, 1, 1],
+    [20, "Ham & Swiss",           690, 27,  5, 0, 0]
+  ],
+  "mystery": [
+    ["Tuna Salad",           480, 18,  7, 0],
+    ["Garden Light",         310, 12, 12, 1],
+    ["Buffalo \u201cChkn\u201d Melt", 890, 38,  6, 1],
+    ["Mama's Meatball",      980, 42,  5, 0],
+    ["Bread-Lover's Loaf",  1250,  8,  4, 1]
+  ],
+  "featNames": ["Calories", "Fat (g)", "Fiber", "Vegetarian"],
+  "sentNames": ["calories", "fat (g)", "fiber"],
+  "className": "Healthy",
+  "sliders": [
+    {"min": 250, "max": 1100, "step": 10, "value": 600},
+    {"min": 0,   "max": 50,   "step": 1,  "value": 20},
+    {"min": 3,   "max": 12,   "step": 1,  "value": 7}
+  ],
+  "defaultClause": {"feat": 0, "op": "<", "thr": 600, "vval": 1},
+  "secondClause":  {"feat": 2, "op": ">=", "thr": 7,  "vval": 1},
+  "_meta": {
+    "rows": { "label": "The 20 items", "kind": "table",
+      "columns": ["#","name","Calories","Fat (g)","Fiber","Vegetarian 1/0","Healthy 1/0"],
+      "regen": "labeled-table",
+      "help": "Worksheet data. Column 6 and 7 must stay 1/0. The pinned scores in the page comments describe the DEFAULT data only \u2014 re-check them if you edit this." },
+    "mystery": { "label": "Mystery items (no labels)", "kind": "table",
+      "columns": ["name","Calories","Fat (g)","Fiber","Vegetarian 1/0"],
+      "regen": "labeled-table",
+      "help": "Shown only in pass 3. The rule stamps each one; there is no right answer to compare against." },
+    "featNames": { "label": "Feature names (revealed in pass 3)", "kind": "list" },
+    "sentNames": { "label": "Feature names as sentence words", "kind": "list",
+      "help": "Lower-case forms of the first three features, used in the spoken rule sentence." },
+    "className": { "label": "Name of the class being predicted", "kind": "text",
+      "help": "Appears in the tally line and the table header, e.g. Healthy." },
+    "sliders": { "label": "Threshold slider per numeric feature", "kind": "range-spec",
+      "help": "One spec for each of the first three features, in order. The fourth feature is 1/0 and has no slider." },
+    "defaultClause": { "label": "Rule the page opens with", "kind": "table",
+      "columns": ["feat","op","thr","vval"],
+      "help": "feat is a 0-based feature index; op is < or >=; thr is the numeric threshold; vval (0 or 1) is used only when feat is the 1/0 feature." },
+    "secondClause": { "label": "Clause added by the AND button", "kind": "table",
+      "columns": ["feat","op","thr","vval"] }
+  }
+}
+</script>
+
+<script>
+(function(){
+"use strict";
+/* pinned checks (see BUILD VERIFICATION comment in <head>):
+   default Feature 1 < 600 → 18/20 · best single clause 19/20 (cal < 620) ·
+   best two-clause 19/20 · no expressible rule reaches 20/20 · veg alone 17/20 */
+
+/* ---------- data: everything tunable comes from the config island ---------- */
+var CFG = JSON.parse(document.getElementById("m170-config").textContent);
+/* rows: [id, name, Calories, Fat(g), Fiber, Vegetarian(1/0), Healthy(1/0)] */
+var ROWS = CFG.rows;
+var MYST = CFG.mystery;                                           /* no labels exist */
+var N    = ROWS.length;
+var FEATNAMES = CFG.featNames;                                    /* pass-3 headers */
+var SENTNAMES = CFG.sentNames;                                    /* pass-3 sentence words */
+var CLASSNAME = CFG.className || "Healthy";
+var VEGFEAT   = FEATNAMES.length - 1;                             /* the 1/0 feature */
+var SL = CFG.sliders.map(function(s){
+  return { min:+s.min, max:+s.max, step:+s.step, def:+s.value };
+});
+
+/* initial teaching state: state 1, rule = Feature 1 < 600, single clause */
+/* A clause carries BOTH a numeric threshold per feature (thrs) and a separate 0/1
+   value (vval) for the 1/0 feature. Keeping them apart is the fix for the reported
+   bug: the "is 1 / is 0" buttons can never touch a numeric threshold again, and
+   switching features no longer destroys the threshold you had set. */
+function mkClause(spec){
+  var c = { feat:+spec.feat, op:spec.op === ">=" ? ">=" : "<",
+            vval: +spec.vval === 0 ? 0 : 1,
+            thrs: SL.map(function(s){ return s.def; }) };
+  if(c.feat < SL.length && spec.thr != null) c.thrs[c.feat] = +spec.thr;
+  if(c.feat > VEGFEAT || c.feat < 0) c.feat = 0;
+  return c;
+}
+function thrOf(c){ return c.thrs[c.feat]; }
+function defaultClauses(){ return [ mkClause(CFG.defaultClause) ]; }
+var clauses = defaultClauses();
+var state = 1, visited = {}, maxVisited = 0;
+
+/* ---------- theme: auto → light → dark (design-system v2) ---------- */
+var root = document.documentElement, themeBtn = document.getElementById("themeBtn");
+function themeLabel(){
+  var m = root.dataset.theme || "auto";
+  themeBtn.textContent = m==="dark" ? "● dark" : m==="light" ? "○ light" : "◑ auto";
+}
+themeBtn.addEventListener("click", function(){
+  var cur = root.dataset.theme || "auto";
+  var next = cur==="auto" ? "light" : cur==="light" ? "dark" : "auto";
+  if(next==="auto"){ delete root.dataset.theme; try{localStorage.removeItem("m170-theme");}catch(e){} }
+  else { root.dataset.theme = next; try{localStorage.setItem("m170-theme", next);}catch(e){} }
+  themeLabel(); renderAll(false);
+});
+if(window.matchMedia){ window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function(){ renderAll(false); }); }
+themeLabel();
+
+/* ---------- shared slider helper (copied from the exemplar) ---------- */
+function wireSlider(id, fmt, onInput){
+  var el = document.getElementById(id), out = document.getElementById(id+"v");
+  function paint(){
+    var p = (el.value - el.min) / (el.max - el.min) * 100;
+    el.style.setProperty("--track",
+      "linear-gradient(to right, var(--gold) "+p+"%, var(--gray-line) "+p+"%)");
+    if(out) out.textContent = fmt(+el.value);
+  }
+  el.addEventListener("input", function(){ paint(); onInput(); });
+  paint();
+  return { el: el, paint: paint,
+           set: function(v){ el.value = v; paint(); } };
+}
+
+/* ---------- rule model ---------- */
+function satisfies(c, f){        /* f = [cal, fat, fiber, veg] */
+  var v = f[c.feat];
+  if(c.feat === VEGFEAT) return v === c.vval;   /* the 1/0 feature: its own value */
+  return c.op === ">=" ? v >= thrOf(c) : v < thrOf(c);
+}
+/* The rule is an AND over its clauses — every clause must hold. */
+function flagged(f){
+  for(var i=0;i<clauses.length;i++) if(!satisfies(clauses[i], f)) return false;
+  return true;
+}
+function clausePhrase(c){
+  if(c.feat === VEGFEAT){
+    if(state === 3) return c.vval===1 ? "it is vegetarian" : "it is not vegetarian";
+    return "Feature "+(VEGFEAT+1)+" is "+c.vval;
+  }
+  var name = state===3 ? SENTNAMES[c.feat] : "Feature "+(c.feat+1);
+  return name+" "+(c.op==="<" ? "&lt;" : "≥")+' <span class="mono">'+thrOf(c)+"</span>";
+}
+
+/* ---------- build the 20-row table ---------- */
+var tbody = document.getElementById("tbody");
+var rows = ROWS.map(function(d){
+  var tr = document.createElement("tr");
+  function td(cls){ var c=document.createElement("td"); c.className=cls; tr.appendChild(c); return c; }
+  var r = { id:d[0], name:d[1], f:[d[2],d[3],d[4],d[5]], lab:d[6], tr:tr };
+  r.cIdx  = td("num idx c-mid");  r.cIdx.textContent = d[0];
+  r.cName = td("c-name");
+  r.cF0   = td("num");  r.cF0.textContent = d[2];
+  r.cF1   = td("num");  r.cF1.textContent = d[3];
+  r.cF2   = td("num");  r.cF2.textContent = d[4];
+  r.cF3   = td("num c-mid");
+  r.cLab  = td("c-mid c-lab");  r.cLab.textContent = d[6] ? "Yes" : "No";
+  r.cFlag = td("c-mid");
+  r.cMatch= td("c-mid c-match");
+  tbody.appendChild(tr);
+  return r;
+});
+
+/* ---------- build the mystery tray ---------- */
+var mtbody = document.getElementById("mtbody");
+var mrows = MYST.map(function(d){
+  var tr = document.createElement("tr");
+  function td(cls){ var c=document.createElement("td"); c.className=cls; tr.appendChild(c); return c; }
+  var r = { name:d[0], f:[d[1],d[2],d[3],d[4]], tr:tr };
+  var n = td("c-name"); n.textContent = d[0];
+  td("num").textContent = d[1];
+  td("num").textContent = d[2];
+  td("num").textContent = d[3];
+  td("num c-mid").textContent = d[4] ? "Yes" : "No";
+  r.cPred = td("c-name");
+  mtbody.appendChild(tr);
+  return r;
+});
+
+/* ---------- FLIP row re-sort (flagged rows slide to the top) ---------- */
+function applyOrder(order, animate){
+  rows.forEach(function(r){ r._top = animate ? r.tr.getBoundingClientRect().top : 0; });
+  order.forEach(function(r){ tbody.appendChild(r.tr); });
+  if(!animate) return;
+  var moved = [];
+  rows.forEach(function(r){
+    var d = r._top - r.tr.getBoundingClientRect().top;
+    if(d){ r.tr.style.transition="none"; r.tr.style.transform="translateY("+d+"px)"; moved.push(r); }
+  });
+  if(!moved.length) return;
+  requestAnimationFrame(function(){ requestAnimationFrame(function(){
+    moved.forEach(function(r){
+      r.tr.style.transition = "transform var(--dur) var(--ease)";
+      r.tr.style.transform  = "";
+    });
+  }); });
+}
+
+/* ---------- render everything driven by rule + state ---------- */
+var sentEl  = document.getElementById("sent");
+var scoreEl = document.getElementById("score");
+
+function renderAll(animate){
+  if(animate === undefined) animate = true;
+  var nFlag = 0, nMatch = 0;
+
+  rows.forEach(function(r){
+    r.isFlag = flagged(r.f);
+    if(r.isFlag) nFlag++;
+    var ok = (r.isFlag ? 1 : 0) === r.lab;
+    if(ok) nMatch++;
+    r.tr.classList.toggle("flag", r.isFlag);
+    r.cFlag.innerHTML = r.isFlag ? '<span class="mk-flag">●</span>' : '<span class="mk-none">–</span>';
+    r.cMatch.textContent = ok ? "✓" : "✗";
+    r.cMatch.classList.toggle("mk-yes",  ok);
+    r.cMatch.classList.toggle("mk-no", !ok);
+  });
+
+  /* stable sort: flagged first, worksheet order within each group */
+  var order = rows.filter(function(r){ return r.isFlag; })
+              .concat(rows.filter(function(r){ return !r.isFlag; }));
+  applyOrder(order, animate);
+
+  /* the rule sentence, in words — always readable aloud, connective spelled out */
+  var parts = clauses.map(clausePhrase).join(" <b>AND</b> ");
+  sentEl.innerHTML = (state===1 ? "Flag a row when " : "Flag as "+CLASSNAME+" when ") + parts + ".";
+
+  /* the tally, in plain words. Classification counts always; agreement with the
+     worksheet's answer column only once the labels have been revealed. */
+  var tally = '<strong class="mono">'+nFlag+" of "+N+'</strong> classified as '+CLASSNAME
+            + ' · <span class="mono">'+(N-nFlag)+'</span> classified as not '+CLASSNAME;
+  if(state !== 1){
+    tally += '<br>Your rule gives the same answer as the ' + CLASSNAME
+          + '? column on <strong class="mono">'+nMatch+" of "+N+'</strong> rows.';
+  }
+  scoreEl.innerHTML = tally;
+
+  /* mystery tray predictions (visible in state 3; kept live regardless) */
+  mrows.forEach(function(m){
+    var p = flagged(m.f);
+    m.tr.classList.toggle("flag", p);
+    m.cPred.innerHTML = p ? '<span class="mk-flag">●</span> Healthy'
+                          : '<span class="mk-none">–</span> Not healthy';
+  });
+}
+
+/* ---------- epistemic state control (forward-only first pass) ---------- */
+var segBtns  = Array.prototype.slice.call(document.getElementById("stateSeg").querySelectorAll("button"));
+var lockHint = document.getElementById("lockHint");
+var thName = document.getElementById("thName");
+var thF = [document.getElementById("thF0"), document.getElementById("thF1"),
+           document.getElementById("thF2"), document.getElementById("thF3")];
+var dataTable = document.getElementById("dataTable");
+var tray = document.getElementById("tray");
+
+function allVisited(){ return visited[1] && visited[2] && visited[3]; }
+function featLabel(f){ return state===3 ? FEATNAMES[f] : "Feature "+(f+1); }
+
+function setState(n){
+  state = n; visited[n] = true;
+  if(n > maxVisited) maxVisited = n;
+  var free = allVisited();
+
+  segBtns.forEach(function(b){
+    var s = +b.dataset.s;
+    b.setAttribute("aria-pressed", String(s===state));
+    b.disabled = !(free || s===state || s===maxVisited+1);
+  });
+  lockHint.textContent = free
+    ? "all three passes seen — switch freely for the discussion"
+    : "the worksheet's order: forward only, until every pass has been seen";
+
+  dataTable.className = "data st"+state;
+  thName.textContent = state===3 ? "sandwich" : "item";
+  for(var f=0; f<thF.length; f++) thF[f].textContent = featLabel(f);
+
+  rows.forEach(function(r){
+    r.cName.textContent = state===3 ? r.name : "Item "+r.id;      /* swap in place */
+    r.cF3.textContent   = state===3 ? (r.f[VEGFEAT] ? "Yes" : "No") : String(r.f[VEGFEAT]);
+  });
+
+  /* rule-builder wording follows the same epistemic state */
+  [0,1].forEach(function(i){
+    var sel = document.getElementById("feat"+i);
+    for(var f=0; f<sel.options.length; f++) sel.options[f].textContent = featLabel(f);
+    var vb = document.getElementById("vops"+i).querySelectorAll("button");
+    vb[0].textContent = state===3 ? "is vegetarian"     : "is 1";
+    vb[1].textContent = state===3 ? "is not vegetarian" : "is 0";
+  });
+
+  document.getElementById("thLab").textContent = CLASSNAME + "?";
+  for(var g=0; g<FEATNAMES.length; g++){
+    var mh = document.getElementById("mh"+g);
+    if(mh) mh.textContent = FEATNAMES[g];
+  }
+
+  tray.hidden = state !== 3;
+  renderAll(false);
+}
+segBtns.forEach(function(b){
+  b.addEventListener("click", function(){ if(!b.disabled) setState(+b.dataset.s); });
+});
+
+/* ---------- rule-builder wiring ----------
+   The slider writes ONLY into thrs[feat]; the 1/0 buttons write ONLY into vval.
+   Neither control can reach the other's value, so no click can move a threshold. */
+function onThr(i){
+  return function(){
+    var c = clauses[i]; if(!c || c.feat === VEGFEAT) return;
+    c.thrs[c.feat] = +sliders[i].el.value;
+    renderAll();
+  };
+}
+var sliders = [
+  wireSlider("t0", function(v){ return String(v); }, onThr(0)),
+  wireSlider("t1", function(v){ return String(v); }, onThr(1))
+];
+
+function refreshClauseUI(i){
+  var c = clauses[i]; if(!c) return;
+  var veg = c.feat === VEGFEAT;
+  document.getElementById("feat"+i).value = String(c.feat);
+  document.getElementById("srow"+i).hidden = veg;
+  document.getElementById("ops"+i).hidden  = veg;
+  document.getElementById("vops"+i).hidden = !veg;
+  document.getElementById("vops"+i).querySelectorAll("button").forEach(function(b){
+    b.setAttribute("aria-pressed", String(+b.dataset.v === c.vval));
+  });
+  if(!veg){
+    var s = SL[c.feat], el = sliders[i].el;
+    el.min = s.min; el.max = s.max; el.step = s.step;
+    /* keep the model inside this feature's range without ever silently
+       rewriting it from another control */
+    var t = Math.min(s.max, Math.max(s.min, c.thrs[c.feat]));
+    c.thrs[c.feat] = t;
+    sliders[i].set(t);
+    document.getElementById("ops"+i).querySelectorAll("button").forEach(function(b){
+      b.setAttribute("aria-pressed", String(b.dataset.op === c.op));
+    });
+  }
+}
+
+[0,1].forEach(function(i){
+  document.getElementById("feat"+i).addEventListener("change", function(){
+    var c = clauses[i]; if(!c) return;
+    c.feat = +this.value;            /* thresholds and vval both survive the switch */
+    refreshClauseUI(i); renderAll();
+  });
+  document.getElementById("ops"+i).querySelectorAll("button").forEach(function(b){
+    b.addEventListener("click", function(){
+      var c = clauses[i]; if(!c || c.feat === VEGFEAT) return;
+      c.op = b.dataset.op; refreshClauseUI(i); renderAll();
+    });
+  });
+  document.getElementById("vops"+i).querySelectorAll("button").forEach(function(b){
+    b.addEventListener("click", function(){
+      var c = clauses[i]; if(!c || c.feat !== VEGFEAT) return;
+      c.vval = +b.dataset.v; refreshClauseUI(i); renderAll();
+    });
+  });
+});
+
+var addwrap = document.getElementById("addwrap"), cl1 = document.getElementById("cl1"),
+    conn = document.getElementById("conn");
+document.getElementById("addBtn").addEventListener("click", function(){
+  clauses.push(mkClause(CFG.secondClause));        /* the spec's example second clause */
+  addwrap.hidden = true; cl1.hidden = false; conn.hidden = false;
+  refreshClauseUI(1); renderAll();
+  document.getElementById("feat1").focus();
+});
+document.getElementById("rmBtn").addEventListener("click", function(){
+  clauses.pop();
+  cl1.hidden = true; addwrap.hidden = false; conn.hidden = true;
+  renderAll();
+  document.getElementById("addBtn").focus();
+});
+
+/* ---------- Reset → the initial teaching state ---------- */
+document.getElementById("reset").addEventListener("click", function(){
+  clauses = defaultClauses();
+  cl1.hidden = true; addwrap.hidden = false; conn.hidden = true;
+  refreshClauseUI(0);
+  visited = {}; maxVisited = 0;
+  setState(1);
+});
+
+/* ---------- boot: state 1, Feature 1 < 600, single clause ---------- */
+refreshClauseUI(0);
+setState(1);
+})();
+</script>
+</body>
+</html>

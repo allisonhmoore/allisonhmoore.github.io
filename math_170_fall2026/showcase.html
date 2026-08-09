@@ -1,0 +1,595 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What we built · MATH 170</title>
+
+<!-- ================================================================
+     DOC PAGE (tools/lint.py DOC_PAGES): the showcase. Carries the
+     canonical token block, the theme boot, print and reduced-motion
+     rules; carries no teaching spec and no .attach footer.
+
+     The config island holds only what this page needs to honour a
+     colour chosen elsewhere: each palette's two token blocks and its
+     ramp. The full record — derivations, every contrast ratio, the
+     rejected hues — is design/palettes.json, inlined whole in
+     kinds.html.
+     ================================================================ -->
+<script type="application/json" id="m170-config">
+{"_v":1,"default":"goldenrod","palettes":{"goldenrod":{"label":"Goldenrod","light":{"--ink":"#111111","--paper":"#FFFFFF","--gold":"#DAA520","--gold-soft":"rgba(218,165,32,.12)","--gray-text":"#666666","--gray-line":"#CCCCCC","--gray-fill":"#F2F2F2"},"dark":{"--ink":"#ECECEC","--paper":"#151515","--gold":"#E3B341","--gold-soft":"rgba(227,179,65,.16)","--gray-text":"#9A9A9A","--gray-line":"#3A3A3A","--gray-fill":"#1F1F1F"},"ramp":{"tokens":["--gold-r1","--gold-r2","--gold-r3","--gold-r4","--gold-r5"],"light":["#FFECC7","#FBC54C","#DAA520","#B58700","#906B00"],"dark":["#594000","#7B5A00","#9F7600","#C4920F","#E3B341"]}},"terracotta":{"label":"Terracotta","light":{"--ink":"#111111","--paper":"#FFFFFF","--gold":"#F1926D","--gold-soft":"rgba(241,146,109,.12)","--gray-text":"#666666","--gray-line":"#CCCCCC","--gray-fill":"#F2F2F2"},"dark":{"--ink":"#ECECEC","--paper":"#151515","--gold":"#FBA07D","--gold-soft":"rgba(251,160,125,.16)","--gray-text":"#9A9A9A","--gray-line":"#3A3A3A","--gray-fill":"#1F1F1F"},"ramp":{"tokens":["--gold-r1","--gold-r2","--gold-r3","--gold-r4","--gold-r5"],"light":["#FFE9E1","#FFBCA1","#F1926D","#CE734E","#AD5530"],"dark":["#762800","#964523","#B76341","#D9815E","#FBA07D"]}},"moss":{"label":"Moss","light":{"--ink":"#111111","--paper":"#FFFFFF","--gold":"#8ABF7F","--gold-soft":"rgba(138,191,127,.12)","--gray-text":"#666666","--gray-line":"#CCCCCC","--gray-fill":"#F2F2F2"},"dark":{"--ink":"#ECECEC","--paper":"#151515","--gold":"#98CB8D","--gold-soft":"rgba(152,203,141,.16)","--gray-text":"#9A9A9A","--gray-line":"#3A3A3A","--gray-fill":"#1F1F1F"},"ramp":{"tokens":["--gold-r1","--gold-r2","--gold-r3","--gold-r4","--gold-r5"],"light":["#CCFFC1","#A9DF9D","#8ABF7F","#6B9F60","#4E8043"],"dark":["#245119","#406E35","#5C8C52","#7AAB6F","#98CB8D"]}},"verdigris":{"label":"Verdigris","light":{"--ink":"#111111","--paper":"#FFFFFF","--gold":"#4BC3C4","--gold-soft":"rgba(75,195,196,.12)","--gray-text":"#666666","--gray-line":"#CCCCCC","--gray-fill":"#F2F2F2"},"dark":{"--ink":"#ECECEC","--paper":"#151515","--gold":"#62CFD0","--gold-soft":"rgba(98,207,208,.16)","--gray-text":"#9A9A9A","--gray-line":"#3A3A3A","--gray-fill":"#1F1F1F"},"ramp":{"tokens":["--gold-r1","--gold-r2","--gold-r3","--gold-r4","--gold-r5"],"light":["#B0FFFF","#6FE3E4","#4BC3C4","#1CA3A4","#008283"],"dark":["#005051","#006F70","#058F91","#3DAEAF","#62CFD0"]}},"harbor":{"label":"Harbor","light":{"--ink":"#111111","--paper":"#FFFFFF","--gold":"#71B4F4","--gold-soft":"rgba(113,180,244,.12)","--gray-text":"#666666","--gray-line":"#CCCCCC","--gray-fill":"#F2F2F2"},"dark":{"--ink":"#ECECEC","--paper":"#151515","--gold":"#81C1FD","--gold-soft":"rgba(129,193,253,.16)","--gray-text":"#9A9A9A","--gray-line":"#3A3A3A","--gray-fill":"#1F1F1F"},"ramp":{"tokens":["--gold-r1","--gold-r2","--gold-r3","--gold-r4","--gold-r5"],"light":["#E2F1FF","#A5D3FF","#71B4F4","#5194D1","#3276B1"],"dark":["#00477A","#24649A","#4482BA","#62A1DB","#81C1FD"]}},"heather":{"label":"Heather","light":{"--ink":"#111111","--paper":"#FFFFFF","--gold":"#C09BE8","--gold-soft":"rgba(192,155,232,.12)","--gray-text":"#666666","--gray-line":"#CCCCCC","--gray-fill":"#F2F2F2"},"dark":{"--ink":"#ECECEC","--paper":"#151515","--gold":"#CCA9F2","--gold-soft":"rgba(204,169,242,.16)","--gray-text":"#9A9A9A","--gray-line":"#3A3A3A","--gray-fill":"#1F1F1F"},"ramp":{"tokens":["--gold-r1","--gold-r2","--gold-r3","--gold-r4","--gold-r5"],"light":["#F3EAFF","#DDBEFF","#C09BE8","#A17CC6","#825EA6"],"dark":["#543372","#704E91","#8D6BB0","#AC89D0","#CCA9F2"]}},"mulberry":{"label":"Mulberry","light":{"--ink":"#111111","--paper":"#FFFFFF","--gold":"#E78EB6","--gold-soft":"rgba(231,142,182,.12)","--gray-text":"#666666","--gray-line":"#CCCCCC","--gray-fill":"#F2F2F2"},"dark":{"--ink":"#ECECEC","--paper":"#151515","--gold":"#F29DC2","--gold-soft":"rgba(242,157,194,.16)","--gray-text":"#9A9A9A","--gray-line":"#3A3A3A","--gray-fill":"#1F1F1F"},"ramp":{"tokens":["--gold-r1","--gold-r2","--gold-r3","--gold-r4","--gold-r5"],"light":["#FFE7F0","#FFB4D4","#E78EB6","#C56F97","#A45279"],"dark":["#6F264B","#8E4367","#AF6084","#D07EA2","#F29DC2"]}}},"_meta":{"palettes":{"label":"Spot-colour palettes (token values only)","help":"Trimmed from design/palettes.json by the P7 build: token blocks and ramps only. The full record — derivations, contrast ratios, rejected hues — lives in design/palettes.json and is inlined whole in kinds.html."}}}
+</script>
+
+<style>
+/* hidden must always win — author display rules on these classes would otherwise beat the attribute */
+[hidden]{display:none !important}
+
+:root{
+  /* color — light */
+  --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+  --gold-soft:rgba(218,165,32,.12);
+  --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  /* type */
+  --font-body: ui-serif, Georgia, "Times New Roman", serif;
+  --font-ui:   system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+  --text-xl:1.75rem; --text-lg:1.25rem; --text-base:1rem; --text-sm:.875rem; --text-xs:.75rem;
+  --leading-prose:1.6; --leading-ui:1.3;
+  /* spacing */
+  --space-1:4px; --space-2:8px; --space-3:16px; --space-4:24px; --space-5:32px; --space-6:48px;
+  /* motion */
+  --ease:cubic-bezier(0.16,1,0.3,1); --dur:200ms;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+    --gold-soft:rgba(227,179,65,.16);
+    --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+  --gold-soft:rgba(227,179,65,.16);
+  --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+}
+@media (prefers-reduced-motion: reduce){ :root{ --dur:0ms; } }
+@media print{
+  :root, :root[data-theme="dark"]{
+    --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+    --gold-soft:rgba(218,165,32,.12);
+    --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  }
+  .theme-btn{display:none}
+  .stage{break-inside:avoid}
+}
+
+/* ---- showcase-only additions (design/showcase-art-direction.md §1) ---- */
+:root{
+  --text-2xl: clamp(2.1rem, 1.4rem + 3.0vw, 3.25rem);   /* section titles      */
+  --text-3xl: clamp(3.0rem, 1.6rem + 6.0vw, 5.50rem);   /* chapter title cards */
+  --text-4xl: clamp(4.0rem, 2.0rem + 9.0vw, 7.75rem);   /* the page title, once */
+  --space-7: 72px;  --space-8: 112px;  --space-9: 160px;
+  --rule: 1px;  --rule-heavy: 2px;
+}
+
+/* ================= base skin (design-system §3–§4) ================= */
+*{box-sizing:border-box}
+html{color-scheme:light dark}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--font-body); font-size:var(--text-base); line-height:var(--leading-prose);
+  -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:960px; margin:0 auto; padding:var(--space-5) var(--space-4) var(--space-6);}
+.topbar{display:flex; align-items:baseline; justify-content:space-between; gap:var(--space-3);
+  border-bottom:1px solid var(--gray-line); padding-bottom:var(--space-2); margin-bottom:var(--space-4);}
+.eyebrow{font-family:var(--font-ui); font-size:var(--text-xs); letter-spacing:.08em; text-transform:uppercase; color:var(--gray-text);}
+h1{font-family:var(--font-body); font-weight:600; font-size:var(--text-xl); line-height:1.2; margin:.2em 0 .1em;}
+h2{font-family:var(--font-ui); font-weight:600; font-size:var(--text-lg); line-height:1.3; margin:var(--space-5) 0 var(--space-2);}
+h3{font-family:var(--font-ui); font-weight:600; font-size:var(--text-base); line-height:1.3;
+  margin:var(--space-6) 0 var(--space-3);}
+p{margin:0 0 var(--space-3);}
+.prose{max-width:66ch;}
+.muted{color:var(--gray-text);}
+.mono,code{font-family:var(--font-mono); font-variant-numeric:tabular-nums;}
+a{color:inherit;}
+:focus-visible{outline:2px solid var(--ink); outline-offset:2px; box-shadow:0 0 0 5px var(--gold-soft);}
+.theme-btn{font-family:var(--font-ui); font-size:var(--text-xs); background:none;
+  border:1px solid var(--gray-line); color:var(--gray-text); padding:6px 10px; cursor:pointer; border-radius:2px;}
+.theme-btn:hover{background:var(--gray-fill);}
+.btn{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:1px solid var(--ink); padding:8px 14px; cursor:pointer; border-radius:2px;}
+.btn:hover{background:var(--gray-fill);}
+.btn.primary{background:var(--gold); border-color:var(--gold); color:#111111;}
+.foot{display:flex; align-items:center; gap:var(--space-3); margin-top:var(--space-6);
+  border-top:1px solid var(--gray-line); padding-top:var(--space-3); flex-wrap:wrap;}
+.foot .btn{margin-right:auto;}
+.hint{font-family:var(--font-ui); font-size:var(--text-sm); color:var(--gray-text);}
+
+/* ================= chapters ================= */
+section{margin:0;}
+.title-card{border-top:var(--rule) solid var(--gray-line); padding-top:var(--space-4);
+  margin-top:var(--space-9); margin-bottom:var(--space-7);}
+.title-card h2{font-family:var(--font-body); font-weight:600; font-size:var(--text-3xl);
+  line-height:.98; letter-spacing:-.015em; margin:var(--space-3) 0 var(--space-4);
+  text-wrap:balance; max-width:20ch; text-transform:none;}
+.title-card .chapno{font-family:var(--font-mono); font-size:var(--text-2xl);
+  color:var(--gray-line); line-height:1;}
+.title-card .eyebrow{display:block; margin-top:var(--space-2);}
+.title-card .under{display:block; width:3.5ch; height:2px; background:var(--gold);
+  box-shadow:0 -1px 0 var(--ink), 0 1px 0 var(--ink); margin-bottom:var(--space-4);}
+.title-card .stand{font-family:var(--font-body); font-size:var(--text-lg); color:var(--gray-text);
+  max-width:44ch; margin:0;}
+@media(min-width:900px){
+  .title-card{display:grid; grid-template-columns:5.5ch 1fr; column-gap:var(--space-4);}
+  .title-card .chapno{grid-row:1 / span 4; text-align:right;}
+}
+.chapter{max-width:66ch;}
+.chapter p{margin:0 0 var(--space-3);}
+.chapter p.nots{color:var(--gray-text);}
+
+.pagehead{margin:var(--space-8) 0 var(--space-9);}
+.pagehead h1{font-family:var(--font-body); font-weight:600; font-size:var(--text-4xl);
+  line-height:.95; letter-spacing:-.02em; margin:var(--space-4) 0 var(--space-4);
+  text-wrap:balance; max-width:14ch;}
+.pagehead .under{display:block; width:3.5ch; height:2px; background:var(--gold);
+  box-shadow:0 -1px 0 var(--ink), 0 1px 0 var(--ink); margin-bottom:var(--space-4);}
+.pagehead .stand{font-family:var(--font-body); font-size:var(--text-lg); color:var(--gray-text); max-width:46ch;}
+
+/* motifs */
+.starband{
+  height:96px; border-block:var(--rule) solid var(--gray-line);
+  background-image:
+    radial-gradient(circle at 12% 40%, var(--ink) 0 1px, transparent 1.2px),
+    radial-gradient(circle at 47% 72%, var(--ink) 0 1px, transparent 1.2px),
+    radial-gradient(circle at 78% 28%, var(--gold) 0 1.6px, transparent 1.8px),
+    radial-gradient(circle at 91% 61%, var(--ink) 0 1px, transparent 1.2px);
+  background-repeat:repeat-x; background-size:220px 96px;
+  opacity:.45; margin:var(--space-8) 0;
+}
+:root[data-theme="dark"] .starband{opacity:.6;}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .starband{opacity:.6;} }
+.squiggle{display:block; width:100%; height:12px; color:var(--gray-line); margin:var(--space-8) 0;}
+.squiggle.accent{color:var(--gold);}
+
+/* figures */
+figure{margin:var(--space-5) 0; padding:0;}
+figcaption{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); margin-top:var(--space-2); max-width:66ch;}
+.frame{border:1px solid var(--gray-line); background:var(--paper);}
+.frame iframe{display:block; width:100%; height:560px; border:0;}
+@media(max-width:620px){ .frame iframe{height:640px;} }
+
+/* the numbers */
+dl.facts{display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));
+  gap:var(--space-4) var(--space-3); margin:var(--space-5) 0; padding:0; max-width:100%;}
+dl.facts div{border-top:1px solid var(--gray-line); padding-top:var(--space-2);}
+dl.facts dt{font-family:var(--font-mono); font-variant-numeric:tabular-nums;
+  font-size:var(--text-2xl); line-height:1; margin-bottom:6px;}
+dl.facts dd{margin:0; font-family:var(--font-ui); font-size:var(--text-sm); color:var(--gray-text); line-height:1.4;}
+
+/* usage table */
+.tscroll{overflow-x:auto;}
+table.usage{border-collapse:collapse; width:100%; font-family:var(--font-ui); font-size:var(--text-sm);
+  margin:var(--space-3) 0;}
+table.usage th, table.usage td{border-bottom:1px solid var(--gray-line); padding:7px 12px 7px 0;
+  text-align:left; vertical-align:baseline;}
+table.usage thead th{font-size:var(--text-xs); text-transform:uppercase; letter-spacing:.06em;
+  color:var(--gray-text); font-weight:600;}
+table.usage td.n, table.usage th.n{text-align:right; font-family:var(--font-mono);
+  font-variant-numeric:tabular-nums; white-space:nowrap;}
+table.usage tr.total td, table.usage tr.total th{border-top:var(--rule-heavy) solid var(--ink); font-weight:600;}
+table.usage td.pending{color:var(--gray-text); font-style:italic;}
+
+/* the one ramp figure */
+.bars{margin:var(--space-4) 0; font-family:var(--font-ui); font-size:var(--text-sm);}
+.bars .row{display:grid; grid-template-columns:5.5em 1fr 5.5em; gap:var(--space-2);
+  align-items:center; margin-bottom:6px;}
+.bars .bar{height:14px; border:1px solid var(--ink); background:var(--gold-soft);}
+.bars .bar.s1{background:var(--gold-r1, var(--gold-soft));}
+.bars .bar.s2{background:var(--gold-r2, var(--gold-soft));}
+.bars .bar.s3{background:var(--gold-r3, var(--gold));}
+.bars .bar.s5{background:var(--gold-r5, var(--gold));}
+.bars .n{font-family:var(--font-mono); font-variant-numeric:tabular-nums; text-align:right; color:var(--gray-text);}
+
+ul.plain{font-family:var(--font-ui); font-size:var(--text-sm); line-height:1.55; max-width:66ch;
+  padding-left:1.1em; margin:0 0 var(--space-3);}
+ul.plain li{margin-bottom:var(--space-2);}
+.cta{font-family:var(--font-ui); font-size:var(--text-lg); max-width:66ch;}
+.cta a{color:var(--ink); text-decoration-color:var(--gold); text-decoration-thickness:2px; text-underline-offset:4px;}
+
+/* motion — inert until the boot script says otherwise (§5) */
+.js-motion .reveal{opacity:0; transform:translateY(8px);
+  transition:opacity 260ms var(--ease), transform 260ms var(--ease);}
+.js-motion .reveal.in{opacity:1; transform:none;}
+@media (prefers-reduced-motion: reduce){
+  .js-motion .reveal{opacity:1 !important; transform:none !important; transition:none !important;}
+}
+
+@media print{
+  :root{ --text-3xl:2.4rem; --text-4xl:3rem; --space-8:48px; --space-9:56px; }
+  .starband, .squiggle, .theme-btn, .frame{ display:none; }
+  .title-card{ break-after:avoid; break-inside:avoid; }
+  section{ break-inside:auto; }
+  .js-motion .reveal{ opacity:1 !important; transform:none !important; }
+  .foot{ display:none; }
+}
+</style>
+
+<!-- the selected palette's four token blocks are written here at boot -->
+<style id="m170-palette-live"></style>
+
+<!-- boot: theme and colour applied before first paint (no flash) -->
+<script>
+window.M170 = (function(){
+  try{var t=localStorage.getItem("m170-theme");if(t)document.documentElement.dataset.theme=t;}catch(e){}
+  var CFG=null, PAL=null, DEF="goldenrod";
+  try{
+    CFG = JSON.parse(document.getElementById("m170-config").textContent);
+    PAL = CFG.palettes;
+    DEF = CFG["default"] || "goldenrod";
+  }catch(e){}
+  function tokens(p, theme, pad){
+    var out=[], b=p[theme], k, i;
+    for(k in b){ if(Object.prototype.hasOwnProperty.call(b,k)) out.push(pad+k+": "+b[k]+";"); }
+    var rt = (p.ramp && p.ramp.tokens) || [];
+    for(i=0;i<rt.length;i++) out.push(pad+rt[i]+": "+p.ramp[theme][i]+";");
+    return out.join("\n");
+  }
+  function cssFor(name){
+    var p = PAL && PAL[name]; if(!p) return "";
+    return ":root{\n"+tokens(p,"light","  ")+"\n}\n"
+      + '@media (prefers-color-scheme: dark){\n  :root:not([data-theme="light"]){\n'+tokens(p,"dark","    ")+"\n  }\n}\n"
+      + ':root[data-theme="dark"]{\n'+tokens(p,"dark","  ")+"\n}\n"
+      + '@media print{\n  :root, :root[data-theme="dark"]{\n'+tokens(p,"light","    ")+"\n  }\n}";
+  }
+  function apply(name){
+    if(!PAL || !PAL[name]) name = DEF;
+    var el = document.getElementById("m170-palette-live");
+    if(el) el.textContent = cssFor(name);
+    return name;
+  }
+  var stored=null; try{stored=localStorage.getItem("m170-palette");}catch(e){}
+  return {pal:PAL, def:DEF, apply:apply, current:apply(stored||DEF)};
+})();
+</script>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="eyebrow">MATH 170 · Math of AI · What we built</div>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Color theme">◑ auto</button>
+  </div>
+
+  <div class="starband" aria-hidden="true"></div>
+
+  <header class="pagehead">
+    <div class="eyebrow">Fall 2025 worksheets · 2026 build</div>
+    <h1 data-edit="title">A course you can hold in one hand.</h1>
+    <span class="under" aria-hidden="true"></span>
+    <p class="stand" data-edit="standfirst">Twenty-nine interactive activities, one classroom server, and a small
+    editing desk that hands all of it to the person who teaches it. One file each. No build step. No accounts.</p>
+  </header>
+
+  <!-- 01 -->
+  <section aria-labelledby="c1h">
+    <div class="title-card reveal">
+      <span class="chapno" aria-hidden="true">01</span>
+      <span class="eyebrow">The goal</span>
+      <h2 id="c1h">One course, one visual language.</h2>
+      <span class="under" aria-hidden="true"></span>
+      <p class="stand">A student should never have to learn a new interface to learn a new idea.</p>
+    </div>
+    <div class="chapter reveal" data-edit="ch1">
+      <p>Week 1 of MATH 170 puts twenty rows of numbers in front of a student — four columns, no column names —
+      and asks them to write a rule that says <em>healthy</em> or <em>not healthy</em>. It is a good hour. What it
+      is not is an hour that survives being handed off to five different websites, each with its own buttons,
+      its own colours, and its own idea of what a slider looks like.</p>
+      <p>So the brief was one visual language for the whole semester: black text, white paper, one spot colour,
+      the way a two-colour textbook is printed. Every activity a single HTML file that opens from a double-click.
+      And every one of them owned, afterwards, by the professor rather than by us.</p>
+      <p class="nots">This doesn't replace the paper. Each page runs <em>after</em> the worksheet, as the reveal
+      or the discussion engine.</p>
+    </div>
+  </section>
+
+  <!-- 02 -->
+  <section aria-labelledby="c2h">
+    <div class="title-card reveal">
+      <span class="chapno" aria-hidden="true">02</span>
+      <span class="eyebrow">Round one</span>
+      <h2 id="c2h">Thirty-two pages and a plane full of cursors.</h2>
+      <span class="under" aria-hidden="true"></span>
+      <p class="stand">Built in one pass from the professor's own Fall 2025 worksheets.</p>
+    </div>
+    <div class="chapter reveal" data-edit="ch2">
+      <p>The first build read the course materials and produced thirty-two activities covering weeks 1 through
+      14 — sorting learning types, drawing a decision line, stepping k-means, reading a truth table, walking one
+      honest forward pass of word2vec — plus one thing that could not be a static file: a coordinate plane on the
+      projector where every student in the room is a randomly named cursor, moving in real time.</p>
+      <p>The data came out of the worksheets verbatim wherever the worksheets had data. Where they only had a
+      picture — a scatter, a bitmap, a graph — the numbers were reconstructed, flagged on the page, and pinned in
+      the source so they can be swapped and re-verified.</p>
+      <p class="nots">This doesn't mean it was right. It means it was checkable, which is the part that mattered
+      next.</p>
+    </div>
+  </section>
+
+  <svg class="squiggle" viewBox="0 0 600 12" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M0 7 C 60 3, 120 10, 180 6 S 300 3, 360 8 S 480 4, 600 6"
+          fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+  </svg>
+
+  <!-- 03 -->
+  <section aria-labelledby="c3h">
+    <div class="title-card reveal">
+      <span class="chapno" aria-hidden="true">03</span>
+      <span class="eyebrow">The review</span>
+      <h2 id="c3h">Thirty-two verdicts, page by page.</h2>
+      <span class="under" aria-hidden="true"></span>
+      <p class="stand">The professor opened every activity and wrote down what was wrong with it.</p>
+    </div>
+    <div class="chapter reveal" data-edit="ch3">
+      <p>Not a rating. A verdict per page — keep, edit, rework, replace, split, remove — with the specific
+      sentence to change, the specific bug to fix, and the reason. The clause selector on the sandwich page could
+      not toggle back to zero at its minimum threshold. The k-NN page mentioned the worksheet when it should have
+      just let you drag. Seven pages were removed outright, because a whiteboard and a conversation did the job
+      better.</p>
+      <p>One line reorganised a whole page. On the truth tables, students had been clicking buttons that revealed
+      answers; the note said they should type T or F themselves and be corrected: <em>“It should be earned not
+      given.”</em> That is a pedagogy decision no amount of engineering produces on its own.</p>
+      <p class="nots">This doesn't happen without a reviewer who opens all thirty-two.</p>
+    </div>
+  </section>
+
+  <!-- 04 -->
+  <section aria-labelledby="c4h">
+    <div class="title-card reveal">
+      <span class="chapno" aria-hidden="true">04</span>
+      <span class="eyebrow">Round two</span>
+      <h2 id="c4h">Every verdict, then the keys.</h2>
+      <span class="under" aria-hidden="true"></span>
+      <p class="stand">The fixes were the easy half. The other half was making us unnecessary.</p>
+    </div>
+    <div class="chapter reveal" data-edit="ch4">
+      <p>Round two implemented all of it: the edits, the reworks, the removals, the Markov page split in two, the
+      norm page replaced with something that doesn't hand out the worksheet's answers. Two new games against the
+      computer joined week 9 — the Shannon switching game and Cliquer — both with the opponent's engine mirrored
+      in Python and swept exhaustively before shipping.</p>
+      <p>Then the part that changes who owns the course. The Studio is a small web app the professor runs on
+      their own laptop: click any sentence on any activity and rewrite it, edit the numbers behind it in a
+      spreadsheet-like grid, generate or import a fresh dataset, make a second exercise from any template, choose
+      what students see and when — and publish a folder of plain HTML. In the coordinator's words, it is
+      <em>“turning it around and giving the keys to the front line.”</em></p>
+      <p class="nots">This doesn't call anything over the network, and it doesn't touch the original files: your
+      edits live beside them as small JSON files you can delete.</p>
+    </div>
+  </section>
+
+  <!-- 05 -->
+  <section aria-labelledby="c5h">
+    <div class="title-card reveal">
+      <span class="chapno" aria-hidden="true">05</span>
+      <span class="eyebrow">What exists now</span>
+      <h2 id="c5h">The set, as of today.</h2>
+      <span class="under" aria-hidden="true"></span>
+      <p class="stand">Counted from the repository on 27 July 2026, not rounded up.</p>
+    </div>
+    <div class="chapter reveal" data-edit="ch5">
+      <p>Twenty-nine activities live in the gallery, each a single self-contained file with its own teaching
+      spec, its own worksheet attachment, and a keyboard route through everything you can do with a mouse. Seven
+      more sit in the archive in case the professor wants them back. The classroom server has three modes now;
+      the last one clusters the whole class by their movie ratings, in all eight dimensions, with no scatterplot
+      anywhere — because the point of that lesson is that you can cluster what you cannot plot.</p>
+    </div>
+    <dl class="facts reveal">
+      <div><dt>29</dt><dd>activity pages, one HTML file each</dd></div>
+      <div><dt>0</dt><dd>network requests a student page makes</dd></div>
+      <div><dt>4</dt><dd>modes in the classroom server</dd></div>
+      <div><dt>7</dt><dd>spot colours, both themes, all measured</dd></div>
+      <div><dt>11</dt><dd>interaction archetypes the set is built from</dd></div>
+      <div><dt>119</dt><dd>automated tests (101 Studio, 18 server)</dd></div>
+    </dl>
+    <figure class="reveal">
+      <div class="frame">
+        <iframe src="softmax.html" loading="lazy" title="The softmax activity, running inside this page"></iframe>
+      </div>
+      <figcaption>One of the twenty-nine, running here: the worksheet's scores [1, 2, 5] become 1.7% · 4.7% ·
+      93.6%, and a confidence knob shows why a lead of 3 is a factor of e³. If the frame is blocked, open
+      <a href="softmax.html">Turning Scores into a Decision</a> directly — it is the same file.</figcaption>
+    </figure>
+  </section>
+
+  <!-- 06 -->
+  <section aria-labelledby="c6h">
+    <div class="title-card reveal">
+      <span class="chapno" aria-hidden="true">06</span>
+      <span class="eyebrow">How it was built</span>
+      <h2 id="c6h">Two people, and a queue of agents.</h2>
+      <span class="under" aria-hidden="true"></span>
+      <p class="stand">Serial phases, each with exit criteria someone checked before the next one started.</p>
+    </div>
+    <div class="chapter reveal" data-edit="ch6">
+      <p>A Fable 5 orchestrator held the plan, the contracts and the verification; seven Opus 5 phase agents did
+      the building, one at a time, each finishing to a written exit criterion — linter clean, tests green, every
+      item in the professor's document accounted for — before the next was allowed to start. One design agent ran
+      in parallel at the beginning and produced the colour system: seven hues, every contrast ratio computed
+      rather than eyeballed.</p>
+      <p>The two people are the reason it points anywhere. The professor drove the pedagogy: what to teach, what
+      to cut, what students should have to earn. The coordinator drove the architecture: static files, a Python
+      back end, one spot colour, and the Studio itself, which was their idea before it was anyone's code.</p>
+      <p class="nots">This doesn't scale by adding agents. The serial order is what made each phase's output
+      checkable.</p>
+    </div>
+  </section>
+
+  <!-- 07 -->
+  <section aria-labelledby="c7h">
+    <div class="title-card reveal">
+      <span class="chapno" aria-hidden="true">07</span>
+      <span class="eyebrow">What it consumed</span>
+      <h2 id="c7h">The meter, published.</h2>
+      <span class="under" aria-hidden="true"></span>
+      <p class="stand">Measured per agent by the harness. Where a number does not exist, we say so.</p>
+    </div>
+    <div class="chapter reveal" data-edit="ch7">
+      <p>Round two ran in a single session on 27 July 2026. Every figure below is the harness's own reading for
+      that agent's run — tokens consumed, tool calls made, wall-clock elapsed. The design phase and the first
+      build phase overlapped; the rest ran one after another.</p>
+    </div>
+    <div class="tscroll reveal">
+      <table class="usage">
+        <caption class="hint" style="text-align:left; padding-bottom:8px;">Round-2 agent usage — measured
+        (source: <code>archive/05-round2-build/usage-ledger.md</code>).</caption>
+        <thead>
+          <tr><th scope="col">Phase</th><th scope="col">Agent model</th><th scope="col" class="n">Tokens</th>
+            <th scope="col" class="n">Tool uses</th><th scope="col" class="n">Wall time</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>D — design system, palettes, gallery specs</td><td>Opus 5</td><td class="n">120,247</td><td class="n">31</td><td class="n">13m 40s</td></tr>
+          <tr><td>P1 — professor pass A + removals + gallery</td><td>Opus 5</td><td class="n">277,046</td><td class="n">76</td><td class="n">23m 05s</td></tr>
+          <tr><td>P2 — professor pass B + markov split</td><td>Opus 5</td><td class="n">411,222</td><td class="n">144</td><td class="n">39m 37s</td></tr>
+          <tr><td>P3 — Shannon/Cliquer games + movies mode</td><td>Opus 5</td><td class="n">291,804</td><td class="n">80</td><td class="n">33m 24s</td></tr>
+          <tr><td>P4 — contract retrofit + lint v2</td><td>Opus 5</td><td class="n">208,402</td><td class="n">128</td><td class="n">26m 34s</td></tr>
+          <tr><td>P5 — Studio core CMS</td><td>Opus 5</td><td class="n">124,143</td><td class="n">64</td><td class="n">15m 15s</td></tr>
+          <tr><td>P6 — Studio data tools</td><td>Opus 5</td><td class="n">260,237</td><td class="n">126</td><td class="n">29m 04s</td></tr>
+          <tr id="usage-p7"><td>P7 — this page and its siblings</td><td>Opus 5</td><td class="n">187,984</td><td class="n">75</td><td class="n">20m 10s</td></tr>
+          <tr><td>Orchestrator — planning, contracts, phase gating, verification</td><td>Fable 5</td><td colspan="3" class="pending">not measurable from inside the session — see the note below</td></tr>
+          <tr class="total"><td>All eight phase agents</td><td>Opus 5 subagents</td><td class="n">1,881,085</td><td class="n">724</td><td class="n">~3h 21m</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="bars reveal" role="img" aria-label="Tokens consumed per phase: D 120,247; P1 277,046; P2 411,222; P3 291,804; P4 208,402; P5 124,143; P6 260,237.">
+      <div class="row"><span>D</span><span class="bar s1" style="width:29.2%"></span><span class="n">120,247</span></div>
+      <div class="row"><span>P1</span><span class="bar s3" style="width:67.4%"></span><span class="n">277,046</span></div>
+      <div class="row"><span>P2</span><span class="bar s5" style="width:100%"></span><span class="n">411,222</span></div>
+      <div class="row"><span>P3</span><span class="bar s3" style="width:71.0%"></span><span class="n">291,804</span></div>
+      <div class="row"><span>P4</span><span class="bar s2" style="width:50.7%"></span><span class="n">208,402</span></div>
+      <div class="row"><span>P5</span><span class="bar s1" style="width:30.2%"></span><span class="n">124,143</span></div>
+      <div class="row"><span>P6</span><span class="bar s3" style="width:63.3%"></span><span class="n">260,237</span></div>
+    </div>
+    <p class="hint" style="max-width:66ch;">Bar length is the token count; the shade is the same number, stepped.
+    The numbers are printed because the bars are not the evidence.</p>
+    <div class="chapter reveal" data-edit="ch7b">
+      <p>Three honest gaps. The orchestrator's own consumption cannot be read from inside its own session, so it
+      is not in the table; its share went to planning documents, contracts, gating and verification runs, and the
+      coordinator can read the exact figure from their plan's usage meter. Round one's per-agent telemetry was
+      not retained, so it has no row here at all — only a shape: a thirty-two page build, one server app, two
+      interruptions when the session ran out of room. And there is no cost column, because this work ran on a
+      subscription rather than metered billing, and a dollar figure we cannot defend would be worse than none.</p>
+    </div>
+  </section>
+
+  <div class="starband" aria-hidden="true"></div>
+
+  <!-- 08 -->
+  <section aria-labelledby="c8h">
+    <div class="title-card reveal">
+      <span class="chapno" aria-hidden="true">08</span>
+      <span class="eyebrow">What's next</span>
+      <h2 id="c8h">The list we did not get to.</h2>
+      <span class="under" aria-hidden="true"></span>
+      <p class="stand">Written down in full, with effort estimates, in <code>NEXT.md</code>.</p>
+    </div>
+    <div class="chapter reveal" data-edit="ch8">
+      <ul class="plain">
+        <li><strong>The click-through.</strong> The professor has now opened these in a real browser twice, and
+        both times sent back notes — that is where every verdict in this story came from. What nobody has done is
+        walk all twenty-nine against their specs, and the newest round of fixes has not been clicked at all. The
+        linter and the test suites cannot do it, and it is still the first thing that should happen.</li>
+        <li><strong>Versioning the professor's edition.</strong> The Studio's edits are plain JSON that diffs
+        cleanly; a small git layer over them would turn “what did I change before last semester?” into an
+        answerable question.</li>
+        <li><strong>The class as a dataset.</strong> The shared plane already computes the class's own numbers on
+        the projector. Letting the room's anonymised responses land back in the Studio as a dataset would close a
+        loop nothing else in the set closes.</li>
+        <li><strong>A second course's archetypes.</strong> Eleven shapes covered a semester of AI mathematics.
+        Probability and calculus sequences would need perhaps three more — and colleagues could trade exercise
+        packs the same way they trade worksheets.</li>
+      </ul>
+    </div>
+  </section>
+
+  <svg class="squiggle accent" viewBox="0 0 600 12" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M0 7 C 60 3, 120 10, 180 6 S 300 3, 360 8 S 480 4, 600 6"
+          fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+  </svg>
+
+  <!-- 09 -->
+  <section aria-labelledby="c9h">
+    <div class="title-card reveal">
+      <span class="chapno" aria-hidden="true">09</span>
+      <span class="eyebrow">Where to start</span>
+      <h2 id="c9h">Open one and press something.</h2>
+      <span class="under" aria-hidden="true"></span>
+      <p class="stand">Everything here is a file. Nothing needs permission to look at it.</p>
+    </div>
+    <div class="chapter reveal" data-edit="ch9">
+      <p class="cta"><a href="index.html">The gallery</a> — twenty-nine activities, sorted by topic.<br>
+      <a href="kinds.html">What kinds of pages this makes</a> — for a colleague with five minutes and a
+      projector.</p>
+      <p>None of this has been in front of a class yet. The mathematics has been checked twice, by hand and in
+      Python; the structure has been checked by a linter that reads every file; the games have been solved
+      exhaustively so the computer opponent cannot blunder. What has not happened is thirty students at once, on
+      their own devices, in a room with imperfect wifi and eleven minutes left. That is the only test that
+      counts, and it is the professor's to run.</p>
+      <p class="muted">Built for MATH 170 · Math of AI, from the Fall 2025 worksheets.</p>
+    </div>
+  </section>
+
+  <div class="foot">
+    <button class="btn" type="button" id="reset">Reset</button>
+    <span class="hint">Reset puts the theme back to your system setting and the colour back to Goldenrod.</span>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+var root = document.documentElement;
+var M = window.M170 || {};
+
+/* ---------- theme ---------- */
+var themeBtn = document.getElementById("themeBtn");
+function themeLabel(){
+  var m = root.dataset.theme || "auto";
+  themeBtn.textContent = m==="dark" ? "● dark" : m==="light" ? "○ light" : "◑ auto";
+}
+themeBtn.addEventListener("click", function(){
+  var cur = root.dataset.theme || "auto";
+  var next = cur==="auto" ? "light" : cur==="light" ? "dark" : "auto";
+  if(next==="auto"){ delete root.dataset.theme; try{localStorage.removeItem("m170-theme");}catch(e){} }
+  else { root.dataset.theme = next; try{localStorage.setItem("m170-theme", next);}catch(e){} }
+  themeLabel();
+});
+themeLabel();
+
+document.getElementById("reset").addEventListener("click", function(){
+  delete root.dataset.theme;
+  try{ localStorage.removeItem("m170-theme"); localStorage.removeItem("m170-palette"); }catch(e){}
+  if(M.apply) M.apply(M.def || "goldenrod");
+  themeLabel();
+});
+
+/* ---------- chapters arrive (art direction §5) ----------
+   The .reveal rule only exists under .js-motion, so nothing is invisible
+   without JavaScript, and nothing depends on the observer firing. */
+var items = document.querySelectorAll(".reveal");
+var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+if(!reduce && window.IntersectionObserver){
+  root.classList.add("js-motion");
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){
+        var el = e.target;
+        var delay = el.classList.contains("title-card") ? 0 : 80;
+        setTimeout(function(){ el.classList.add("in"); }, delay);
+        io.unobserve(el);
+      }
+    });
+  }, {rootMargin: "0px 0px -8% 0px", threshold: 0.05});
+  Array.prototype.forEach.call(items, function(el){ io.observe(el); });
+}
+})();
+</script>
+</body>
+</html>

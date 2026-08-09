@@ -1,0 +1,522 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Negation Machine — after-game checker · MATH 170</title>
+<style>
+/* hidden must always win over any author display rule */
+[hidden]{display:none !important}
+
+:root{
+  --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+  --gold-soft:rgba(218,165,32,.12);
+  --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  --font-body: ui-serif, Georgia, "Times New Roman", serif;
+  --font-ui:   system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+  --text-xl:1.75rem; --text-lg:1.25rem; --text-base:1rem; --text-sm:.875rem; --text-xs:.75rem;
+  --leading-prose:1.6; --leading-ui:1.3;
+  --space-1:4px; --space-2:8px; --space-3:16px; --space-4:24px; --space-5:32px; --space-6:48px;
+  --ease:cubic-bezier(0.16,1,0.3,1); --dur:200ms;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+    --gold-soft:rgba(227,179,65,.16);
+    --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+  --gold-soft:rgba(227,179,65,.16);
+  --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+}
+@media (prefers-reduced-motion: reduce){ :root{ --dur:0ms; } }
+@media print{
+  :root, :root[data-theme="dark"]{
+    --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+    --gold-soft:rgba(218,165,32,.12);
+    --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  }
+  .theme-btn{display:none}
+  .stage{break-inside:avoid}
+}
+*{box-sizing:border-box}
+html{color-scheme:light dark}
+body{margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--font-body); font-size:var(--text-base); line-height:var(--leading-prose);
+  -webkit-text-size-adjust:100%;}
+.wrap{max-width:820px; margin:0 auto; padding:var(--space-5) var(--space-4) var(--space-6);}
+.topbar{display:flex; align-items:baseline; justify-content:space-between; gap:var(--space-3);
+  border-bottom:1px solid var(--gray-line); padding-bottom:var(--space-2); margin-bottom:var(--space-4);}
+.eyebrow{font-family:var(--font-ui); font-size:var(--text-xs); letter-spacing:.08em; text-transform:uppercase; color:var(--gray-text);}
+h1{font-family:var(--font-body); font-weight:600; font-size:var(--text-xl); line-height:1.2; margin:.2em 0 .1em;}
+p{margin:0 0 var(--space-3);}
+.prose{max-width:66ch;}
+.muted{color:var(--gray-text);}
+.mono,code{font-family:var(--font-mono); font-variant-numeric:tabular-nums;}
+a{color:inherit;}
+:focus-visible{outline:2px solid var(--ink); outline-offset:2px; box-shadow:0 0 0 5px var(--gold-soft);}
+.theme-btn{font-family:var(--font-ui); font-size:var(--text-xs); background:none;
+  border:1px solid var(--gray-line); color:var(--gray-text); padding:6px 10px; cursor:pointer; border-radius:2px;}
+.theme-btn:hover{background:var(--gray-fill);}
+details.spec{border:1px solid var(--gray-line); border-radius:2px; margin:0 0 var(--space-4); background:var(--gray-fill);}
+details.spec>summary{font-family:var(--font-ui); font-size:var(--text-sm); cursor:pointer;
+  padding:var(--space-2) var(--space-3); list-style:none; color:var(--gray-text);}
+details.spec>summary::-webkit-details-marker{display:none}
+details.spec>summary::before{content:"▸ "; color:var(--gold);}
+details.spec[open]>summary::before{content:"▾ ";}
+.spec-body{padding:0 var(--space-3) var(--space-3); font-family:var(--font-ui); font-size:var(--text-sm); line-height:1.5;}
+.spec-body dt{font-weight:600; margin-top:var(--space-2);}
+.spec-body dd{margin:0; color:var(--gray-text);}
+.stage{margin:var(--space-4) 0;}
+.controls{border-top:1px solid var(--gray-line); padding-top:var(--space-3); margin-top:var(--space-4);}
+.btn{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:1px solid var(--ink); padding:8px 14px; cursor:pointer; border-radius:2px;}
+.btn:hover{background:var(--gray-fill);}
+.btn[disabled]{border-color:var(--gray-line); color:var(--gray-line); cursor:default;}
+.seg{display:inline-flex; border:1px solid var(--ink); border-radius:2px; overflow:hidden; flex-wrap:wrap;}
+.seg button{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:0; border-left:1px solid var(--ink); padding:7px 12px; cursor:pointer;}
+.seg button:first-child{border-left:0;}
+.seg button[aria-pressed="true"]{background:var(--gold); color:#111111;}
+.foot{display:flex; align-items:center; gap:var(--space-3); margin-top:var(--space-5);
+  border-top:1px solid var(--gray-line); padding-top:var(--space-3); flex-wrap:wrap;}
+.foot .btn{margin-right:auto;}
+.hint{font-family:var(--font-ui); font-size:var(--text-sm); color:var(--gray-text);}
+.attach{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text);
+  border-top:1px dotted var(--gray-line); margin-top:var(--space-6); padding-top:var(--space-3);}
+.tag{display:inline-block; font-family:var(--font-ui); font-size:var(--text-xs);
+  border:1px solid var(--gray-line); border-radius:999px; padding:1px 8px; color:var(--gray-text); margin-left:6px;}
+.callout{font-family:var(--font-ui); font-size:var(--text-sm); border:1px solid var(--gray-line);
+  border-left:2px solid var(--gold); padding:var(--space-2) var(--space-3); margin:var(--space-3) 0;}
+
+/* file-specific */
+.banner{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--gold-soft);
+  border:1px solid var(--gold); border-radius:2px; padding:var(--space-2) var(--space-3); margin-bottom:var(--space-3);}
+.chips{display:flex; gap:var(--space-2); flex-wrap:wrap; margin:var(--space-2) 0;}
+.chips button{font-family:var(--font-ui); font-size:var(--text-sm); border:1px solid var(--gray-line);
+  background:var(--paper); color:var(--ink); border-radius:999px; padding:4px 12px; cursor:pointer; text-align:left;}
+.chips button[aria-pressed="true"]{border-color:var(--gold); background:var(--gold-soft);}
+.orig{border:1px solid var(--gray-line); border-radius:2px; padding:var(--space-3); margin:var(--space-3) 0;}
+.orig .sym{font-family:var(--font-mono); color:var(--gray-text); font-size:var(--text-sm); margin-top:4px;}
+.shapes{display:grid; grid-template-columns:1fr; gap:var(--space-2); margin:var(--space-2) 0;}
+.shapes button{font-family:var(--font-mono); font-size:var(--text-sm); text-align:left; padding:var(--space-2) var(--space-3);
+  border:1px solid var(--gray-line); background:var(--paper); color:var(--ink); border-radius:2px; cursor:pointer;}
+.shapes button[aria-pressed="true"]{border-color:var(--gold); background:var(--gold-soft);}
+.deriv{margin:var(--space-3) 0;}
+.step{border-left:2px solid var(--gray-line); padding:var(--space-2) var(--space-3); margin-bottom:var(--space-2);}
+.step.now{border-left-color:var(--gold);}
+.step .rule{font-family:var(--font-ui); font-size:var(--text-xs); text-transform:uppercase; letter-spacing:.06em; color:var(--gray-text);}
+.step .sym{font-family:var(--font-mono); font-size:var(--text-base); margin:2px 0;}
+.step .sym b{color:var(--gold); font-weight:700;}
+.step .en{font-family:var(--font-ui); font-size:var(--text-sm); color:var(--gray-text);}
+.verdict{font-family:var(--font-ui); font-size:var(--text-sm); padding:var(--space-2) var(--space-3);
+  border:1px solid var(--gray-line); border-radius:2px; margin:var(--space-2) 0;}
+.keybar{font-family:var(--font-mono); font-size:var(--text-xs); color:var(--gray-text);
+  border-top:1px solid var(--gray-line); margin-top:var(--space-4); padding-top:var(--space-2);}
+</style>
+<script>
+try{var t=localStorage.getItem("m170-theme");if(t)document.documentElement.dataset.theme=t;}catch(e){}
+</script>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="eyebrow">MATH 170 · Logic · Negation Game &amp; Logical Negation one-sheet</div>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Color theme">◑ auto</button>
+  </div>
+
+  <h1 data-edit="title">The Negation Machine <span class="tag">self-check</span></h1>
+  <div class="banner" data-edit="banner"><strong>Play the paper rounds first.</strong> Then check yourself here —
+  pick your answer's <em>shape</em> before the machine shows a single step.</div>
+
+  <div data-slot="notes-top"></div>
+
+
+  <div class="stage">
+    <div style="font-family:var(--font-ui);font-size:var(--text-sm);margin-bottom:4px;">Round</div>
+    <div class="seg" id="rounds" role="group" aria-label="Round"></div>
+    <div class="chips" id="sentences"></div>
+    <div class="orig">
+      <div id="origEn"></div>
+      <div class="sym" id="origSym"></div>
+      <div class="sym muted" id="taskLine"></div>
+    </div>
+    <div id="flagBox"></div>
+    <div style="font-family:var(--font-ui);font-size:var(--text-sm);" data-edit="prompt-shape">Before the machine moves: which <strong>shape</strong> is your answer?</div>
+    <div class="shapes" id="shapes"></div>
+    <div class="verdict" id="verdict" hidden aria-live="polite"></div>
+    <div class="deriv" id="deriv"></div>
+    <div>
+      <button class="btn" id="stepBtn" type="button" disabled>Step ▸</button>
+      <button class="btn" id="allBtn" type="button" disabled>Run all ▸▸</button>
+    </div>
+  </div>
+
+  <div data-slot="notes-bottom"></div>
+
+  <div class="foot">
+    <button class="btn" id="reset" type="button">Reset</button>
+    <span class="hint" data-edit="hint-try">Try: Round 4's compound contrapositive — two De Morgans fire back to back.</span>
+  </div>
+
+  <div class="keybar" data-edit="keybar">∀ for all · ∃ there exists · ¬ not · ∧ and · ∨ or · → implies</div>
+
+</div>
+
+<script type="application/json" id="m170-config">
+{
+  "_v": 1,
+  "start": {"round": 1, "sentence": 1},
+  "labels": {
+    "taskPrefix": "Task: ",
+    "taskContra": "find the CONTRAPOSITIVE",
+    "taskNegate": "NEGATE the statement",
+    "noteJoin": "  —  ",
+    "flagPrefix": "⚠ ",
+    "firstStepRule": "restate as if-then / quantified form",
+    "englishPrefix": "In English: "
+  },
+  "messages": {
+    "shapeRight": "That's the right shape. Now watch each rule fire — Step ▸.",
+    "shapeWrong": "Hold that thought — step through and see which rule your shape breaks.",
+    "compareWrong": "Compare with the shape you picked — the step above is the rule it skipped or bent."
+  },
+  "shuffle": {"a": 9301, "c": 49297, "m": 233280, "roundWeight": 7, "sentenceWeight": 13},
+  "rounds": [
+    {
+      "n": 1, "label": "1 · P→Q", "task": "contra", "form": "P → Q",
+      "shapes": {"right": "¬Q → ¬P", "traps": ["Q → P   (converse)", "¬P → ¬Q   (inverse)"]},
+      "steps": [["contrapositive: swap and negate both sides", "<b>¬Q → ¬P</b>"]],
+      "sents": [
+        {"en": "A yellow flower is always a daffodil.",
+         "ifthen": "If a flower is yellow (P), then it is a daffodil (Q).",
+         "ans": "If a flower is not a daffodil, then it is not yellow."},
+        {"en": "An expensive phone features a good camera.",
+         "ifthen": "If a phone is expensive (P), then it has a good camera (Q).",
+         "ans": "If a phone's camera is not good, then the phone is not expensive."},
+        {"en": "The stream's freezing indicates the temperature is below zero degrees Celsius.",
+         "ifthen": "If the stream is freezing (P), then the temperature is below zero (Q).",
+         "ans": "If the temperature is not below zero, then the stream is not freezing."}
+      ]
+    },
+    {
+      "n": 2, "label": "2 · (A∧B)→Q", "task": "contra", "form": "(A ∧ B) → Q",
+      "shapes": {"right": "¬Q → (¬A ∨ ¬B)", "traps": ["¬Q → (¬A ∧ ¬B)   (De Morgan missed)", "(¬A ∧ ¬B) → ¬Q   (inverse)"]},
+      "steps": [["contrapositive: swap and negate", "<b>¬Q → ¬(A ∧ B)</b>"],
+                ["De Morgan: ¬(A∧B) = ¬A ∨ ¬B", "¬Q → <b>(¬A ∨ ¬B)</b>"]],
+      "sents": [
+        {"en": "A plant is a rose only when it has thorns and is red.",
+         "ifthen": "If a plant has thorns (A) and is red (B), then it is a rose (Q).",
+         "ans": "If a plant is not a rose, then it lacks thorns or is not red."},
+        {"en": "The app's popularity comes from it being free and having no ads.",
+         "ifthen": "If the app is free (A) and has no ads (B), then it is popular (Q).",
+         "ans": "If the app is not popular, then it is not free or it has ads."},
+        {"en": "A class is hard whenever the topic is physics and the professor is strict.",
+         "ifthen": "If the topic is physics (A) and the professor is strict (B), then the class is hard (Q).",
+         "ans": "If a class is not hard, then the topic is not physics or the professor is not strict."}
+      ]
+    },
+    {
+      "n": 3, "label": "3 · (A∨B)→Q", "task": "neg", "form": "(A ∨ B) → Q",
+      "shapes": {"right": "(A ∨ B) ∧ ¬Q", "traps": ["(A ∨ B) → ¬Q   (still a conditional!)", "(¬A ∧ ¬B) → ¬Q   (contrapositive-ish)"]},
+      "steps": [["negating a conditional: keep the hypothesis, deny the conclusion", "<b>(A ∨ B) ∧ ¬Q</b>"]],
+      "sents": [
+        {"en": "High humidity results from it being either snowing or raining.",
+         "ifthen": "If it is snowing (A) or raining (B), then humidity is high (Q).",
+         "ans": "It is snowing or raining, and the humidity is not high."},
+        {"en": "A monitor that is large or high resolution costs over $500.",
+         "ifthen": "If a monitor is large (A) or high resolution (B), then it costs over $500 (Q).",
+         "ans": "A monitor is large or high resolution, and it costs $500 or less."},
+        {"en": "A proof problem or a calculation problem is worth 10 points.",
+         "ifthen": "If a problem is a proof (A) or a calculation (B), then it is worth 10 points (Q).",
+         "ans": "A problem is a proof or a calculation problem, and it is not worth 10 points."}
+      ]
+    },
+    {
+      "n": 4, "label": "4 · (A∨B)→(C∧D)", "task": "contra", "form": "(A ∨ B) → (C ∧ D)",
+      "shapes": {"right": "(¬C ∨ ¬D) → (¬A ∧ ¬B)", "traps": ["(¬C ∧ ¬D) → (¬A ∨ ¬B)   (both De Morgans flipped wrong)", "(C ∧ D) → (A ∨ B)   (converse)"]},
+      "steps": [["contrapositive: swap and negate", "<b>¬(C ∧ D) → ¬(A ∨ B)</b>"],
+                ["De Morgan on ¬(C∧D)", "<b>(¬C ∨ ¬D)</b> → ¬(A ∨ B)"],
+                ["De Morgan on ¬(A∨B)", "(¬C ∨ ¬D) → <b>(¬A ∧ ¬B)</b>"]],
+      "sents": [
+        {"en": "A student receives a Dean's Award and a scholarship when they earn a GPA or publish a paper.",
+         "ifthen": "If a student earns the GPA (A) or publishes a paper (B), then they receive a Dean's Award (C) and a scholarship (D).",
+         "ans": "If a student does not receive a Dean's Award or does not receive a scholarship, then they did not earn the GPA and did not publish a paper."},
+        {"en": "This appliance qualifies for a warranty and gets free service when it is newly purchased or fully registered.",
+         "ifthen": "If the appliance is newly purchased (A) or fully registered (B), then it qualifies for a warranty (C) and gets free service (D).",
+         "ans": "If the appliance does not qualify for a warranty or does not get free service, then it is not newly purchased and not fully registered."},
+        {"en": "A fishing lure is effective and catches big fish when it is shiny or brightly colored.",
+         "ifthen": "If a lure is shiny (A) or brightly colored (B), then it is effective (C) and catches big fish (D).",
+         "ans": "If a lure is not effective or does not catch big fish, then it is not shiny and not brightly colored."}
+      ]
+    },
+    {
+      "n": 5, "label": "5 · P→∃xQ(x)", "task": "neg", "form": "P → ∃x Q(x)",
+      "shapes": {"right": "P ∧ ∀x ¬Q(x)", "traps": ["P ∧ ¬Q   (the ∃ vanished)", "¬P → ∀x ¬Q(x)   (still a conditional)"]},
+      "steps": [["negating a conditional: keep the hypothesis, deny the conclusion", "<b>P ∧ ¬∃x Q(x)</b>"],
+                ["quantifier flip: ¬∃ becomes ∀¬", "P ∧ <b>∀x ¬Q(x)</b>"]],
+      "sents": [
+        {"en": "If the mountain is snow-covered, then there is a path that is closed.",
+         "ifthen": "P = the mountain is snow-covered; Q(x) = path x is closed.",
+         "ans": "The mountain is snow-covered, and no path is closed (every path is open)."},
+        {"en": "If the class size exceeds thirty, then an assistant must be hired.",
+         "ifthen": "P = class size exceeds thirty; Q(x) = assistant x is hired.",
+         "ans": "The class size exceeds thirty, and no assistant is hired. (The game sheet's own example.)"},
+        {"en": "If the company announces profits, then someone will get a bonus.",
+         "ifthen": "P = the company announces profits; Q(x) = person x gets a bonus.",
+         "ans": "The company announces profits, and no one gets a bonus."}
+      ]
+    },
+    {
+      "n": 6, "label": "6 · ∀x(P→Q)", "task": "neg", "form": "∀x (P(x) → Q(x))",
+      "flag": "Game-sheet correction (professor, 2026-08-05): the printed symbolic answer for this round reads ∃x(P(x)→¬Q(x)), and that arrow is a typo — confirmed, and the paper worksheets will be corrected. Its own words (\"there exists an x such that P and not Q\") are right, and they mean ∃x(P(x) ∧ ¬Q(x)). That corrected form is what this checker teaches below.",
+      "shapes": {"right": "∃x (P(x) ∧ ¬Q(x))", "traps": ["∀x (P(x) ∧ ¬Q(x))   (quantifier never flipped)", "∃x (P(x) → ¬Q(x))   (negation left as a conditional)"]},
+      "steps": [["quantifier flip: ¬∀ becomes ∃¬", "<b>∃x ¬(P(x) → Q(x))</b>"],
+                ["negating the inner conditional: P and not Q", "∃x <b>(P(x) ∧ ¬Q(x))</b>"]],
+      "sents": [
+        {"en": "Every customer service agent is polite.",
+         "ifthen": "For every x: if x is a customer service agent (P), x is polite (Q).",
+         "ans": "Some customer service agent is not polite."},
+        {"en": "All files on this drive are backed up.",
+         "ifthen": "For every x: if x is a file on this drive (P), x is backed up (Q).",
+         "ans": "Some file on this drive is not backed up."},
+        {"en": "Each ticket purchased includes an appetizer.",
+         "ifthen": "For every x: if x is a purchased ticket (P), x includes an appetizer (Q).",
+         "ans": "Some purchased ticket does not include an appetizer."}
+      ]
+    },
+    {
+      "n": 7, "label": "7 · ∃x(P→(A∧B))", "task": "neg", "form": "∃x (P(x) → (A(x) ∧ B(x)))",
+      "flagPrefix": "◆ ",
+      "note": "domain of discourse: the birds (emails, clients) themselves",
+      "flag": "Not a typo — a question of the <b>domain of discourse</b> (professor, 2026-08-05). Read over <em>all things</em>, the printed pattern says little: any non-bird makes P(x) → (A(x) ∧ B(x)) true on its own, and the printed negation ∀x(P(x) ∧ ¬(A(x) ∧ B(x))) would be claiming that everything in the universe is a bird. Read over <em>all birds</em> — the restricted domain most English speakers assume on hearing \"there is a bird that…\" — every x already satisfies P(x), both lines say exactly what they should, and the game sheet is right as printed. This checker follows that restricted reading.",
+      "shapes": {"right": "∀x (P(x) ∧ ¬(A(x) ∧ B(x)))", "traps": ["∃x (P(x) ∧ ¬(A(x) ∧ B(x)))   (quantifier never flipped)", "∀x (P(x) ∧ ¬A(x) ∧ ¬B(x))   (De Morgan misapplied: neither A nor B)"]},
+      "steps": [["quantifier flip: ¬∃ becomes ∀¬", "<b>∀x ¬(P(x) → (A(x) ∧ B(x)))</b>"],
+                ["negating the inner conditional: keep the hypothesis, deny the conclusion", "∀x <b>(P(x) ∧ ¬(A(x) ∧ B(x)))</b>"],
+                ["the domain is the birds themselves, so P(x) holds for every x — the line reads: no bird has both", "∀x (P(x) ∧ ¬(A(x) ∧ B(x)))   ≡   ∀x ¬(A(x) ∧ B(x))"]],
+      "sents": [
+        {"en": "There is a bird that is both brown and sings beautifully.",
+         "ifthen": "Domain: birds. P(x) = x is a bird (true of every x here); A(x) = x is brown; B(x) = x sings beautifully.",
+         "ans": "No bird is both brown and beautifully singing — every bird fails at least one of the two."},
+        {"en": "Some marketing email is professional and easy to read.",
+         "ifthen": "Domain: marketing emails. P(x) = x is a marketing email; A(x) = x is professional; B(x) = x is easy to read.",
+         "ans": "No marketing email is both professional and easy to read."},
+        {"en": "We found at least one client who is satisfied and will recommend us.",
+         "ifthen": "Domain: clients. P(x) = x is a client; A(x) = x is satisfied; B(x) = x will recommend us.",
+         "ans": "No client is both satisfied and willing to recommend us."}
+      ]
+    },
+    {
+      "n": 8, "label": "8 · ∀ + contrapositive", "task": "contra", "form": "∀x (H(x) → C(x))",
+      "note": "Reminder from the game sheet: quantifiers do NOT change under contrapositive, converse, or inverse.",
+      "shapes": {"right": "∀x (¬C(x) → ¬H(x))", "traps": ["∃x (¬C(x) → ¬H(x))   (quantifier wrongly flipped)", "∀x (C(x) → H(x))   (converse)"]},
+      "steps": [["contrapositive inside; the ∀ stays put", "∀x (<b>¬C(x) → ¬H(x)</b>)"],
+                ["De Morgan if the side is compound", "∀x (¬C(x) → ¬H(x)) — expanded per sentence below"]],
+      "sents": [
+        {"en": "For every integer x, if x is positive, then x is either greater than 5 or x is less than 10.",
+         "ifthen": "H = x is positive; C = (x > 5) ∨ (x < 10).",
+         "ans": "For every integer x, if x is not greater than 5 and x is not less than 10, then x is not positive."},
+        {"en": "For every triangle T, if T is equilateral, then T is acute.",
+         "ifthen": "H = T is equilateral; C = T is acute.",
+         "ans": "For every triangle T, if T is not acute, then T is not equilateral."},
+        {"en": "For every line in the coordinate plane, if the line has slope 1, the line passes through the y-axis.",
+         "ifthen": "H = the line has slope 1; C = it passes through the y-axis.",
+         "ans": "For every line, if the line does not pass through the y-axis, then the line does not have slope 1."}
+      ]
+    },
+    {
+      "n": 9, "label": "9 · ∃ + contrapositive", "task": "contra", "form": "∃x ((A(x) ∧ B(x)) → Q(x))",
+      "note": "Same reminder: the ∃ stays put under contrapositive. (The sheet's printed pattern for this round loosely matches — the machine applies the contrapositive to each sentence's own form.)",
+      "shapes": {"right": "∃x (¬Q(x) → (¬A(x) ∨ ¬B(x)))", "traps": ["∀x (¬Q(x) → (¬A(x) ∨ ¬B(x)))   (quantifier wrongly flipped)", "∃x (¬Q(x) → (¬A(x) ∧ ¬B(x)))   (De Morgan missed)"]},
+      "steps": [["contrapositive inside; the ∃ stays put", "∃x (<b>¬Q(x) → ¬(A(x) ∧ B(x))</b>)"],
+                ["De Morgan on ¬(A∧B)", "∃x (¬Q(x) → <b>(¬A(x) ∨ ¬B(x))</b>)"]],
+      "sents": [
+        {"en": "There exists a point such that if it has x-coordinate 0 and y-coordinate positive, then it intersects the line.",
+         "ifthen": "A = x-coordinate 0; B = y-coordinate positive; Q = intersects the line.",
+         "ans": "There exists a point such that if it does not intersect the line, then its x-coordinate is not 0 or its y-coordinate is not positive."},
+        {"en": "There exists an integer p such that if it is greater than 100 and even, then it is divisible by q.",
+         "ifthen": "A = p > 100; B = p is even; Q = p divisible by q.",
+         "ans": "There exists an integer p such that if p is not divisible by q, then p is not greater than 100 or p is not even."},
+        {"en": "There exists polygon such that if it is blue and has four sides, then it is a rectangle.",
+         "ifthen": "A = blue; B = four sides; Q = rectangle.",
+         "ans": "There exists a polygon such that if it is not a rectangle, then it is not blue or does not have four sides."}
+      ]
+    }
+  ],
+  "_meta": {
+    "start": {"label": "Round and sentence the page opens on", "kind": "range-spec",
+      "help": "Both are 1-based counts into the lists below; out-of-range values are clamped."},
+    "labels": {"label": "Fixed wording around the task line and each derivation step",
+      "help": "Short connective phrases the machine prints: the \"Task:\" prefix, the two task names, the joiner before a round note, the flag marker, the name of the opening step and the prefix on the English answer."},
+    "messages": {"label": "Verdict lines after a shape is picked", "kind": "text",
+      "help": "Shown once the student commits to an answer shape, and again at the end of a derivation when the shape was wrong."},
+    "shuffle": {"label": "Seeded shuffle of the three answer shapes",
+      "help": "A linear congruential generator (a, c, m) plus the two weights that build the seed from round and sentence number. Deliberately not random: the same round always offers the shapes in the same order."},
+    "rounds": {"label": "The nine rounds, 27 sentences", "kind": "table",
+      "help": "One entry per round: n and label for the button, task (\"contra\" or \"neg\"), form for the symbolic header, optional note and flag callouts (a round may set its own flagPrefix to replace the shared ⚠ marker — a settled teaching note is not a warning), the shapes (one right answer plus two traps), the named rewrite steps (rule text and symbols, with <b> around the part that changed), and three sentences each carrying its plain English, its if-then reading, and its finished answer. Rounds with no sentences are skipped."}
+  }
+}
+</script>
+
+<script>
+(function(){
+"use strict";
+var root=document.documentElement, themeBtn=document.getElementById("themeBtn");
+function themeLabel(){var m=root.dataset.theme||"auto";
+  themeBtn.textContent=m==="dark"?"● dark":m==="light"?"○ light":"◑ auto";}
+themeBtn.addEventListener("click",function(){
+  var cur=root.dataset.theme||"auto",next=cur==="auto"?"light":cur==="light"?"dark":"auto";
+  if(next==="auto"){delete root.dataset.theme;try{localStorage.removeItem("m170-theme");}catch(e){}}
+  else{root.dataset.theme=next;try{localStorage.setItem("m170-theme",next);}catch(e){}}
+  themeLabel();});
+themeLabel();
+
+/* ---------- everything tunable comes from the config island ----------
+   Rounds: task 'contra' or 'neg'; sym templates use H (hypothesis) / C (conclusion).
+   steps: [rule, symbolic-with-<b>changed</b>] per round; final English per sentence. */
+var CFG = JSON.parse(document.getElementById("m170-config").textContent);
+function str(v, dflt){ return (typeof v === "string") ? v : dflt; }
+function clampInt(v, lo, hi){
+  var n = Math.floor(+v); if(!isFinite(n)) n = lo;
+  return Math.min(hi, Math.max(lo, n));
+}
+var LAB = CFG.labels || {}, MSG = CFG.messages || {};
+
+function normSent(S){
+  S = S || {};
+  return { en: str(S.en, ""), ifthen: str(S.ifthen, ""), ans: str(S.ans, "") };
+}
+function normRound(R, i){
+  R = R || {};
+  var sh = R.shapes || {};
+  return {
+    n: (R.n != null && isFinite(+R.n)) ? +R.n : (i + 1),
+    label: str(R.label, String(i + 1)),
+    task: R.task === "contra" ? "contra" : "neg",
+    form: str(R.form, ""),
+    note: str(R.note, ""),
+    flag: str(R.flag, ""),
+    /* a round may override the shared flag marker — a settled teaching note is not a ⚠ */
+    flagPrefix: (R.flagPrefix == null ? null : String(R.flagPrefix)),
+    shapes: { right: str(sh.right, ""),
+              traps: (sh.traps || []).map(function(t){ return String(t); }) },
+    steps: (R.steps || []).filter(function(s){ return s && s.length >= 2; })
+             .map(function(s){ return [String(s[0]), String(s[1])]; }),
+    sents: (R.sents || []).map(normSent)
+  };
+}
+var ROUNDS = (CFG.rounds || []).map(normRound).filter(function(R){ return R.sents.length > 0; });
+if(!ROUNDS.length) ROUNDS = [normRound({ sents: [{}] }, 0)];
+
+var SH = CFG.shuffle || {};
+var SH_A = +SH.a || 9301, SH_C = +SH.c || 49297, SH_M = +SH.m || 233280,
+    SH_RW = +SH.roundWeight || 7, SH_SW = +SH.sentenceWeight || 13;
+
+function startState(){
+  var r = clampInt((CFG.start || {}).round, 1, ROUNDS.length) - 1;
+  var s = clampInt((CFG.start || {}).sentence, 1, Math.max(1, ROUNDS[r].sents.length)) - 1;
+  return { r: r, s: s, shape: null, step: 0 };
+}
+
+var state=startState();
+
+function el(id){return document.getElementById(id);}
+function renderRounds(){
+  var host=el("rounds"); host.innerHTML="";
+  ROUNDS.forEach(function(R,i){
+    var b=document.createElement("button"); b.type="button"; b.textContent=R.label;
+    b.setAttribute("aria-pressed",String(i===state.r));
+    b.addEventListener("click",function(){ state.r=i; state.s=0; resetWork(); renderAll(); });
+    host.appendChild(b);
+  });
+}
+function renderSentences(){
+  var R=ROUNDS[state.r], host=el("sentences"); host.innerHTML="";
+  R.sents.forEach(function(S,i){
+    var b=document.createElement("button"); b.type="button"; b.textContent=S.en;
+    b.setAttribute("aria-pressed",String(i===state.s));
+    b.addEventListener("click",function(){ state.s=i; resetWork(); renderAll(); });
+    host.appendChild(b);
+  });
+}
+function shuffleFixed(arr,seed){ // deterministic order per round+sentence (no Math.random)
+  var a=arr.slice(), s=seed;
+  for(var i=a.length-1;i>0;i--){ s=(s*SH_A+SH_C)%SH_M; var j=s%(i+1); var t=a[i];a[i]=a[j];a[j]=t; }
+  return a;
+}
+function curSent(R){ return R.sents[state.s] || R.sents[0] || normSent(null); }
+function renderMain(){
+  var R=ROUNDS[state.r], S=curSent(R);
+  el("origEn").textContent=S.en;
+  el("origSym").textContent=R.form+"   ·   "+S.ifthen;
+  el("taskLine").textContent=str(LAB.taskPrefix,"Task: ")+
+    (R.task==="contra"?str(LAB.taskContra,"find the CONTRAPOSITIVE")
+                      :str(LAB.taskNegate,"NEGATE the statement"))+
+    (R.note?str(LAB.noteJoin,"  —  ")+R.note:"");
+  var fpre=(R.flagPrefix==null)?str(LAB.flagPrefix,"⚠ "):R.flagPrefix;
+  el("flagBox").innerHTML=R.flag?'<div class="callout">'+fpre+R.flag+"</div>":"";
+  // shapes
+  var options=[{t:R.shapes.right,ok:true}].concat(R.shapes.traps.map(function(t){return {t:t,ok:false};}));
+  options=shuffleFixed(options, (state.r+1)*SH_RW+(state.s+1)*SH_SW);
+  var host=el("shapes"); host.innerHTML="";
+  options.forEach(function(o){
+    var b=document.createElement("button"); b.type="button"; b.textContent=o.t;
+    b.setAttribute("aria-pressed","false");
+    b.addEventListener("click",function(){
+      host.querySelectorAll("button").forEach(function(x){x.setAttribute("aria-pressed","false");});
+      b.setAttribute("aria-pressed","true");
+      state.shape=o;
+      var v=el("verdict"); v.hidden=false;
+      v.textContent=o.ok?str(MSG.shapeRight,"That's the right shape. Now watch each rule fire — Step ▸.")
+        :str(MSG.shapeWrong,"Hold that thought — step through and see which rule your shape breaks.");
+      el("stepBtn").disabled=false; el("allBtn").disabled=false;
+    });
+    host.appendChild(b);
+  });
+  el("verdict").hidden=true; el("deriv").innerHTML="";
+  el("stepBtn").disabled=true; el("allBtn").disabled=true;
+}
+function stepsFor(R,S){
+  var list=[{rule:str(LAB.firstStepRule,"restate as if-then / quantified form"),sym:R.form,en:S.ifthen}];
+  R.steps.forEach(function(st){ list.push({rule:st[0],sym:st[1],en:""}); });
+  list[list.length-1].en=str(LAB.englishPrefix,"In English: ")+S.ans;
+  return list;
+}
+function renderSteps(){
+  var R=ROUNDS[state.r], S=curSent(R), steps=stepsFor(R,S), host=el("deriv");
+  host.innerHTML="";
+  steps.slice(0,state.step).forEach(function(st,i){
+    var d=document.createElement("div");
+    d.className="step"+(i===state.step-1?" now":"");
+    d.innerHTML='<div class="rule">'+st.rule+'</div><div class="sym">'+st.sym+'</div>'+
+      (st.en?'<div class="en">'+st.en+"</div>":"");
+    host.appendChild(d);
+  });
+  if(state.step>=steps.length){
+    el("stepBtn").disabled=true; el("allBtn").disabled=true;
+    if(state.shape && !state.shape.ok){
+      var d=document.createElement("div"); d.className="verdict";
+      d.textContent=str(MSG.compareWrong,"Compare with the shape you picked — the step above is the rule it skipped or bent.");
+      host.appendChild(d);
+    }
+  }
+}
+el("stepBtn").addEventListener("click",function(){ state.step++; renderSteps(); });
+el("allBtn").addEventListener("click",function(){
+  state.step=stepsFor(ROUNDS[state.r],curSent(ROUNDS[state.r])).length; renderSteps(); });
+
+function resetWork(){ state.shape=null; state.step=0; }
+function renderAll(){ renderRounds(); renderSentences(); renderMain(); }
+
+document.getElementById("reset").addEventListener("click",function(){
+  state=startState(); renderAll();
+});
+
+renderAll();
+})();
+</script>
+</body>
+</html>

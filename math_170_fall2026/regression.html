@@ -1,0 +1,820 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guess the line, then beat it · MATH 170</title>
+
+<!-- ================================================================
+     DESIGN-SYSTEM v2 TOKEN BLOCK — copied verbatim into every file.
+     A global tweak stays a find-replace across the set.
+     Copied unchanged from the exemplar week-13-softmax.html.
+     ================================================================ -->
+<style>
+/* hidden must always win — author display rules on these classes would otherwise beat the attribute */
+[hidden]{display:none !important}
+
+:root{
+  /* color — light */
+  --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+  --gold-soft:rgba(218,165,32,.12);
+  --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  /* type */
+  --font-body: ui-serif, Georgia, "Times New Roman", serif;
+  --font-ui:   system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+  --text-xl:1.75rem; --text-lg:1.25rem; --text-base:1rem; --text-sm:.875rem; --text-xs:.75rem;
+  --leading-prose:1.6; --leading-ui:1.3;
+  /* spacing */
+  --space-1:4px; --space-2:8px; --space-3:16px; --space-4:24px; --space-5:32px; --space-6:48px;
+  /* motion */
+  --ease:cubic-bezier(0.16,1,0.3,1); --dur:200ms;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+    --gold-soft:rgba(227,179,65,.16);
+    --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+  --gold-soft:rgba(227,179,65,.16);
+  --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+}
+@media (prefers-reduced-motion: reduce){ :root{ --dur:0ms; } }
+@media print{
+  :root, :root[data-theme="dark"]{
+    --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+    --gold-soft:rgba(218,165,32,.12);
+    --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  }
+  .theme-btn{display:none}
+  .stage{break-inside:avoid}
+}
+
+/* ================= base skin (design-system §3–§4) ================= */
+*{box-sizing:border-box}
+html{color-scheme:light dark}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--font-body); font-size:var(--text-base); line-height:var(--leading-prose);
+  -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:820px; margin:0 auto; padding:var(--space-5) var(--space-4) var(--space-6);}
+.topbar{display:flex; align-items:baseline; justify-content:space-between; gap:var(--space-3);
+  border-bottom:1px solid var(--gray-line); padding-bottom:var(--space-2); margin-bottom:var(--space-4);}
+.eyebrow{font-family:var(--font-ui); font-size:var(--text-xs); letter-spacing:.08em; text-transform:uppercase; color:var(--gray-text);}
+h1{font-family:var(--font-body); font-weight:600; font-size:var(--text-xl); line-height:1.2; margin:.2em 0 .1em;}
+h2{font-family:var(--font-ui); font-weight:600; font-size:var(--text-lg); line-height:1.3; margin:var(--space-5) 0 var(--space-2);}
+p{margin:0 0 var(--space-3);}
+.prose{max-width:66ch;}
+.muted{color:var(--gray-text);}
+.mono,code{font-family:var(--font-mono); font-variant-numeric:tabular-nums;}
+a{color:inherit;}
+:focus-visible{outline:2px solid var(--ink); outline-offset:2px; box-shadow:0 0 0 5px var(--gold-soft);}
+
+.theme-btn{font-family:var(--font-ui); font-size:var(--text-xs); background:none;
+  border:1px solid var(--gray-line); color:var(--gray-text); padding:6px 10px; cursor:pointer; border-radius:2px;}
+.theme-btn:hover{background:var(--gray-fill);}
+
+/* spec header */
+details.spec{border:1px solid var(--gray-line); border-radius:2px; margin:0 0 var(--space-4); background:var(--gray-fill);}
+details.spec>summary{font-family:var(--font-ui); font-size:var(--text-sm); cursor:pointer;
+  padding:var(--space-2) var(--space-3); list-style:none; color:var(--gray-text);}
+details.spec>summary::-webkit-details-marker{display:none}
+details.spec>summary::before{content:"▸ "; color:var(--gold);}
+details.spec[open]>summary::before{content:"▾ ";}
+.spec-body{padding:0 var(--space-3) var(--space-3); font-family:var(--font-ui); font-size:var(--text-sm); line-height:1.5;}
+.spec-body dt{font-weight:600; margin-top:var(--space-2);}
+.spec-body dd{margin:0; color:var(--gray-text);}
+
+/* stage */
+.stage{margin:var(--space-4) 0; text-align:center;}
+svg{max-width:100%; height:auto; font-family:var(--font-ui);}
+figcaption{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); margin-top:var(--space-2);}
+
+/* controls */
+.controls{border-top:1px solid var(--gray-line); padding-top:var(--space-3); margin-top:var(--space-4);
+  display:grid; grid-template-columns:1fr 1fr; gap:var(--space-3) var(--space-4);}
+.controls .full{grid-column:1/-1;}
+@media(max-width:560px){ .controls{grid-template-columns:1fr;} }
+.ctl label{display:flex; justify-content:space-between; align-items:baseline;
+  font-family:var(--font-ui); font-size:var(--text-sm); line-height:var(--leading-ui);}
+.ctl .val{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm); color:var(--ink);}
+.ctl .val.gold{color:var(--gold); font-weight:600;}
+.ctl .note{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); margin-top:4px;}
+
+/* range slider — filled track works in ALL engines (design-system v2 fix):
+   wireSlider() paints the webkit track with a two-stop gradient on input. */
+input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:18px;
+  background:transparent; margin:6px 0 0; cursor:pointer;}
+input[type=range]::-webkit-slider-runnable-track{height:2px; border-radius:1px;
+  background:var(--track, var(--gray-line));}
+input[type=range]::-moz-range-track{height:2px; background:var(--gray-line);}
+input[type=range]::-moz-range-progress{height:2px; background:var(--gold);}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; appearance:none;
+  width:18px; height:18px; margin-top:-8px; border-radius:50%; background:var(--gold); border:1px solid var(--ink);}
+input[type=range]::-moz-range-thumb{width:18px; height:18px; border-radius:50%; background:var(--gold); border:1px solid var(--ink);}
+
+/* buttons + segmented + stepper */
+.btn{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:1px solid var(--ink); padding:8px 14px; cursor:pointer; border-radius:2px;}
+.btn:hover{background:var(--gray-fill);}
+.btn.primary{background:var(--gold); border-color:var(--gold); color:#111111;}
+.btn[disabled]{border-color:var(--gray-line); color:var(--gray-line); cursor:default; background:var(--paper);}
+.seg{display:inline-flex; border:1px solid var(--ink); border-radius:2px; overflow:hidden;}
+.seg button{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:0; border-left:1px solid var(--ink); padding:7px 12px; cursor:pointer;}
+.seg button:first-child{border-left:0;}
+.seg button[aria-pressed="true"]{background:var(--gold); color:#111111;}
+.stepper{display:inline-flex; align-items:center; gap:var(--space-2); font-family:var(--font-ui); font-size:var(--text-sm);}
+.stepper .count{font-family:var(--font-mono); font-variant-numeric:tabular-nums; color:var(--gray-text);}
+
+.foot{display:flex; align-items:center; gap:var(--space-3); margin-top:var(--space-5);
+  border-top:1px solid var(--gray-line); padding-top:var(--space-3); flex-wrap:wrap;}
+.foot .btn{margin-right:auto;}
+.hint{font-family:var(--font-ui); font-size:var(--text-sm); color:var(--gray-text);}
+
+/* math reveal */
+.mathbox{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm);
+  background:var(--gray-fill); border-left:2px solid var(--gold); padding:var(--space-3);
+  margin:var(--space-3) 0; overflow-x:auto; white-space:pre; line-height:1.7; text-align:left;}
+.attach{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text);
+  border-top:1px dotted var(--gray-line); margin-top:var(--space-6); padding-top:var(--space-3);}
+.tag{display:inline-block; font-family:var(--font-ui); font-size:var(--text-xs);
+  border:1px solid var(--gray-line); border-radius:999px; padding:1px 8px; color:var(--gray-text); margin-left:6px;}
+.callout{font-family:var(--font-ui); font-size:var(--text-sm); border:1px solid var(--gray-line);
+  border-left:2px solid var(--gold); padding:var(--space-2) var(--space-3); margin:var(--space-3) 0; background:var(--paper);}
+
+/* ---- file-specific styles (additions only; base skin above unchanged) ---- */
+.handle{cursor:grab; outline-offset:2px;}
+.handle.dragging{cursor:grabbing;}
+.handle.disabled{cursor:default; pointer-events:none;}
+.bignum{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:1.4rem;
+  color:var(--ink); margin:var(--space-2) 0 0;}
+.bignum b{color:var(--gold); font-weight:600;}
+.wstable{border-collapse:collapse; margin:var(--space-3) auto 0; font-family:var(--font-mono);
+  font-variant-numeric:tabular-nums; font-size:var(--text-sm);}
+.wstable caption{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text);
+  caption-side:top; text-align:left; padding-bottom:4px;}
+.wstable th{font-family:var(--font-ui); font-weight:600; font-size:var(--text-xs); color:var(--gray-text);}
+.wstable th,.wstable td{border:1px solid var(--gray-line); padding:4px 9px; text-align:right;}
+.wstable th:first-child,.wstable td:first-child{text-align:left; font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text);}
+.verdict{font-family:var(--font-ui); font-size:var(--text-sm); margin-top:var(--space-2);}
+.verdict .mono{font-size:var(--text-sm);}
+@media(max-width:560px){ .wstable{font-size:var(--text-xs);} .wstable th,.wstable td{padding:3px 5px;} }
+</style>
+
+<!-- theme boot: apply stored choice before first paint (no flash) -->
+<script>
+try{var t=localStorage.getItem("m170-theme");if(t)document.documentElement.dataset.theme=t;}catch(e){}
+</script>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="eyebrow">MATH 170 · Regression · Q6–Q7</div>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Color theme">◑ auto</button>
+  </div>
+
+  <h1 data-edit="title">Guess the line, then beat it <span class="tag">least squares</span></h1>
+  <p class="prose muted" data-edit="intro">You are the AI. Six students told you how they slept and how they
+  scored. Draw your best line by eye — then find out how close your eye got to the line a
+  computer would search out. Then try a whole year of ice-cream sales, where picking the
+  <em>shape</em> of the model matters as much as fitting it.</p>
+
+  <div data-slot="notes-top"></div>
+
+
+  <div class="full" style="margin-bottom:var(--space-3)">
+    <div class="seg" role="group" aria-label="Part">
+      <button type="button" id="partA" aria-pressed="true">Part 1 · Sleep &amp; scores</button>
+      <button type="button" id="partB" aria-pressed="false">Part 2 · Ice-cream year</button>
+    </div>
+  </div>
+
+  <div class="stage">
+    <svg id="chart" viewBox="0 0 640 400" role="img" aria-label="Scatter plot with your adjustable curve and its errors"></svg>
+    <div class="bignum" aria-live="polite" id="sseOut"></div>
+    <div class="verdict" aria-live="polite" id="verdict"></div>
+    <figcaption id="cap"></figcaption>
+    <div id="tableWrap"></div>
+  </div>
+
+  <div class="controls">
+    <div class="ctl" id="famCtl" hidden>
+      <label id="famLabel" for="famSeg">Model family <span class="val" id="famVal"></span></label>
+      <div class="seg" id="famSeg" role="group" aria-label="Model family" style="margin-top:6px">
+        <button type="button" data-fam="lin" aria-pressed="true">linear</button>
+        <button type="button" data-fam="quad" aria-pressed="false">quadratic</button>
+        <button type="button" data-fam="cub" aria-pressed="false">cubic</button>
+        <button type="button" data-fam="sin" aria-pressed="false">sinusoidal</button>
+      </div>
+      <div class="note" data-edit="note-family">sinusoidal period is fixed at 12 months — drag its midline and its peak</div>
+    </div>
+    <div class="ctl">
+      <label>Commit, then compare <span class="val" id="lockState"></span></label>
+      <div style="display:flex; gap:var(--space-2); margin-top:6px; flex-wrap:wrap">
+        <button class="btn" id="lockBtn" type="button">Lock my guess</button>
+        <button class="btn" id="revealBtn" type="button" disabled>Reveal best fit</button>
+      </div>
+      <div class="note" data-edit="note-lock">worksheet order: estimate by eye first, reveal after (that's the Desmos step)</div>
+    </div>
+    <div class="full">
+      <button class="btn" id="mathToggle" type="button" aria-expanded="false">Show the math ▸</button>
+      <div id="mathReveal" hidden>
+        <div class="mathbox" id="mathbox" aria-live="polite"></div>
+        <p class="muted prose" style="font-family:var(--font-ui); font-size:var(--text-sm)" id="mathNote"></p>
+      </div>
+    </div>
+  </div>
+
+  <div data-slot="notes-bottom"></div>
+
+  <div class="foot">
+    <button class="btn" id="reset" type="button">Reset</button>
+    <span class="hint" id="hint"></span>
+  </div>
+
+</div>
+
+<script type="application/json" id="m170-config">
+{
+  "_v": 1,
+  "sleep": {
+    "x": [5.5, 6, 6.5, 7, 7.5, 8],
+    "y": [64, 70, 72, 80, 85, 88]
+  },
+  "sleepBestFit": {"m": 9.885714285714286, "b": 9.771428571428572, "sse": 7.942857142857143},
+  "sleepStart": [76, 77],
+  "iceCream": {
+    "months": ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
+    "y": [40, 42, 43, 67, 92, 120, 153, 130, 140, 112, 71, 55]
+  },
+  "iceBestFit": {
+    "lin":  {"c": [56.45454545, 4.96853147], "sse": 15036.11, "label": "56.45 + 4.97·x"},
+    "quad": {"c": [-29.20454545, 41.67957043, -2.82392607], "sse": 4392.73, "label": "-29.20 + 41.68·x - 2.82·x²"},
+    "cub":  {"c": [38.30303030, -10.49661450, 6.82001332, -0.49456099], "sse": 1559.64, "label": "38.30 - 10.50·x + 6.82·x² - 0.495·x³"},
+    "sin":  {"a": 54.69183242, "c": 4.72950836, "d": 88.75, "sse": 619.07, "label": "54.69·sin(π/6·(x−4.73)) + 88.75"}
+  },
+  "iceStart": {
+    "lin":  [120, 50],
+    "quad": [120, 60, 120],
+    "cub":  [130, 90, 40],
+    "sin":  {"d": 100, "a": -40, "c": 1}
+  },
+  "openPart": 1,
+  "openFamily": "lin",
+  "nearOptimalPct": 1,
+  "labels": {
+    "xSleep": "hours of sleep",
+    "ySleep": "test score",
+    "xIce": "month (Jan–Dec, then next year)",
+    "yIce": "ice-cream cones sold"
+  },
+  "familyNotes": {
+    "lin": "A line can't bend with the seasons — even the best one misses badly.",
+    "quad": "One hump fits one summer — but a parabola keeps falling forever (0.8 cones by next Feb).",
+    "cub": "Respectable in-family error — but it predicts −32 cones next January and −129 by February. <strong>Appropriate beats lowest.</strong>",
+    "sin": "Lowest error of all four families (619.1) — and the only shape that repeats every 12 months. Appropriate <em>and</em> lowest, this time."
+  },
+  "hints": {
+    "part1": "Try: your line starts almost flat, with a total near 400. Get it under 15 by eye before you lock and reveal.",
+    "part2": "Try: every curve starts with the wrong shape. Fix the shape first, the height second — then lock the cubic and look past December."
+  },
+  "_meta": {
+    "sleep": {"label": "Sleep vs. test score data (Q6)", "kind": "table", "columns": ["x", "y"],
+      "help": "Six students. Changing these invalidates the pinned best fit below — recompute it.",
+      "regen": "scatter-linear"},
+    "sleepBestFit": {"label": "Pinned least-squares line for the sleep data",
+      "help": "m, b and the best possible total squared error. Computed at build time; the page never fits."},
+    "sleepStart": {"label": "Where the student's line starts", "kind": "list",
+      "help": "Two scores: the line's height at the first x and at the last x. The default 76 → 77 is almost horizontal, near the score average of 76.5, so the opening total (401.6) is about fifty times the best possible. Professor's request, 2026-07-27: the defaults must not start close to optimal."},
+    "iceCream": {"label": "Ice-cream cones by month (Q7)", "kind": "table", "columns": ["months", "y"]},
+    "iceBestFit": {"label": "Pinned best fit per model family",
+      "help": "Polynomial coefficients low-order first; the sinusoid is a·sin(π/6·(x−c))+d. Recompute if the data changes."},
+    "iceStart": {"label": "Where each student curve starts", "kind": "table",
+      "help": "Handle heights, in cones. lin at months 3 and 10; quad at 2, 6.5 and 11; cub at 3, 6.5 and 12; sin is midline d, amplitude a, phase c. All four defaults are deliberately the wrong shape — a falling line, an upward-opening parabola, a falling cubic and an upside-down season."},
+    "openPart": {"label": "Which part the page opens on", "kind": "choice", "options": [1, 2]},
+    "openFamily": {"label": "Model family selected at load", "kind": "choice",
+      "options": ["lin", "quad", "cub", "sin"]},
+    "nearOptimalPct": {"label": "Called “essentially optimal” below this % above best", "kind": "number"},
+    "labels": {"label": "Axis names", "kind": "text"},
+    "familyNotes": {"label": "What the reveal says about each family", "kind": "text"},
+    "hints": {"label": "The nudge under the Reset button", "kind": "text"}
+  }
+}
+</script>
+
+<script>
+(function(){
+"use strict";
+/* ==================== BUILD-TIME PINS (python3; re-verified 2026-07-27) =========
+   All of the following holds for the DEFAULT config island below.
+   Sleep/scores (x = 5.5,6,6.5,7,7.5,8 ; y = 64,70,72,80,85,88):
+     m* = 9.885714285714286 (= 346/35)   b* = 9.771428571428572 (= 342/35)
+     SSE* = 7.942857142857143 (= 278/35)
+     (course-data.md's draft parenthetical "≈9.94x+9.04" does NOT reproduce; superseded.)
+   Opening guess, per the professor's 2026-07-27 note that the defaults sat too close
+   to optimal: handles 76 and 77 → slope 0.4, b = 73.8 — near-flat through the score
+   average of 76.5 — SSE = 401.6, about 50× the best possible.
+   Ice-cream (months 1..12; y = 40,42,43,67,92,120,153,130,140,112,71,55) best fits:
+     linear   : 56.45454545 + 4.96853147·x                                SSE 15036.11
+     quadratic: -29.20454545 + 41.67957043·x - 2.82392607·x²              SSE  4392.73
+     cubic    : 38.30303030 - 10.49661450·x + 6.82001332·x² - 0.49456099·x³  SSE 1559.64
+                cubic value at month 13 = -32.12, at month 14 = -129.00
+     sinusoid : 54.69183242·sin(π/6·(x − 4.72950836)) + 88.75             SSE   619.07
+     NOTE: sinusoidal, not cubic, has the lowest SSE (619 < 1560); page copy follows the
+     pinned data — the "appropriate beats lowest" beat is carried by the cubic's −129
+     cones next February despite its respectable in-family error.
+   Opening guesses for part 2, all deliberately the WRONG SHAPE (2026-07-27):
+     lin  [120, 50] falling                      SSE 47245.0   (best 15036)
+     quad [120, 60, 120] opens upward            SSE 53134.5   (best  4393)
+     cub  [130, 90, 40] falling                  SSE 49899.9   (best  1560)
+     sin  midline 100, amplitude −40, phase 1    SSE 19899.6   (best   619)
+   Student cubic parameterization (3 handles): y = k + s(x−6.5) + a(x−6.5)³,
+     handles at x = 3, 6.5, 12; (k,s,a) = MINV·(h1,h2,h3), MINV pinned below (det 346.5).
+     MINV depends only on those three handle positions, not on the data, so it is not
+     part of the config island.
+   No fitting happens in JS — reveals draw only the pinned constants from the island.
+   ============================================================================== */
+var CFG=JSON.parse(document.getElementById("m170-config").textContent);
+function arr(v,d){ return (Object.prototype.toString.call(v)==="[object Array]"&&v.length)?v:d; }
+function num(v,d){ v=+v; return isFinite(v)?v:d; }
+var SLEEP_X=arr((CFG.sleep||{}).x,[5.5,6,6.5,7,7.5,8]).map(Number);
+var SLEEP_Y=arr((CFG.sleep||{}).y,[64,70,72,80,85,88]).map(Number);
+if(SLEEP_Y.length>SLEEP_X.length) SLEEP_Y=SLEEP_Y.slice(0,SLEEP_X.length);
+while(SLEEP_Y.length<SLEEP_X.length) SLEEP_Y.push(0);
+var BEST1=CFG.sleepBestFit||{m:9.885714285714286,b:9.771428571428572,sse:7.942857142857143};
+var MONTHS=arr((CFG.iceCream||{}).months,["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]);
+var ICE_Y=arr((CFG.iceCream||{}).y,[40,42,43,67,92,120,153,130,140,112,71,55]).map(Number);
+var NMON=Math.min(MONTHS.length,ICE_Y.length);
+var B=Math.PI/6; /* sinusoidal angular frequency — period fixed at 12 months */
+var BEST2=CFG.iceBestFit||{};
+var LAB=CFG.labels||{};
+var FAMNOTE=CFG.familyNotes||{};
+var HINTS=CFG.hints||{};
+var NEAR=num(CFG.nearOptimalPct,1);
+var MINV=[[0,1,0],
+          [-0.480158730159,0.603896103896,-0.123737373737],
+          [0.015873015873,-0.025974025974,0.010101010101]];
+var FAMNAME={lin:"linear",quad:"quadratic",cub:"cubic",sin:"sinusoidal"};
+
+/* ---------- theme: auto → light → dark (copied from exemplar) ---------- */
+var root=document.documentElement, themeBtn=document.getElementById("themeBtn");
+function themeLabel(){
+  var m=root.dataset.theme||"auto";
+  themeBtn.textContent=m==="dark"?"● dark":m==="light"?"○ light":"◑ auto";
+}
+themeBtn.addEventListener("click",function(){
+  var cur=root.dataset.theme||"auto";
+  var next=cur==="auto"?"light":cur==="light"?"dark":"auto";
+  if(next==="auto"){ delete root.dataset.theme; try{localStorage.removeItem("m170-theme");}catch(e){} }
+  else { root.dataset.theme=next; try{localStorage.setItem("m170-theme",next);}catch(e){} }
+  themeLabel(); render();
+});
+if(window.matchMedia){ window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",function(){ render(); }); }
+themeLabel();
+
+/* ---------- svg helpers (exemplar pattern) ---------- */
+function css(v){ return getComputedStyle(document.body).getPropertyValue(v).trim(); }
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+function txt(x,y,s,color,anchor,size,family,weight){
+  return '<text x="'+x+'" y="'+y+'" fill="'+color+'" text-anchor="'+(anchor||"start")+
+    '" font-size="'+(size||12)+'" font-family="'+(family||"var(--font-ui)")+'"'+
+    (weight?' font-weight="'+weight+'"':'')+
+    (family==="var(--font-mono)"?' style="font-variant-numeric:tabular-nums"':'')+'>'+esc(s)+'</text>';
+}
+function ln(x1,y1,x2,y2,color,w,dash){
+  return '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+color+
+    '" stroke-width="'+(w||1)+'"'+(dash?' stroke-dasharray="'+dash+'"':'')+'/>';
+}
+
+/* ---------- plot windows: presentation only, derived from the island's data ----
+   For the default data these reproduce the original hand-picked windows exactly
+   (5.1–8.4 × 55–100 and 0.4–14.9 × −60–175). ---------------------------------- */
+function mn(a){ return Math.min.apply(null,a); }
+function mx(a){ return Math.max.apply(null,a); }
+var SX0=SLEEP_X[0], SX1=SLEEP_X[SLEEP_X.length-1];
+var SLO=Math.floor((mn(SLEEP_Y)-5)/5)*5, SHI=Math.ceil((mx(SLEEP_Y)+10)/5)*5;
+var ILO=-Math.round(mx(ICE_Y)*0.4/10)*10, IHI=Math.ceil((mx(ICE_Y)+22)/25)*25;
+var AMAX=Math.round((IHI-ILO)/20)*10;   /* sine amplitude limit — half the plot height */
+
+/* ---------- state ---------- */
+var startSleep=arr(CFG.sleepStart,[76,77]).map(Number);
+var startIce=CFG.iceStart||{};
+function iceH(k,d){ var v=startIce[k]; return arr(v,d).map(Number); }
+var sinH=startIce.sin&&typeof startIce.sin==="object"?startIce.sin:{d:100,a:-40,c:1};
+var state={
+  part:CFG.openPart===2?2:1,
+  /* handle scores at the first and last x — default 76 → 77 is near-flat on purpose */
+  p1:{h:[num(startSleep[0],76),num(startSleep[1],77)], locked:false, revealed:false},
+  p2:{fam:FAMNAME[CFG.openFamily]?CFG.openFamily:"lin",
+      handles:{lin:iceH("lin",[120,50]), quad:iceH("quad",[120,60,120]),
+               cub:iceH("cub",[130,90,40]),
+               sin:{d:num(sinH.d,100), a:num(sinH.a,-40), c:num(sinH.c,1)}},
+      locked:{lin:false,quad:false,cub:false,sin:false},
+      revealed:{lin:false,quad:false,cub:false,sin:false}}
+};
+var INIT=JSON.stringify(state);
+
+/* ---------- model ---------- */
+function p1line(){ /* line through (SX0,h0) and (SX1,h1) */
+  var span=(SX1-SX0)||1;
+  var m=(state.p1.h[1]-state.p1.h[0])/span, b=state.p1.h[0]-m*SX0; return {m:m,b:b};
+}
+function p1pred(x){ var l=p1line(); return l.m*x+l.b; }
+function p2params(){
+  var f=state.p2.fam, h=state.p2.handles[f];
+  if(f==="cub"){
+    return [MINV[0][0]*h[0]+MINV[0][1]*h[1]+MINV[0][2]*h[2],
+            MINV[1][0]*h[0]+MINV[1][1]*h[1]+MINV[1][2]*h[2],
+            MINV[2][0]*h[0]+MINV[2][1]*h[1]+MINV[2][2]*h[2]];
+  }
+  return h;
+}
+function p2eval(x){
+  var f=state.p2.fam, h=state.p2.handles[f];
+  if(f==="lin") return h[0]+(x-3)*(h[1]-h[0])/7;             /* handles at x=3, x=10 */
+  if(f==="quad"){                                            /* Lagrange nodes 2, 6.5, 11 */
+    return h[0]*((x-6.5)*(x-11))/((2-6.5)*(2-11))
+         + h[1]*((x-2)*(x-11))/((6.5-2)*(6.5-11))
+         + h[2]*((x-2)*(x-6.5))/((11-2)*(11-6.5));
+  }
+  if(f==="cub"){ var p=p2params(), u=x-6.5; return p[0]+p[1]*u+p[2]*u*u*u; }
+  return h.a*Math.sin(B*(x-h.c))+h.d;                        /* sin: period fixed */
+}
+function bestEval(f,x){
+  var bf=BEST2[f]||{};
+  if(f==="sin") return num(bf.a,0)*Math.sin(B*(x-num(bf.c,0)))+num(bf.d,0);
+  var c=arr(bf.c,[0]), y=0; for(var i=c.length-1;i>=0;i--) y=y*x+num(c[i],0); return y;
+}
+function bestSse(f){ return num((BEST2[f]||{}).sse,0); }
+function sse1(){ var s=0; for(var i=0;i<SLEEP_X.length;i++){ var r=SLEEP_Y[i]-p1pred(SLEEP_X[i]); s+=r*r; } return s; }
+function sse2(){ var s=0; for(var i=0;i<NMON;i++){ var r=ICE_Y[i]-p2eval(i+1); s+=r*r; } return s; }
+
+/* ---------- persistent draggable handles (survive re-render) ---------- */
+var svg=document.getElementById("chart");
+var NS="http://www.w3.org/2000/svg";
+var gPlot=document.createElementNS(NS,"g");
+var gHandles=document.createElementNS(NS,"g");
+svg.appendChild(gPlot); svg.appendChild(gHandles);
+var handleEls=[];
+
+function toData(ev){ /* client → data coords via current geometry */
+  var pt=svg.createSVGPoint(); pt.x=ev.clientX; pt.y=ev.clientY;
+  var p=pt.matrixTransform(svg.getScreenCTM().inverse());
+  return {x:GEO.ix(p.x), y:GEO.iy(p.y)};
+}
+function mkHandle(cfg){ /* cfg: {get()->[x,y], setFromDrag(x,y), key(dx,dy), aria} */
+  var g=document.createElementNS(NS,"g");
+  g.setAttribute("class","handle"); g.setAttribute("tabindex","0");
+  g.setAttribute("role","slider"); g.setAttribute("aria-label",cfg.aria);
+  g.innerHTML='<circle class="hit" r="14" fill="transparent"/>'+
+              '<circle class="dot" r="8"/>';
+  function paint(){
+    var p=cfg.get();
+    g.setAttribute("transform","translate("+GEO.x(p[0])+","+GEO.y(p[1])+")");
+    var dot=g.lastChild;
+    dot.setAttribute("fill",cfg.disabled()?css("--gray-line"):css("--gold"));
+    dot.setAttribute("stroke",css("--ink"));
+    g.classList.toggle("disabled",cfg.disabled());
+    g.setAttribute("aria-valuetext",cfg.valuetext());
+    g.setAttribute("aria-disabled",String(cfg.disabled()));
+  }
+  g.addEventListener("pointerdown",function(ev){
+    if(cfg.disabled())return;
+    g.setPointerCapture(ev.pointerId); g.classList.add("dragging"); ev.preventDefault();
+  });
+  g.addEventListener("pointermove",function(ev){
+    if(!g.classList.contains("dragging"))return;
+    var d=toData(ev); cfg.setFromDrag(d.x,d.y); render();
+  });
+  g.addEventListener("pointerup",function(){ g.classList.remove("dragging"); });
+  g.addEventListener("keydown",function(ev){
+    if(cfg.disabled())return;
+    var mult=ev.shiftKey?10:1, used=true;
+    if(ev.key==="ArrowUp")cfg.key(0,mult); else if(ev.key==="ArrowDown")cfg.key(0,-mult);
+    else if(ev.key==="ArrowLeft")cfg.key(-mult,0); else if(ev.key==="ArrowRight")cfg.key(mult,0);
+    else used=false;
+    if(used){ ev.preventDefault(); render(); }
+  });
+  g._paint=paint;
+  gHandles.appendChild(g); handleEls.push(g);
+  return g;
+}
+function clearHandles(){ handleEls.forEach(function(h){ h.remove(); }); handleEls=[]; }
+function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
+
+/* geometry shared between render + drag */
+var GEO={};
+function setGeo(xmin,xmax,ymin,ymax){
+  var W=640,H=400,L=56,R=18,T=26,Bm=46;
+  GEO={L:L,R:R,T:T,B:Bm,W:W,H:H,
+    x:function(v){return L+(v-xmin)/(xmax-xmin)*(W-L-R);},
+    y:function(v){return H-Bm-(v-ymin)/(ymax-ymin)*(H-T-Bm);},
+    ix:function(px){return xmin+(px-L)/(W-L-R)*(xmax-xmin);},
+    iy:function(py){return ymin+((H-Bm)-py)/(H-T-Bm)*(ymax-ymin);},
+    xmin:xmin,xmax:xmax,ymin:ymin,ymax:ymax};
+}
+
+function buildHandles(){
+  clearHandles();
+  if(state.part===1){
+    [0,1].forEach(function(i){
+      var hx=i===0?SX0:SX1;
+      mkHandle({
+        aria:"Line handle at "+hx+" "+(LAB.xSleep||"hours")+" — arrow keys move the value",
+        get:function(){return [hx,state.p1.h[i]];},
+        setFromDrag:function(x,y){ state.p1.h[i]=clamp(Math.round(y*2)/2,SLO,SHI); },
+        key:function(dx,dy){ state.p1.h[i]=clamp(state.p1.h[i]+dy*0.5,SLO,SHI); },
+        valuetext:function(){return "score "+state.p1.h[i].toFixed(1)+" at "+hx+" hours";},
+        disabled:function(){return state.p1.locked;}
+      });
+    });
+  } else {
+    var f=state.p2.fam, lockd=function(){return state.p2.locked[state.p2.fam];};
+    if(f==="lin"||f==="quad"||f==="cub"){
+      var hx=f==="lin"?[3,10]:f==="quad"?[2,6.5,11]:[3,6.5,12];
+      hx.forEach(function(xv,i){
+        mkHandle({
+          aria:FAMNAME[f]+" handle at month "+xv,
+          get:function(){return [xv,state.p2.handles[f][i]];},
+          setFromDrag:function(x,y){ state.p2.handles[f][i]=clamp(Math.round(y),ILO,IHI); },
+          key:function(dx,dy){ state.p2.handles[f][i]=clamp(state.p2.handles[f][i]+dy*1,ILO,IHI); },
+          valuetext:function(){return state.p2.handles[f][i].toFixed(0)+" cones at month "+xv;},
+          disabled:lockd
+        });
+      });
+    } else {
+      mkHandle({ /* midline handle: sets d */
+        aria:"Sine midline handle — up and down set the average level",
+        get:function(){return [1.5,state.p2.handles.sin.d];},
+        setFromDrag:function(x,y){ state.p2.handles.sin.d=clamp(Math.round(y),ILO+20,IHI-5); },
+        key:function(dx,dy){ state.p2.handles.sin.d=clamp(state.p2.handles.sin.d+dy,ILO+20,IHI-5); },
+        valuetext:function(){return "midline "+state.p2.handles.sin.d.toFixed(0)+" cones";},
+        disabled:lockd
+      });
+      mkHandle({ /* peak handle: x sets phase c, y sets amplitude a */
+        aria:"Sine peak handle — left and right slide the peak month, up and down set the height",
+        get:function(){var s=state.p2.handles.sin; return [s.c+3,s.d+s.a];},
+        setFromDrag:function(x,y){ var s=state.p2.handles.sin;
+          s.c=clamp(Math.round((x-3)*4)/4,-2,NMON-2.5); s.a=clamp(Math.round(y-s.d),-AMAX,AMAX); },
+        key:function(dx,dy){ var s=state.p2.handles.sin;
+          s.c=clamp(s.c+dx*0.25,-2,NMON-2.5); s.a=clamp(s.a+dy,-AMAX,AMAX); },
+        valuetext:function(){var s=state.p2.handles.sin;
+          return "peak at month "+(s.c+3).toFixed(2)+", height "+(s.d+s.a).toFixed(0);},
+        disabled:lockd
+      });
+    }
+  }
+}
+
+/* ---------- render ---------- */
+function fmt(v,d){ return v.toFixed(d===undefined?1:d); }
+function residualArt(pts,predFn,ink,gray,gold){
+  /* segments + squares. squares use the y-pixel scale on both sides so
+     area on screen ∝ (error)² — same scale for every square. */
+  var out="", worst=-1, wi=-1;
+  pts.forEach(function(p,i){ var r=Math.abs(p[1]-predFn(p[0])); if(r>worst){worst=r;wi=i;} });
+  pts.forEach(function(p,i){
+    var yhat=predFn(p[0]), r=p[1]-yhat;
+    var x=GEO.x(p[0]), y1=GEO.y(p[1]), y2=GEO.y(clamp(yhat,GEO.ymin,GEO.ymax));
+    var s=Math.abs(y2-y1);
+    if(s>0.5){
+      var left=GEO.x(p[0])+s>GEO.W-GEO.R; /* keep square inside plot */
+      out+='<rect x="'+(left?x-s:x)+'" y="'+Math.min(y1,y2)+'" width="'+s+'" height="'+s+
+           '" fill="'+css("--gold-soft")+'" stroke="'+gold+'" stroke-opacity=".45" stroke-width="1"/>';
+    }
+    out+=ln(x,y1,x,y2, i===wi?ink:gray, i===wi?2.5:1);
+  });
+  return out;
+}
+
+function render(){
+  var ink=css("--ink"), gold=css("--gold"), gray=css("--gray-text"),
+      line=css("--gray-line"), fill=css("--gray-fill");
+  var out="";
+  if(state.part===1){
+    var X0=SX0-0.4, X1=SX1+0.4;
+    setGeo(X0,X1,SLO,SHI);
+    /* grid + axes */
+    for(var yv=Math.ceil((SLO+1)/10)*10; yv<=SHI; yv+=10){ out+=ln(GEO.L,GEO.y(yv),GEO.W-GEO.R,GEO.y(yv),line,1); out+=txt(GEO.L-8,GEO.y(yv)+4,yv,gray,"end",11,"var(--font-mono)"); }
+    SLEEP_X.forEach(function(xv){ out+=txt(GEO.x(xv),GEO.H-GEO.B+18,xv.toFixed(1),gray,"middle",11,"var(--font-mono)"); });
+    out+=ln(GEO.L,GEO.H-GEO.B,GEO.W-GEO.R,GEO.H-GEO.B,ink,1.5);
+    out+=ln(GEO.L,GEO.T,GEO.L,GEO.H-GEO.B,ink,1.5);
+    out+=txt(GEO.W-GEO.R,GEO.H-GEO.B+34,LAB.xSleep||"hours of sleep",gray,"end",12);
+    out+=txt(GEO.L-40,GEO.T-10,LAB.ySleep||"test score",gray,"start",12);
+    /* residual art under everything else but above grid */
+    var pts=SLEEP_X.map(function(x,i){return [x,SLEEP_Y[i]];});
+    out+=residualArt(pts,p1pred,ink,line,gold);
+    /* best fit (after reveal): ink dashed */
+    if(state.p1.revealed){
+      var bm=num(BEST1.m,0), bb=num(BEST1.b,0);
+      out+=ln(GEO.x(X0),GEO.y(clamp(bm*X0+bb,SLO,SHI)),GEO.x(X1),GEO.y(clamp(bm*X1+bb,SLO,SHI)),ink,1.5,"7 4");
+      out+=txt(GEO.x(X1-0.05),GEO.y(clamp(bm*(X1-0.05)+bb,SLO,SHI))-8,"best fit",gray,"end",11);
+    }
+    /* your line: gold */
+    var l=p1line();
+    out+=ln(GEO.x(X0),GEO.y(clamp(l.m*X0+l.b,SLO,SHI)),GEO.x(X1),GEO.y(clamp(l.m*X1+l.b,SLO,SHI)),gold,2.5);
+    /* data points: ink */
+    pts.forEach(function(p){ out+='<circle cx="'+GEO.x(p[0])+'" cy="'+GEO.y(p[1])+'" r="4.5" fill="'+ink+'"/>'; });
+  } else {
+    setGeo(0.4,NMON+2.9,ILO,IHI);
+    /* extrapolation ghost band: months beyond December */
+    out+='<rect x="'+GEO.x(NMON+0.5)+'" y="'+GEO.T+'" width="'+(GEO.W-GEO.R-GEO.x(NMON+0.5))+
+         '" height="'+(GEO.H-GEO.B-GEO.T)+'" fill="'+fill+'"/>';
+    out+=txt(GEO.x(NMON+1.6),GEO.T+14,"next "+MONTHS[0]+" · "+MONTHS[1%NMON],gray,"middle",10);
+    for(var yv2=Math.ceil((ILO+1)/50)*50; yv2<=IHI; yv2+=50){ out+=ln(GEO.L,GEO.y(yv2),GEO.W-GEO.R,GEO.y(yv2),line,1); out+=txt(GEO.L-8,GEO.y(yv2)+4,yv2,gray,"end",11,"var(--font-mono)"); }
+    out+=ln(GEO.L,GEO.y(0),GEO.W-GEO.R,GEO.y(0),ink,1);   /* zero-cones line */
+    for(var mm=1;mm<=NMON+2;mm++){
+      var lab=String(MONTHS[(mm-1)%NMON]).charAt(0);
+      out+=txt(GEO.x(mm),GEO.H-GEO.B+18,lab,mm<=NMON?gray:line,"middle",11);
+    }
+    out+=ln(GEO.L,GEO.H-GEO.B,GEO.W-GEO.R,GEO.H-GEO.B,ink,1.5);
+    out+=ln(GEO.L,GEO.T,GEO.L,GEO.H-GEO.B,ink,1.5);
+    out+=txt(GEO.W-GEO.R,GEO.H-GEO.B+34,LAB.xIce||"month",gray,"end",12);
+    out+=txt(GEO.L-40,GEO.T-10,LAB.yIce||"cones sold",gray,"start",12);
+    var f=state.p2.fam;
+    /* residual art for the real months */
+    var ipts=[]; for(var q=0;q<NMON;q++) ipts.push([q+1,ICE_Y[q]]);
+    out+=residualArt(ipts,p2eval,ink,line,gold);
+    /* revealed best fit: ink dashed, drawn past the last month */
+    if(state.p2.revealed[f]){
+      out+=curvePath(function(x){return bestEval(f,x);},ink,1.5,"7 4");
+      var v14=bestEval(f,NMON+2);
+      out+=txt(GEO.x(NMON+2.2),clamp(GEO.y(v14),GEO.T+26,GEO.H-GEO.B-6)-8,
+               "next "+MONTHS[1%NMON]+": "+fmt(v14,0),gray,"end",11,"var(--font-mono)");
+    }
+    /* your curve: gold, also drawn into the ghost region */
+    out+=curvePath(p2eval,gold,2.5);
+    ipts.forEach(function(p){ out+='<circle cx="'+GEO.x(p[0])+'" cy="'+GEO.y(p[1])+'" r="4" fill="'+ink+'"/>'; });
+  }
+  gPlot.innerHTML=out;
+  handleEls.forEach(function(h){ h._paint(); });
+  renderReadouts();
+}
+function curvePath(fn,color,w,dash){
+  var d="",pen=false;
+  for(var x=GEO.xmin;x<=GEO.xmax+1e-9;x+=0.1){
+    var y=fn(x);
+    if(y<GEO.ymin-40||y>GEO.ymax+40){ pen=false; continue; }
+    var yy=clamp(y,GEO.ymin,GEO.ymax);
+    d+=(pen?" L":" M")+GEO.x(x).toFixed(1)+" "+GEO.y(yy).toFixed(1);
+    pen=(y>=GEO.ymin&&y<=GEO.ymax);
+  }
+  return '<path d="'+d+'" fill="none" stroke="'+color+'" stroke-width="'+w+'"'+
+         (dash?' stroke-dasharray="'+dash+'"':'')+'/>';
+}
+
+/* ---------- readouts: big number, verdict, table, caption, math ---------- */
+function renderReadouts(){
+  var isP1=state.part===1, sse=isP1?sse1():sse2();
+  var f=state.p2.fam;
+  var locked=isP1?state.p1.locked:state.p2.locked[f];
+  var revealed=isP1?state.p1.revealed:state.p2.revealed[f];
+  var best=isP1?num(BEST1.sse,0):bestSse(f);
+  document.getElementById("sseOut").innerHTML=
+    "total squared error — your "+(isP1?"line":FAMNAME[f])+": <b>"+fmt(sse)+"</b>";
+  var v="";
+  if(revealed){
+    var pct=best>0?(sse-best)/best*100:0;
+    v="your "+(isP1?"line":FAMNAME[f])+" <span class='mono'>"+fmt(sse)+"</span> — best possible "+
+      "<span class='mono'>"+fmt(best)+"</span> — "+
+      (pct<NEAR?"essentially optimal — sharp eye.":"you were <span class='mono'>"+
+        (pct<100?fmt(pct):fmt(pct,0))+"%</span> off.");
+    if(!isP1 && FAMNOTE[f]) v+=" "+FAMNOTE[f];
+  } else if(locked){
+    v="Guess locked. Reveal when ready — that's the worksheet's Desmos step.";
+  }
+  document.getElementById("verdict").innerHTML=v;
+  document.getElementById("lockState").textContent=locked?(revealed?"locked · revealed":"locked"):"unlocked";
+  document.getElementById("lockBtn").textContent=locked?"Unlock & edit":"Lock my guess";
+  var rb=document.getElementById("revealBtn");
+  rb.disabled=!locked||revealed;
+  rb.textContent=revealed?"Best fit shown":"Reveal best fit";
+  document.getElementById("cap").innerHTML=isP1?
+    "ink dots: the worksheet's six students · gold line: yours (drag its two gold handles) · gray drops: errors "+
+    "(largest drawn thick) · faint squares: each error squared — their areas are what your total adds up":
+    "ink dots: monthly cones · gold curve: yours · shaded right: two months past December (extrapolation)"+
+    (state.p2.revealed[f]?" · dashed ink: the best "+FAMNAME[f]:"");
+  document.getElementById("famCtl").hidden=isP1;
+  document.getElementById("tableWrap").innerHTML=isP1?wsTable():"";
+  document.getElementById("hint").textContent=isP1?
+    (HINTS.part1||"Try: get the total as low as you can by eye before you lock and reveal."):
+    (HINTS.part2||"Try: fix the shape first, the height second.");
+  renderMath(sse,best,revealed,isP1,f);
+}
+function wsTable(){
+  var h="<table class='wstable'><caption>Q6's table, filled live from your line (copy onto paper)</caption>";
+  h+="<tr><th scope='row'>"+esc(LAB.xSleep||"hours of sleep")+"</th>"+SLEEP_X.map(function(x){return "<td>"+x+"</td>";}).join("")+"</tr>";
+  h+="<tr><th scope='row'>observed "+esc(LAB.ySleep||"score")+"</th>"+SLEEP_Y.map(function(y){return "<td>"+y+"</td>";}).join("")+"</tr>";
+  h+="<tr><th scope='row'>predicted (your line)</th>"+SLEEP_X.map(function(x){return "<td>"+fmt(p1pred(x))+"</td>";}).join("")+"</tr>";
+  h+="<tr><th scope='row'>error = obs − pred</th>"+SLEEP_X.map(function(x,i){return "<td>"+fmt(SLEEP_Y[i]-p1pred(x))+"</td>";}).join("")+"</tr>";
+  return h+"</table>";
+}
+function renderMath(sse,best,revealed,isP1,f){
+  var L=[];
+  if(isP1){
+    var l=p1line();
+    L.push("your line:  score = "+fmt(l.m,3)+" · hours + "+fmt(l.b,3));
+    L.push("");
+    SLEEP_X.forEach(function(x,i){
+      var p=p1pred(x), r=SLEEP_Y[i]-p;
+      L.push("("+SLEEP_Y[i]+" − "+fmt(p)+")²  =  ("+fmt(r)+")²  =  "+fmt(r*r,2));
+    });
+    L.push("────────────────────────────────");
+    L.push("total = "+SLEEP_X.map(function(x,i){var r=SLEEP_Y[i]-p1pred(x);return fmt(r*r,2);}).join(" + "));
+    L.push("      = "+fmt(sse,2));
+    if(revealed){
+      L.push("");
+      L.push("best fit (pinned from the computer's search):");
+      L.push("score = "+fmt(num(BEST1.m,0),3)+" · hours + "+fmt(num(BEST1.b,0),3)+
+             "     total = "+fmt(num(BEST1.sse,0),2));
+    }
+  } else {
+    L.push("your "+FAMNAME[f]+" — miss at each month, squared:");
+    L.push("");
+    for(var i=0;i<NMON;i++){
+      var p=p2eval(i+1), r=ICE_Y[i]-p;
+      L.push(MONTHS[i]+"  ("+ICE_Y[i]+" − "+fmt(p)+")²  =  "+fmt(r*r));
+    }
+    L.push("────────────────────────────────");
+    L.push("total = "+fmt(sse));
+    if(revealed){
+      L.push("");
+      L.push("best "+FAMNAME[f]+" (pinned): y = "+((BEST2[f]||{}).label||"—"));
+      L.push("its total = "+fmt(best));
+    }
+  }
+  document.getElementById("mathbox").textContent=L.join("\n");
+  document.getElementById("mathNote").innerHTML=
+    "The total is the <em>sum of squares of the individual errors</em> — the worksheet's exact recipe. "+
+    "“Best fit” means the computer searched every candidate and kept the one with the lowest total; "+
+    "the reveal draws that pre-computed answer, the same one Desmos would give.";
+}
+
+/* ---------- events ---------- */
+function setPart(p){
+  state.part=p;
+  document.getElementById("partA").setAttribute("aria-pressed",String(p===1));
+  document.getElementById("partB").setAttribute("aria-pressed",String(p===2));
+  buildHandles(); render();
+}
+document.getElementById("partA").addEventListener("click",function(){setPart(1);});
+document.getElementById("partB").addEventListener("click",function(){setPart(2);});
+
+Array.prototype.forEach.call(document.querySelectorAll("#famSeg button"),function(b){
+  b.addEventListener("click",function(){
+    state.p2.fam=b.dataset.fam;
+    Array.prototype.forEach.call(document.querySelectorAll("#famSeg button"),function(x){
+      x.setAttribute("aria-pressed",String(x===b));
+    });
+    buildHandles(); render();
+  });
+});
+
+document.getElementById("lockBtn").addEventListener("click",function(){
+  if(state.part===1){
+    state.p1.locked=!state.p1.locked;
+    if(!state.p1.locked) state.p1.revealed=false;
+  } else {
+    var f=state.p2.fam;
+    state.p2.locked[f]=!state.p2.locked[f];
+    if(!state.p2.locked[f]) state.p2.revealed[f]=false;
+  }
+  handleEls.forEach(function(h){h._paint();}); render();
+});
+document.getElementById("revealBtn").addEventListener("click",function(){
+  if(state.part===1){ if(state.p1.locked) state.p1.revealed=true; }
+  else { var f=state.p2.fam; if(state.p2.locked[f]) state.p2.revealed[f]=true; }
+  render();
+});
+
+var mt=document.getElementById("mathToggle"), mr=document.getElementById("mathReveal");
+mt.addEventListener("click",function(){
+  var open=mr.hidden; mr.hidden=!open;
+  mt.setAttribute("aria-expanded",String(open));
+  mt.textContent=open?"Hide the math ▾":"Show the math ▸";
+});
+
+function syncFam(){
+  Array.prototype.forEach.call(document.querySelectorAll("#famSeg button"),function(x){
+    x.setAttribute("aria-pressed",String(x.dataset.fam===state.p2.fam));
+  });
+}
+document.getElementById("reset").addEventListener("click",function(){
+  /* initial teaching state, straight from the config island: a near-flat line and
+     four wrong-shaped curves — best fit hidden, guess unlocked. */
+  state=JSON.parse(INIT);
+  syncFam();
+  setPart(state.part);
+});
+
+syncFam();
+setPart(state.part);
+})();
+</script>
+</body>
+</html>

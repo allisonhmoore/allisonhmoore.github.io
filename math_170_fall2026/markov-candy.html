@@ -1,0 +1,545 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Graceful Goodies flow — Markov chains · MATH 170</title>
+<style>
+:root{
+  --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+  --gold-soft:rgba(218,165,32,.12);
+  --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  /* optional sequential ramp (design/color-system.md §7, goldenrod) — used only
+     by the distribution-over-time chart, where the station encodes recency */
+  --gold-r1:#FFECC7; --gold-r2:#FBC54C; --gold-r3:#DAA520; --gold-r4:#B58700; --gold-r5:#906B00;
+  --font-body: ui-serif, Georgia, "Times New Roman", serif;
+  --font-ui:   system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+  --text-xl:1.75rem; --text-lg:1.25rem; --text-base:1rem; --text-sm:.875rem; --text-xs:.75rem;
+  --leading-prose:1.6; --leading-ui:1.3;
+  --space-1:4px; --space-2:8px; --space-3:16px; --space-4:24px; --space-5:32px; --space-6:48px;
+  --ease:cubic-bezier(0.16,1,0.3,1); --dur:200ms;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+    --gold-soft:rgba(227,179,65,.16);
+    --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+    --gold-r1:#594000; --gold-r2:#7B5A00; --gold-r3:#9F7600; --gold-r4:#C4920F; --gold-r5:#E3B341;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+  --gold-soft:rgba(227,179,65,.16);
+  --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+  --gold-r1:#594000; --gold-r2:#7B5A00; --gold-r3:#9F7600; --gold-r4:#C4920F; --gold-r5:#E3B341;
+}
+@media (prefers-reduced-motion: reduce){ :root{ --dur:0ms; } }
+@media print{
+  :root, :root[data-theme="dark"]{
+    --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+    --gold-soft:rgba(218,165,32,.12);
+    --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+    --gold-r1:#FFECC7; --gold-r2:#FBC54C; --gold-r3:#DAA520; --gold-r4:#B58700; --gold-r5:#906B00;
+  }
+  .theme-btn{display:none}
+  .stage{break-inside:avoid}
+}
+*{box-sizing:border-box}
+html{color-scheme:light dark}
+body{margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--font-body); font-size:var(--text-base); line-height:var(--leading-prose);
+  -webkit-text-size-adjust:100%;}
+.wrap{max-width:820px; margin:0 auto; padding:var(--space-5) var(--space-4) var(--space-6);}
+.topbar{display:flex; align-items:baseline; justify-content:space-between; gap:var(--space-3);
+  border-bottom:1px solid var(--gray-line); padding-bottom:var(--space-2); margin-bottom:var(--space-4);}
+.eyebrow{font-family:var(--font-ui); font-size:var(--text-xs); letter-spacing:.08em; text-transform:uppercase; color:var(--gray-text);}
+h1{font-family:var(--font-body); font-weight:600; font-size:var(--text-xl); line-height:1.2; margin:.2em 0 .1em;}
+p{margin:0 0 var(--space-3);}
+.prose{max-width:66ch;}
+.muted{color:var(--gray-text);}
+.mono,code{font-family:var(--font-mono); font-variant-numeric:tabular-nums;}
+a{color:inherit;}
+:focus-visible{outline:2px solid var(--ink); outline-offset:2px; box-shadow:0 0 0 5px var(--gold-soft);}
+.theme-btn{font-family:var(--font-ui); font-size:var(--text-xs); background:none;
+  border:1px solid var(--gray-line); color:var(--gray-text); padding:6px 10px; cursor:pointer; border-radius:2px;}
+.theme-btn:hover{background:var(--gray-fill);}
+details.spec{border:1px solid var(--gray-line); border-radius:2px; margin:0 0 var(--space-4); background:var(--gray-fill);}
+details.spec>summary{font-family:var(--font-ui); font-size:var(--text-sm); cursor:pointer;
+  padding:var(--space-2) var(--space-3); list-style:none; color:var(--gray-text);}
+details.spec>summary::-webkit-details-marker{display:none}
+details.spec>summary::before{content:"▸ "; color:var(--gold);}
+details.spec[open]>summary::before{content:"▾ ";}
+.spec-body{padding:0 var(--space-3) var(--space-3); font-family:var(--font-ui); font-size:var(--text-sm); line-height:1.5;}
+.spec-body dt{font-weight:600; margin-top:var(--space-2);}
+.spec-body dd{margin:0; color:var(--gray-text);}
+.stage{margin:var(--space-4) 0;}
+svg{max-width:100%; height:auto; font-family:var(--font-ui); display:block; margin:0 auto;}
+.controls{border-top:1px solid var(--gray-line); padding-top:var(--space-3); margin-top:var(--space-4);
+  display:grid; grid-template-columns:1fr 1fr; gap:var(--space-3) var(--space-4);}
+.controls .full{grid-column:1/-1;}
+@media(max-width:560px){ .controls{grid-template-columns:1fr;} }
+.ctl label{display:flex; justify-content:space-between; align-items:baseline;
+  font-family:var(--font-ui); font-size:var(--text-sm);}
+.ctl .val{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm);}
+input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:18px;
+  background:transparent; margin:6px 0 0; cursor:pointer;}
+input[type=range]::-webkit-slider-runnable-track{height:2px; border-radius:1px;
+  background:var(--track, var(--gray-line));}
+input[type=range]::-moz-range-track{height:2px; background:var(--gray-line);}
+input[type=range]::-moz-range-progress{height:2px; background:var(--gold);}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; appearance:none;
+  width:18px; height:18px; margin-top:-8px; border-radius:50%; background:var(--gold); border:1px solid var(--ink);}
+input[type=range]::-moz-range-thumb{width:18px; height:18px; border-radius:50%; background:var(--gold); border:1px solid var(--ink);}
+.btn{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:1px solid var(--ink); padding:8px 14px; cursor:pointer; border-radius:2px;}
+.btn:hover{background:var(--gray-fill);}
+.btn.primary{background:var(--gold); border-color:var(--gold); color:#111111;}
+.btn[disabled]{border-color:var(--gray-line); color:var(--gray-line); cursor:default;}
+.seg{display:inline-flex; border:1px solid var(--ink); border-radius:2px; overflow:hidden; flex-wrap:wrap;}
+.seg button{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:0; border-left:1px solid var(--ink); padding:7px 12px; cursor:pointer;}
+.seg button:first-child{border-left:0;}
+.seg button[aria-pressed="true"]{background:var(--gold); color:#111111;}
+.foot{display:flex; align-items:center; gap:var(--space-3); margin-top:var(--space-5);
+  border-top:1px solid var(--gray-line); padding-top:var(--space-3); flex-wrap:wrap;}
+.foot .btn{margin-right:auto;}
+.hint{font-family:var(--font-ui); font-size:var(--text-sm); color:var(--gray-text);}
+.mathbox{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm);
+  background:var(--gray-fill); border-left:2px solid var(--gold); padding:var(--space-3);
+  margin:var(--space-3) 0; overflow-x:auto; white-space:pre; line-height:1.7;}
+.attach{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text);
+  border-top:1px dotted var(--gray-line); margin-top:var(--space-6); padding-top:var(--space-3);}
+.tag{display:inline-block; font-family:var(--font-ui); font-size:var(--text-xs);
+  border:1px solid var(--gray-line); border-radius:999px; padding:1px 8px; color:var(--gray-text); margin-left:6px;}
+.callout{font-family:var(--font-ui); font-size:var(--text-sm); border:1px solid var(--gray-line);
+  border-left:2px solid var(--gold); padding:var(--space-2) var(--space-3); margin:var(--space-3) 0;}
+.chips{display:flex; gap:var(--space-2); flex-wrap:wrap; margin:var(--space-2) 0;}
+.chips button{font-family:var(--font-ui); font-size:var(--text-xs); border:1px solid var(--gray-line);
+  background:var(--paper); color:var(--ink); border-radius:999px; padding:3px 10px; cursor:pointer;}
+.chips button[aria-pressed="true"]{border-color:var(--gold); background:var(--gold-soft);}
+table.mx{border-collapse:collapse; font-family:var(--font-mono); font-variant-numeric:tabular-nums;
+  font-size:var(--text-sm); margin:var(--space-2) auto;}
+table.mx td,table.mx th{border:1px solid var(--gray-line); padding:4px 8px; text-align:center;}
+table.mx th{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); background:var(--gray-fill);}
+table.mx input{width:56px; font:inherit; text-align:center; border:none; background:transparent; color:var(--ink);}
+.warn{color:var(--gold); font-weight:700;}
+.stepbar{display:flex; gap:var(--space-2); align-items:center; margin:var(--space-2) 0; flex-wrap:wrap;}
+.count{font-family:var(--font-mono); font-variant-numeric:tabular-nums; color:var(--gray-text); font-size:var(--text-sm);}
+</style>
+<!-- ---- shared Markov component styles (added after the skin, never restyling it) ---- -->
+<style>
+h2{font-family:var(--font-ui); font-weight:600; font-size:var(--text-lg); line-height:1.3; margin:var(--space-5) 0 var(--space-2);}
+figcaption{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); margin-top:var(--space-2); text-align:center;}
+.duo{display:grid; grid-template-columns:1fr 1fr; gap:var(--space-3); align-items:start;}
+@media(max-width:680px){ .duo{grid-template-columns:1fr;} }
+table.mx{border-collapse:collapse; font-family:var(--font-mono); font-variant-numeric:tabular-nums;
+  font-size:var(--text-sm); margin:var(--space-2) auto;}
+table.mx td,table.mx th{border:1px solid var(--gray-line); padding:4px 8px; text-align:center;}
+table.mx th{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); background:var(--gray-fill);}
+table.mx th.rowh{text-align:left;}
+table.mx input{width:4.2em; font:inherit; text-align:center; color:var(--ink);
+  background:var(--paper); border:1px solid var(--gray-line); border-radius:2px; padding:2px 0;}
+table.mx td.sum{font-family:var(--font-ui); font-size:var(--text-xs); text-align:left; white-space:nowrap;}
+table.mx td.sum .sym{font-family:var(--font-mono); font-weight:700; margin-right:4px;}
+table.mx td.sum.ok{background:var(--gold-soft);}
+table.mx td.sum.bad{border:2px dashed var(--ink);}
+.vecwrap{margin:var(--space-3) 0 0;}
+.vecwrap .lbl{font-family:var(--font-ui); font-size:var(--text-sm); color:var(--gray-text);}
+.warnbox{font-family:var(--font-ui); font-size:var(--text-sm); border:1px solid var(--ink);
+  border-left:3px dashed var(--ink); padding:var(--space-2) var(--space-3); margin:var(--space-3) 0;}
+.callout{font-family:var(--font-ui); font-size:var(--text-sm); border:1px solid var(--gray-line);
+  border-left:2px solid var(--gold); padding:var(--space-2) var(--space-3); margin:var(--space-3) 0;}
+.chips{display:flex; gap:var(--space-2); flex-wrap:wrap; margin:var(--space-2) 0;}
+.chips button{font-family:var(--font-ui); font-size:var(--text-xs); border:1px solid var(--gray-line);
+  background:var(--paper); color:var(--ink); border-radius:999px; padding:3px 10px; cursor:pointer;}
+.chips button[aria-pressed="true"]{border-color:var(--ink); background:var(--gold); color:#111111;}
+.stepbar{display:flex; gap:var(--space-2); align-items:center; margin:var(--space-3) 0 0; flex-wrap:wrap;}
+.count{font-family:var(--font-mono); font-variant-numeric:tabular-nums; color:var(--gray-text); font-size:var(--text-sm);}
+.rampkey{display:flex; align-items:center; gap:6px; justify-content:center; flex-wrap:wrap;
+  font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); margin-top:var(--space-2);}
+.rampkey i{display:inline-block; width:16px; height:10px; border:1px solid var(--ink); font-style:normal;}
+.rampkey i.r1{background:var(--gold-r1);} .rampkey i.r2{background:var(--gold-r2);}
+.rampkey i.r3{background:var(--gold-r3);} .rampkey i.r4{background:var(--gold-r4);}
+.rampkey i.r5{background:var(--gold-r5);}
+.attach .warn{font-weight:700;}
+</style>
+
+<!-- theme boot: apply stored choice before first paint (no flash) -->
+<script>
+try{var t=localStorage.getItem("m170-theme");if(t)document.documentElement.dataset.theme=t;}catch(e){}
+</script>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="eyebrow">MATH 170 · Markov chains · Local Candy Preferences</div>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Color theme">◑ auto</button>
+  </div>
+
+  <h1 data-edit="title">The Graceful Goodies flow <span class="tag">Markov chains</span></h1>
+  <p class="prose muted" data-edit="intro">The owners keep reacting to one week's sales — 80% truffles last
+  week, panic production, 30% this week. What they actually need is the <em>flow</em>: given what a
+  customer bought last, what do they buy next? Put your class survey's own percentages into the table
+  below — every cell starts at 0.25, which is a guess and nothing more — then step the mix forward and
+  watch where it settles.</p>
+
+  <div data-slot="notes-top"></div>
+
+
+  <!-- PINNED (python, row-vector convention v⁰Pⁿ), for the DEFAULT config island:
+       With every entry of P equal to 0.25 the matrix is doubly stochastic and every start
+       collapses to [.25,.25,.25,.25] after exactly ONE step; that uniform vector is π.
+       Default v⁰ = [.8,.1,.05,.05] is the worksheet's panic week and sums to 1. -->
+
+  <h2 data-edit="h2-matrix">Your survey, as a matrix</h2>
+  <p class="prose muted" data-edit="matrix-intro" style="font-family:var(--font-ui); font-size:var(--text-sm)">
+    Row = what they bought <em>last</em>. Column = what they buy <em>next</em>. Each row must total
+    <span class="mono">1.00</span>, because a customer buys something. Nothing is corrected for you.</p>
+  <div id="mxBox"></div>
+
+  <div class="vecwrap">
+    <p class="lbl" data-edit="vec-label">The starting mix <span class="mono">v⁰</span> — a row vector. This one must total <span class="mono">1.00</span> too.</p>
+    <div id="v0Box"></div>
+  </div>
+
+  <div id="warnBox" aria-live="polite"></div>
+
+  <h2 data-edit="h2-run">Step it forward</h2>
+  <div class="stage">
+    <div class="duo">
+      <div>
+        <svg id="graphSvg" viewBox="0 0 340 330" aria-label="State graph: node size is the current share of customers"></svg>
+        <figcaption data-edit="cap-graph">Each circle is a candy; its size is the share of customers buying it right now. Each arc carries the probability of moving that way.</figcaption>
+      </div>
+      <div>
+        <svg id="chartSvg" viewBox="0 0 420 300" aria-label="Distribution over time"></svg>
+        <div class="rampkey"><span>older</span><i class="r1"></i><i class="r2"></i><i class="r3"></i><i class="r4"></i><i class="r5"></i><span>now</span></div>
+        <figcaption data-edit="cap-chart">One bar per week, oldest at the top and palest. Left to right inside a bar, the four candies always sit in the same order; the numbers under the newest bar are the current shares.</figcaption>
+      </div>
+    </div>
+
+    <div class="stepbar">
+      <button class="btn" id="back" type="button">◂ Back</button>
+      <button class="btn primary" id="step" type="button">Step ▸</button>
+      <button class="btn" id="run" type="button">Run ▸▸</button>
+      <span class="count" id="count">t = 0</span>
+      <span class="hint" id="status" aria-live="polite"></span>
+    </div>
+
+    <div class="mathbox" id="mathbox" aria-live="polite"></div>
+  </div>
+
+  <div data-slot="notes-bottom"></div>
+
+  <div class="foot">
+    <button class="btn" id="reset" type="button">Reset</button>
+    <span class="hint" data-edit="hint-try">Try: run it once with every cell still at 0.25, then type your survey's real numbers and run it again. Then start somewhere else entirely and run it a third time.</span>
+  </div>
+
+</div>
+
+<script type="application/json" id="m170-config">
+{
+  "_v": 1,
+  "states": ["Chocolate truffles", "Chocolate pralines", "Artisan marshmallows", "Fruit gummies"],
+  "short": ["CT", "CP", "AM", "FG"],
+  "unit": "week",
+  "P": [
+    [0.25, 0.25, 0.25, 0.25],
+    [0.25, 0.25, 0.25, 0.25],
+    [0.25, 0.25, 0.25, 0.25],
+    [0.25, 0.25, 0.25, 0.25]
+  ],
+  "v0": [0.8, 0.1, 0.05, 0.05],
+  "historyRows": 6,
+  "settleTolerance": 0.001,
+  "maxRun": 500,
+  "messages": {
+    "rowOk": "totals 1.00",
+    "rowShort": "totals {sum} — {gap} short of 1.00",
+    "rowOver": "totals {sum} — {gap} over 1.00",
+    "notStochastic": "{n} of the rows do not total 1.00 yet. The page will still step the mix forward so you can see what happens, but a row that does not total 1 is saying customers vanish or appear from nowhere.",
+    "v0Bad": "The starting mix totals {sum}, not 1.00. Fix it before you read anything into the run.",
+    "settled": "Settled after {n} steps — nothing moves any more. That is π.",
+    "settledNow": "Settled — nothing moves any more. That is π."
+  },
+  "_meta": {
+    "states": {"label": "The four candies", "kind": "list"},
+    "short": {"label": "Short labels used on the chart", "kind": "list"},
+    "unit": {"label": "What one step of time is called", "kind": "text"},
+    "P": {"label": "Transition percentages", "kind": "table", "regen": "markov-matrix",
+      "help": "Row = bought last, column = buys next. EVERY ENTRY DEFAULTS TO 0.25 by the professor's instruction (2026-07-27) so that students enter their own survey's numbers. The page never renormalizes a row; it reports the total and lets the student fix it."},
+    "v0": {"label": "Starting mix v⁰", "kind": "list",
+      "help": "A row vector of four shares. The default is the worksheet's panic week — 80% truffles — and totals 1."},
+    "historyRows": {"label": "How many past weeks the chart shows", "kind": "number",
+      "help": "Capped at 5 ramp stations; more rows than that reuse the same five."},
+    "settleTolerance": {"label": "Called settled when no share moves more than this", "kind": "number"},
+    "maxRun": {"label": "Safety cap on Run", "kind": "number"},
+    "messages": {"label": "Row-total and stepper wording", "kind": "text",
+      "help": "Placeholders: {sum} {gap} {n}."}
+  }
+}
+</script>
+
+<script>
+(function(){
+"use strict";
+
+/* ROUND 2 (professor, 2026-07-27): the combined Markov page was split in two. This is
+   the candy half: no city toggle, no race-two-starts. The transition table is editable
+   with every cell defaulting to 0.25, the row totals are REPORTED rather than silently
+   renormalized (the old page re-balanced the row behind the student's back), and v⁰ is
+   an editable row vector with its own total check. */
+
+var CFG = JSON.parse(document.getElementById("m170-config").textContent);
+function isArr(v){ return Object.prototype.toString.call(v)==="[object Array]"; }
+function num(v,d){ v=+v; return isFinite(v)?v:d; }
+function fill(t,vars){ return String(t==null?"":t).replace(/\{(\w+)\}/g,function(m,k){
+  return vars[k]!==undefined?vars[k]:m; }); }
+
+var STATES = isArr(CFG.states)&&CFG.states.length===4 ? CFG.states.map(String)
+           : ["State 1","State 2","State 3","State 4"];
+var SHORT  = isArr(CFG.short)&&CFG.short.length===4 ? CFG.short.map(String)
+           : STATES.map(function(s){ return s.slice(0,2); });
+var UNIT   = String(CFG.unit||"step");
+var MSG    = CFG.messages||{};
+var ROWS   = Math.max(2, Math.round(num(CFG.historyRows,6)));
+var TOL    = Math.max(1e-6, num(CFG.settleTolerance,0.001));
+var MAXRUN = Math.max(1, Math.round(num(CFG.maxRun,500)));
+
+function grid4(src, dflt){
+  var out=[], i, j;
+  for(i=0;i<4;i++){
+    out.push([]);
+    for(j=0;j<4;j++){
+      var v = (isArr(src)&&isArr(src[i])) ? num(src[i][j], dflt) : dflt;
+      out[i].push(Math.min(1, Math.max(0, v)));
+    }
+  }
+  return out;
+}
+function vec4(src, dflt){
+  var out=[], i;
+  for(i=0;i<4;i++) out.push(Math.min(1, Math.max(0, isArr(src)?num(src[i],dflt):dflt)));
+  return out;
+}
+var P0 = grid4(CFG.P, 0.25), V0 = vec4(CFG.v0, 0.25);
+var P  = P0.map(function(r){ return r.slice(); });
+var v0 = V0.slice();
+var hist = [v0.slice()];
+
+/* ---------- theme ---------- */
+var root=document.documentElement, themeBtn=document.getElementById("themeBtn");
+function themeLabel(){ var m=root.dataset.theme||"auto";
+  themeBtn.textContent=m==="dark"?"● dark":m==="light"?"○ light":"◑ auto"; }
+themeBtn.addEventListener("click",function(){
+  var cur=root.dataset.theme||"auto",next=cur==="auto"?"light":cur==="light"?"dark":"auto";
+  if(next==="auto"){delete root.dataset.theme;try{localStorage.removeItem("m170-theme");}catch(e){}}
+  else{root.dataset.theme=next;try{localStorage.setItem("m170-theme",next);}catch(e){}}
+  themeLabel(); drawAll();});
+if(window.matchMedia){ window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",function(){ drawAll(); }); }
+themeLabel();
+
+function css(v){ return getComputedStyle(document.body).getPropertyValue(v).trim(); }
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+function pct(x){ return (x*100).toFixed(1)+"%"; }
+function sum4(a){ return a[0]+a[1]+a[2]+a[3]; }
+function stepv(v,M){
+  var r=[0,0,0,0], i, j;
+  for(j=0;j<4;j++) for(i=0;i<4;i++) r[j]+=v[i]*M[i][j];
+  return r;
+}
+function settled(a,b){ for(var i=0;i<4;i++) if(Math.abs(a[i]-b[i])>TOL) return false; return true; }
+
+/* ---------- the two total checks: symbol + words, never colour alone ---------- */
+function totalCell(total){
+  var ok = Math.abs(total-1) < 0.005;
+  var txt = ok ? (MSG.rowOk||"totals 1.00")
+    : (total < 1 ? fill(MSG.rowShort,{sum:total.toFixed(2), gap:(1-total).toFixed(2)})
+                 : fill(MSG.rowOver ,{sum:total.toFixed(2), gap:(total-1).toFixed(2)}));
+  return '<td class="sum '+(ok?"ok":"bad")+'"><span class="sym">'+(ok?"✓":"✗")+
+         '</span>'+esc(txt)+'</td>';
+}
+
+/* ---------- the editable matrix ---------- */
+function drawMatrix(){
+  var html='<table class="mx"><tr><th>bought last \\ buys next</th>';
+  STATES.forEach(function(s){ html+="<th>"+esc(s)+"</th>"; });
+  html+="<th>row total</th></tr>";
+  P.forEach(function(row,i){
+    html+='<tr><th class="rowh">'+esc(STATES[i])+"</th>";
+    row.forEach(function(p,j){
+      html+='<td><input inputmode="decimal" value="'+p.toFixed(2)+
+            '" data-i="'+i+'" data-j="'+j+'" aria-label="probability of going from '+
+            esc(STATES[i])+' to '+esc(STATES[j])+'"></td>';
+    });
+    html+=totalCell(sum4(row))+"</tr>";
+  });
+  html+="</table>";
+  var host=document.getElementById("mxBox");
+  host.innerHTML=html;
+  Array.prototype.forEach.call(host.querySelectorAll("input"),function(inp){
+    inp.addEventListener("change",function(){
+      var i=+inp.getAttribute("data-i"), j=+inp.getAttribute("data-j");
+      P[i][j]=Math.min(1,Math.max(0,parseFloat(inp.value)||0));
+      resetTime(); drawAll();
+    });
+  });
+}
+
+/* ---------- the editable starting row vector ---------- */
+function drawV0(){
+  var html='<table class="mx"><tr><th>v⁰</th>';
+  STATES.forEach(function(s){ html+="<th>"+esc(s)+"</th>"; });
+  html+="<th>total</th></tr><tr><th class=\"rowh\">share at t = 0</th>";
+  v0.forEach(function(p,i){
+    html+='<td><input inputmode="decimal" value="'+p.toFixed(2)+
+          '" data-k="'+i+'" aria-label="starting share of '+esc(STATES[i])+'"></td>';
+  });
+  html+=totalCell(sum4(v0))+"</tr></table>";
+  var host=document.getElementById("v0Box");
+  host.innerHTML=html;
+  Array.prototype.forEach.call(host.querySelectorAll("input"),function(inp){
+    inp.addEventListener("change",function(){
+      var k=+inp.getAttribute("data-k");
+      v0[k]=Math.min(1,Math.max(0,parseFloat(inp.value)||0));
+      resetTime(); drawAll();
+    });
+  });
+}
+
+/* ---------- honesty banner ---------- */
+function drawWarn(){
+  var bad=0, i;
+  for(i=0;i<4;i++) if(Math.abs(sum4(P[i])-1)>=0.005) bad++;
+  var vs=sum4(v0), vbad=Math.abs(vs-1)>=0.005;
+  var html="";
+  if(bad) html+='<div class="warnbox"><strong>✗ </strong>'+esc(fill(MSG.notStochastic,{n:bad}))+"</div>";
+  if(vbad) html+='<div class="warnbox"><strong>✗ </strong>'+esc(fill(MSG.v0Bad,{sum:vs.toFixed(2)}))+"</div>";
+  document.getElementById("warnBox").innerHTML=html;
+}
+
+/* ---------- state graph ---------- */
+function drawGraph(){
+  var ink=css("--ink"), gray=css("--gray-text"), line=css("--gray-line"), fillc=css("--gray-fill");
+  var v=hist[hist.length-1], out="";
+  var centers=[[95,80],[245,80],[95,250],[245,250]];
+  P.forEach(function(row,i){ row.forEach(function(p,j){
+    if(i===j||p<0.005) return;
+    var a=centers[i], b=centers[j];
+    var mx=(a[0]+b[0])/2 + (a[1]-b[1])*0.18, my=(a[1]+b[1])/2 + (b[0]-a[0])*0.18;
+    out+='<path d="M'+a[0]+' '+a[1]+' Q'+mx+' '+my+' '+b[0]+' '+b[1]+'" fill="none" stroke="'+line+
+         '" stroke-width="'+(0.5+p*4).toFixed(2)+'"/>';
+    out+='<text x="'+mx+'" y="'+my+'" font-size="9" fill="'+gray+
+         '" text-anchor="middle" font-family="var(--font-mono)">'+p.toFixed(2).replace("0.",".")+'</text>';
+  });});
+  centers.forEach(function(c,i){
+    var r=10+Math.max(0,Math.min(1,v[i]))*40;
+    out+='<circle cx="'+c[0]+'" cy="'+c[1]+'" r="'+r.toFixed(1)+'" fill="'+fillc+'" stroke="'+ink+'" stroke-width="1.5"/>';
+    out+='<text x="'+c[0]+'" y="'+(c[1]-r-6).toFixed(1)+'" font-size="10" fill="'+ink+'" text-anchor="middle">'+esc(SHORT[i])+'</text>';
+    out+='<text x="'+c[0]+'" y="'+(c[1]+4)+'" font-size="11" fill="'+ink+
+         '" text-anchor="middle" font-family="var(--font-mono)">'+pct(v[i])+'</text>';
+    out+='<text x="'+c[0]+'" y="'+(c[1]+15)+'" font-size="8" fill="'+gray+
+         '" text-anchor="middle">self '+P[i][i].toFixed(2).replace("0.",".")+'</text>';
+  });
+  document.getElementById("graphSvg").innerHTML=out;
+}
+
+/* ---------- distribution over time ----------
+   The ramp (design/color-system.md §7) encodes RECENCY, which is a sequential
+   quantity. It never encodes which candy a segment is: the four candies keep the
+   same left-to-right order in every bar, are separated by ink hairlines, and are
+   named and numbered in print under the newest bar. */
+function rampVar(i, n){
+  if(n<=1) return "--gold-r5";
+  var st = 1 + Math.round(i/(n-1)*4);
+  return "--gold-r"+Math.min(5,Math.max(1,st));
+}
+function drawChart(){
+  var ink=css("--ink"), gray=css("--gray-text");
+  var shown=hist.slice(-ROWS), t0=hist.length-shown.length;
+  var x0=54, w=340, rowH=Math.min(30, Math.floor(230/Math.max(1,shown.length))), barH=Math.max(9,rowH-10);
+  var out="";
+  out+='<text x="'+x0+'" y="14" font-size="10" fill="'+gray+'">left to right in every bar: '+
+       esc(SHORT.join(" · "))+'</text>';
+  shown.forEach(function(hv,hi){
+    var y=26+hi*rowH, x=x0, st=css(rampVar(hi, shown.length));
+    out+='<text x="'+(x0-6)+'" y="'+(y+barH/2+3)+'" font-size="9" fill="'+gray+
+         '" text-anchor="end" font-family="var(--font-mono)">t='+(t0+hi)+'</text>';
+    hv.forEach(function(p){
+      var seg=Math.max(0.5, Math.max(0,Math.min(1,p))*w);
+      out+='<rect x="'+x.toFixed(1)+'" y="'+y+'" width="'+seg.toFixed(1)+'" height="'+barH+
+           '" fill="'+st+'" stroke="'+ink+'" stroke-width="1"/>';
+      x+=seg;
+    });
+  });
+  /* numbers under the newest bar — the ramp is never the only encoding */
+  var last=shown[shown.length-1], yN=26+(shown.length-1)*rowH+barH+13, xc=x0;
+  last.forEach(function(p,i){
+    var seg=Math.max(0.5, Math.max(0,Math.min(1,p))*w);
+    if(seg>36) out+='<text x="'+(xc+seg/2).toFixed(1)+'" y="'+yN+'" font-size="9" fill="'+ink+
+      '" text-anchor="middle" font-family="var(--font-mono)">'+esc(SHORT[i])+' '+pct(p)+'</text>';
+    xc+=seg;
+  });
+  out+='<text x="'+x0+'" y="'+(yN+16)+'" font-size="9" fill="'+gray+'" font-family="var(--font-mono)">now: '+
+       esc(SHORT.map(function(s,i){ return s+" "+pct(last[i]); }).join("   "))+'</text>';
+  document.getElementById("chartSvg").innerHTML=out;
+}
+
+/* ---------- the receipt ---------- */
+function drawMath(){
+  var v=hist[hist.length-1], L=[];
+  var prev=hist.length>1?hist[hist.length-2]:null;
+  if(prev){
+    var terms=prev.map(function(p,i){ return p.toFixed(3)+"·"+P[i][0].toFixed(2); }).join(" + ");
+    L.push("one entry of v·P, expanded — next "+STATES[0]+" share:");
+    L.push("  "+terms+" = "+v[0].toFixed(3));
+    L.push("(each term: the share sitting in a state × the probability of moving to "+STATES[0]+")");
+  } else {
+    L.push("v⁰ = ["+v.map(function(x){return x.toFixed(2);}).join(", ")+"]   — press Step ▸ to multiply by P once.");
+  }
+  document.getElementById("mathbox").textContent=L.join("\n");
+}
+
+function drawAll(){
+  drawMatrix(); drawV0(); drawWarn(); drawGraph(); drawChart(); drawMath();
+  var t=hist.length-1;
+  document.getElementById("count").textContent="t = "+t+" "+UNIT+(t===1?"":"s");
+}
+
+/* ---------- time ---------- */
+function say(s){ document.getElementById("status").textContent=s||""; }
+function resetTime(){ hist=[v0.slice()]; say(""); }
+document.getElementById("step").addEventListener("click",function(){
+  var v=stepv(hist[hist.length-1],P);
+  var done=settled(v,hist[hist.length-1]);
+  hist.push(v); drawAll();
+  say(done ? (MSG.settledNow||"Settled.") : "");
+});
+document.getElementById("back").addEventListener("click",function(){
+  if(hist.length>1){ hist.pop(); say(""); drawAll(); }
+});
+document.getElementById("run").addEventListener("click",function(){
+  var guard=0, done=false;
+  while(guard++<MAXRUN){
+    var v=stepv(hist[hist.length-1],P);
+    done=settled(v,hist[hist.length-1]);
+    hist.push(v);
+    if(done) break;
+  }
+  drawAll();
+  say(done ? fill(MSG.settled,{n:hist.length-1}) : "");
+});
+
+document.getElementById("reset").addEventListener("click",function(){
+  P=P0.map(function(r){ return r.slice(); });
+  v0=V0.slice();
+  resetTime(); drawAll();
+});
+
+drawAll();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,638 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trainable Machine · MATH 170</title>
+<style>
+/* hidden must always win over any author display rule */
+[hidden]{display:none !important}
+
+:root{
+  --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+  --gold-soft:rgba(218,165,32,.12);
+  --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  --font-body: ui-serif, Georgia, "Times New Roman", serif;
+  --font-ui:   system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+  --text-xl:1.75rem; --text-lg:1.25rem; --text-base:1rem; --text-sm:.875rem; --text-xs:.75rem;
+  --leading-prose:1.6; --leading-ui:1.3;
+  --space-1:4px; --space-2:8px; --space-3:16px; --space-4:24px; --space-5:32px; --space-6:48px;
+  --ease:cubic-bezier(0.16,1,0.3,1); --dur:200ms;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+    --gold-soft:rgba(227,179,65,.16);
+    --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+  --gold-soft:rgba(227,179,65,.16);
+  --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+}
+@media (prefers-reduced-motion: reduce){ :root{ --dur:0ms; } }
+@media print{
+  :root, :root[data-theme="dark"]{
+    --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+    --gold-soft:rgba(218,165,32,.12);
+    --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  }
+  .theme-btn{display:none}
+  .stage{break-inside:avoid}
+}
+*{box-sizing:border-box}
+html{color-scheme:light dark}
+body{margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--font-body); font-size:var(--text-base); line-height:var(--leading-prose);
+  -webkit-text-size-adjust:100%;}
+.wrap{max-width:820px; margin:0 auto; padding:var(--space-5) var(--space-4) var(--space-6);}
+.topbar{display:flex; align-items:baseline; justify-content:space-between; gap:var(--space-3);
+  border-bottom:1px solid var(--gray-line); padding-bottom:var(--space-2); margin-bottom:var(--space-4);}
+.eyebrow{font-family:var(--font-ui); font-size:var(--text-xs); letter-spacing:.08em; text-transform:uppercase; color:var(--gray-text);}
+h1{font-family:var(--font-body); font-weight:600; font-size:var(--text-xl); line-height:1.2; margin:.2em 0 .1em;}
+h2{font-family:var(--font-ui); font-weight:600; font-size:var(--text-lg); margin:var(--space-4) 0 var(--space-2);}
+p{margin:0 0 var(--space-3);}
+.prose{max-width:66ch;}
+.muted{color:var(--gray-text);}
+.mono,code{font-family:var(--font-mono); font-variant-numeric:tabular-nums;}
+a{color:inherit;}
+:focus-visible{outline:2px solid var(--ink); outline-offset:2px; box-shadow:0 0 0 5px var(--gold-soft);}
+.theme-btn{font-family:var(--font-ui); font-size:var(--text-xs); background:none;
+  border:1px solid var(--gray-line); color:var(--gray-text); padding:6px 10px; cursor:pointer; border-radius:2px;}
+.theme-btn:hover{background:var(--gray-fill);}
+details.spec{border:1px solid var(--gray-line); border-radius:2px; margin:0 0 var(--space-4); background:var(--gray-fill);}
+details.spec>summary{font-family:var(--font-ui); font-size:var(--text-sm); cursor:pointer;
+  padding:var(--space-2) var(--space-3); list-style:none; color:var(--gray-text);}
+details.spec>summary::-webkit-details-marker{display:none}
+details.spec>summary::before{content:"▸ "; color:var(--gold);}
+details.spec[open]>summary::before{content:"▾ ";}
+.spec-body{padding:0 var(--space-3) var(--space-3); font-family:var(--font-ui); font-size:var(--text-sm); line-height:1.5;}
+.spec-body dt{font-weight:600; margin-top:var(--space-2);}
+.spec-body dd{margin:0; color:var(--gray-text);}
+.stage{margin:var(--space-4) 0;}
+.controls{border-top:1px solid var(--gray-line); padding-top:var(--space-3); margin-top:var(--space-4);}
+.btn{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:1px solid var(--ink); padding:8px 14px; cursor:pointer; border-radius:2px;}
+.btn:hover{background:var(--gray-fill);}
+.btn.primary{background:var(--gold); border-color:var(--gold); color:#111111;}
+.btn[disabled]{border-color:var(--gray-line); color:var(--gray-line); cursor:default;}
+.seg{display:inline-flex; border:1px solid var(--ink); border-radius:2px; overflow:hidden;}
+.seg button{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:0; border-left:1px solid var(--ink); padding:7px 12px; cursor:pointer;}
+.seg button:first-child{border-left:0;}
+.seg button[aria-pressed="true"]{background:var(--gold); color:#111111;}
+.foot{display:flex; align-items:center; gap:var(--space-3); margin-top:var(--space-5);
+  border-top:1px solid var(--gray-line); padding-top:var(--space-3); flex-wrap:wrap;}
+.foot .btn{margin-right:auto;}
+.hint{font-family:var(--font-ui); font-size:var(--text-sm); color:var(--gray-text);}
+.attach{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text);
+  border-top:1px dotted var(--gray-line); margin-top:var(--space-6); padding-top:var(--space-3);}
+.tag{display:inline-block; font-family:var(--font-ui); font-size:var(--text-xs);
+  border:1px solid var(--gray-line); border-radius:999px; padding:1px 8px; color:var(--gray-text); margin-left:6px;}
+.callout{font-family:var(--font-ui); font-size:var(--text-sm); border:1px solid var(--gray-line);
+  border-left:2px solid var(--gold); padding:var(--space-2) var(--space-3); margin:var(--space-3) 0;}
+
+.grid2{display:grid; grid-template-columns:auto 1fr; gap:var(--space-4); align-items:start;}
+@media(max-width:680px){ .grid2{grid-template-columns:1fr;} }
+canvas.pad{border:1px solid var(--ink); border-radius:2px; touch-action:none; cursor:crosshair;
+  image-rendering:pixelated; background:var(--paper);}
+.shelves{display:grid; grid-template-columns:repeat(3,1fr); gap:var(--space-3);}
+@media(max-width:560px){ .shelves{grid-template-columns:1fr;} }
+.shelf{border:1px solid var(--gray-line); border-radius:2px; padding:var(--space-2);}
+.shelf h3{font-family:var(--font-ui); font-size:var(--text-sm); margin:0 0 var(--space-2);}
+.shelf h3 input{font:inherit; border:none; border-bottom:1px dashed var(--gray-line);
+  background:transparent; color:var(--ink); width:90px;}
+.thumbs{display:flex; flex-wrap:wrap; gap:4px; min-height:40px;}
+.thumbs canvas{border:1px solid var(--gray-line); cursor:pointer;}
+.thumbs canvas.held{border-style:dashed; border-color:var(--gold);}
+.thumbs canvas.near{outline:2px solid var(--gold);}
+.bars{font-family:var(--font-ui); font-size:var(--text-sm);}
+.bars .row{display:flex; align-items:center; gap:8px; margin:4px 0;}
+.bars .bar{height:14px; background:var(--gray-fill); border:1px solid var(--ink); min-width:1px;}
+.bars .bar.win{background:var(--gold);}
+.bars .lbl{width:80px;}
+.bars .pct{font-family:var(--font-mono); font-variant-numeric:tabular-nums; width:52px; text-align:right;}
+table.cm{border-collapse:collapse; font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm);}
+table.cm td,table.cm th{border:1px solid var(--gray-line); padding:6px 12px; text-align:center;}
+table.cm th{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); background:var(--gray-fill);}
+table.cm td{cursor:pointer;}
+table.cm td.diag{background:var(--gold-soft);}
+.status{font-family:var(--font-ui); font-size:var(--text-sm); min-height:1.4em; margin-top:var(--space-2);}
+</style>
+<script>
+try{var t=localStorage.getItem("m170-theme");if(t)document.documentElement.dataset.theme=t;}catch(e){}
+</script>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="eyebrow">MATH 170 · Images become vectors · Teachable Machine session, self-hosted</div>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Color theme">◑ auto</button>
+  </div>
+
+  <h1 data-edit="title">Trainable machine <span class="tag">native · no accounts, no camera</span></h1>
+  <p class="prose muted" data-edit="intro">Show it labeled drawings, hold some back for testing, and read the
+  accuracy matrix. Unlike the famous website, this one lets you see <em>exactly</em> why it
+  decided — it measures pixel disagreement, exactly like the digit grids.</p>
+
+  <div data-slot="notes-top"></div>
+
+
+  <div class="callout" data-edit="howto">
+    <b>How to work this page.</b>
+    <b>Training pad</b> — draw a shape, then press <i>add to sun / house / tree</i>. That drawing
+    joins the shelf for that class and becomes one of the examples the machine may look at.
+    <b>Test pad</b> — draw something the machine has never seen; once you have pressed
+    <i>Train</i>, the prediction updates live as you draw, and the stored drawings it is
+    comparing you against light up in the shelves. Click a square to turn it black, click it
+    again to turn it back to white; drag to paint or erase a run of squares.
+    <b>Click any thumbnail in a shelf to delete that drawing.</b> With hold-back ON, every 4th
+    drawing in a class is set aside: the machine never studies it, and it is the only thing the
+    accuracy matrix is allowed to grade.
+  </div>
+
+  <div class="stage">
+    <div class="grid2">
+      <div>
+        <div style="font-family:var(--font-ui);font-size:var(--text-sm);margin-bottom:4px;" id="padLabel">Training pad — draw an example (click a square to toggle it; drag to paint or erase)</div>
+        <canvas class="pad" id="pad" width="256" height="256" aria-label="16 by 16 drawing pad" tabindex="0"></canvas>
+        <div style="display:flex; gap:6px; margin-top:6px; flex-wrap:wrap;">
+          <button class="btn" id="clearPad" type="button">Clear pad</button>
+          <span class="seg" id="addBtns"></span>
+        </div>
+        <div style="margin-top:var(--space-2)">
+          <span class="seg" role="group" aria-label="Pad mode" id="padMode">
+            <button type="button" data-m="train" aria-pressed="true">training pad</button>
+            <button type="button" data-m="test" aria-pressed="false">test pad</button>
+          </span>
+        </div>
+      </div>
+      <div>
+        <div class="shelves" id="shelves"></div>
+        <div style="margin-top:var(--space-3); display:flex; gap:var(--space-2); flex-wrap:wrap; align-items:center;">
+          <button class="btn primary" id="train" type="button">Train</button>
+          <button class="btn" id="split" type="button" aria-pressed="true">hold back every 4th drawing for testing: ON</button>
+          <button class="btn" id="dl" type="button">Save set (JSON)</button>
+          <label class="btn" style="display:inline-block">Load set<input type="file" id="ul" accept=".json" style="display:none"></label>
+        </div>
+        <div class="status" id="status" aria-live="polite">Demo set loaded. Press Train — training here just means <em>memorizing the examples</em> (that's all k-NN is).</div>
+        <div class="bars" id="bars"></div>
+        <div id="cmBox"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="full">
+      <button class="btn" id="mathToggle" type="button" aria-expanded="false">Show the math ▸</button>
+      <div id="mathReveal" hidden>
+        <div class="mathbox" id="mathbox" aria-live="polite"></div>
+        <p class="muted prose" data-edit="math-prose" style="font-family:var(--font-ui); font-size:var(--text-sm)">
+          Notice what this rule does <b>not</b> do: it never averages a class. There is no
+          "typical sun" stored anywhere. Every stored drawing keeps its own identity and the
+          three closest ones vote, so one unusual example can decide an answer all by itself —
+          and deleting one drawing can change the prediction. A method that <em>did</em> average
+          each class into one centre drawing (a centroid) would be smoother and blinder: it
+          could never be swayed by a single neighbour, and it could never tell you
+          <em>which</em> stored drawing your sketch looks like.</p>
+      </div>
+    </div>
+  </div>
+
+  <div data-slot="notes-bottom"></div>
+
+  <div class="foot">
+    <button class="btn" id="reset" type="button">Reset</button>
+    <span class="hint" data-edit="hint-try">Try: train, test-draw a sun with a doorway — then click the matrix cell where it went wrong.</span>
+  </div>
+
+</div>
+
+<script type="application/json" id="m170-config">
+{
+  "_v": 1,
+  "gridSize": 16,
+  "k": 3,
+  "holdBackEvery": 4,
+  "classes": [
+    { "name": "sun",   "shape": "sun",   "examples": [[0,0,4],[-1,0,3],[1,1,4],[0,-1,3]] },
+    { "name": "house", "shape": "house", "examples": [[0,0,8],[1,0,7],[-1,1,8],[0,-1,7]] },
+    { "name": "tree",  "shape": "tree",  "examples": [[0,0,4],[1,0,3],[-1,0,4],[0,1,3]] }
+  ],
+  "_meta": {
+    "gridSize": { "label": "Drawing pad is n × n cells", "kind": "number",
+      "help": "16 gives the 256-pixel vector the digit-grid activity uses. The built-in demo recipes are drawn for a 16 × 16 pad; other sizes still work but the demo shapes will sit off-centre." },
+    "k": { "label": "How many neighbours vote", "kind": "number",
+      "help": "k in k-nearest-neighbours. 3 is the value the page's explanation describes." },
+    "holdBackEvery": { "label": "Hold back every nth drawing for testing", "kind": "number",
+      "help": "With 4, drawings number 4, 8, 12 … in each class are hidden from training and used only to grade." },
+    "classes": { "label": "The three classes and their demo drawings", "kind": "table",
+      "columns": ["name","shape","examples"],
+      "regen": "binary-grid",
+      "help": "shape is one of sun, house, tree — the recipe used to draw the demo set. examples is a list of [dx, dy, size] triples, one per starting drawing. Students can add, delete and rename freely; nothing here is worksheet data." }
+  }
+}
+</script>
+
+<script>
+(function(){
+"use strict";
+var root=document.documentElement, themeBtn=document.getElementById("themeBtn");
+function themeLabel(){var m=root.dataset.theme||"auto";
+  themeBtn.textContent=m==="dark"?"● dark":m==="light"?"○ light":"◑ auto";}
+themeBtn.addEventListener("click",function(){
+  var cur=root.dataset.theme||"auto",next=cur==="auto"?"light":cur==="light"?"dark":"auto";
+  if(next==="auto"){delete root.dataset.theme;try{localStorage.removeItem("m170-theme");}catch(e){}}
+  else{root.dataset.theme=next;try{localStorage.setItem("m170-theme",next);}catch(e){}}
+  themeLabel(); repaintAll();});
+themeLabel();
+
+/* everything tunable comes from the config island */
+var CFG=JSON.parse(document.getElementById("m170-config").textContent);
+var N=Math.max(4,Math.min(64,+CFG.gridSize||16));
+var K=Math.max(1,+CFG.k||3);
+var EVERY=Math.max(2,+CFG.holdBackEvery||4);
+var PADPX=256, CELL=PADPX/N, THUMBPX=32, TCELL=THUMBPX/N;
+var NCLASS=CFG.classes.length;
+function blankClasses(){ return CFG.classes.map(function(c){ return {name:c.name, samples:[]}; }); }
+var classes=blankClasses();
+var trained=false, splitOn=true, padMode="train";
+var pad=new Array(N*N).fill(0);
+var lastPred=null;
+
+/* ---- demo set: generated from shape recipes (ours, flagged) ---- */
+function blank(){ return new Array(N*N).fill(0); }
+function px(g,x,y){ if(x>=0&&x<N&&y>=0&&y<N) g[y*N+x]=1; }
+function circle(g,cx,cy,r){ for(var a=0;a<360;a+=6) px(g,Math.round(cx+r*Math.cos(a*Math.PI/180)),Math.round(cy+r*Math.sin(a*Math.PI/180))); }
+function lineg(g,x1,y1,x2,y2){ var n=Math.max(Math.abs(x2-x1),Math.abs(y2-y1))||1;
+  for(var i=0;i<=n;i++) px(g,Math.round(x1+(x2-x1)*i/n),Math.round(y1+(y2-y1)*i/n)); }
+function rect(g,x1,y1,x2,y2){ lineg(g,x1,y1,x2,y1); lineg(g,x2,y1,x2,y2); lineg(g,x2,y2,x1,y2); lineg(g,x1,y2,x1,y1); }
+function mkSun(dx,dy,r){ var g=blank(); circle(g,8+dx,8+dy,r);
+  for(var a=0;a<360;a+=45) lineg(g,Math.round(8+dx+(r+1)*Math.cos(a*Math.PI/180)),Math.round(8+dy+(r+1)*Math.sin(a*Math.PI/180)),
+    Math.round(8+dx+(r+3)*Math.cos(a*Math.PI/180)),Math.round(8+dy+(r+3)*Math.sin(a*Math.PI/180)));
+  return g; }
+function mkHouse(dx,dy,w){ var g=blank();
+  rect(g,4+dx,8+dy,4+dx+w,14+dy);
+  lineg(g,4+dx,8+dy,4+dx+w/2,4+dy); lineg(g,4+dx+w/2,4+dy,4+dx+w,8+dy);
+  rect(g,6+dx,11+dy,8+dx,14+dy);
+  return g; }
+function mkTree(dx,dy,r){ var g=blank();
+  lineg(g,8+dx,9+dy,8+dx,14+dy); lineg(g,7+dx,14+dy,9+dx,14+dy);
+  circle(g,8+dx,6+dy,r); circle(g,8+dx,6+dy,r-2<2?2:r-2);
+  return g; }
+var RECIPE={ sun:mkSun, house:mkHouse, tree:mkTree };
+function loadDemo(){
+  CFG.classes.forEach(function(spec,ci){
+    if(!classes[ci]) return;
+    var make=RECIPE[spec.shape]||mkSun;
+    classes[ci].samples=(spec.examples||[]).map(function(e){
+      return make(+e[0]||0, +e[1]||0, +e[2]||4);
+    });
+  });
+}
+
+function l1(a,b){ var s=0; for(var i=0;i<a.length;i++) s+=Math.abs(a[i]-b[i]); return s; }
+function heldBack(ci,si){ return splitOn && (si % EVERY === EVERY-1); }
+/* how many of n drawings the rule above sets aside — the number the button reports */
+function heldCount(n){ return Math.floor(n / EVERY); }
+function totals(){
+  var all=0, held=0;
+  classes.forEach(function(c){ all+=c.samples.length; held+=heldCount(c.samples.length); });
+  return {all:all, held:held};
+}
+function splitLabel(){
+  var t=totals();
+  return splitOn
+    ? "hold back every "+EVERY+"th drawing for testing: ON — "+t.held+" of "+t.all+" held back"
+    : "hold back every "+EVERY+"th drawing for testing: OFF — 0 of "+t.all+" held back";
+}
+function paintSplitBtn(){
+  var b=document.getElementById("split");
+  b.textContent=splitLabel();
+  b.setAttribute("aria-pressed",String(splitOn));
+}
+function trainingSet(){
+  var t=[];
+  classes.forEach(function(c,ci){ c.samples.forEach(function(s,si){
+    if(!heldBack(ci,si)) t.push({v:s,ci:ci,si:si}); }); });
+  return t;
+}
+function knn(v){
+  var t=trainingSet();
+  var scored=t.map(function(e){ return {e:e,d:l1(v,e.v)}; })
+    .sort(function(a,b){return a.d-b.d;}).slice(0,K);
+  var inv=scored.map(function(s){ return 1/(s.d+1); });
+  var tot=inv.reduce(function(a,b){return a+b;},0);
+  var shares=classes.map(function(){ return 0; });
+  scored.forEach(function(s,i){ shares[s.e.ci]+=inv[i]/tot; });
+  var win=shares.indexOf(Math.max.apply(null,shares));
+  return {near:scored, shares:shares, win:win};
+}
+
+/* ---- pad drawing ---- */
+var padCv=document.getElementById("pad"), pctx=padCv.getContext("2d");
+function css(v){ return getComputedStyle(document.body).getPropertyValue(v).trim(); }
+function paintPad(){
+  pctx.clearRect(0,0,PADPX,PADPX);
+  pctx.fillStyle=css("--paper"); pctx.fillRect(0,0,PADPX,PADPX);
+  pctx.strokeStyle=css("--gray-line"); pctx.lineWidth=1;
+  for(var i=0;i<=N;i++){ pctx.beginPath(); pctx.moveTo(i*CELL,0); pctx.lineTo(i*CELL,PADPX); pctx.stroke();
+    pctx.beginPath(); pctx.moveTo(0,i*CELL); pctx.lineTo(PADPX,i*CELL); pctx.stroke(); }
+  pctx.fillStyle=css("--ink");
+  for(var j=0;j<N*N;j++) if(pad[j]) pctx.fillRect((j%N)*CELL+1, Math.floor(j/N)*CELL+1, CELL-2, CELL-2);
+}
+/* A press TOGGLES the cell it lands on: black square -> white, white square -> black.
+   Whatever that first cell did becomes the mode for the rest of the drag, so dragging
+   paints a run or rubs one out. Right-drag / ctrl-drag still forces erase. */
+var drawing=false, erase=false;
+function padCell(ev){
+  var r=padCv.getBoundingClientRect();
+  var x=Math.floor((ev.clientX-r.left)/r.width*N), y=Math.floor((ev.clientY-r.top)/r.height*N);
+  if(x<0||x>=N||y<0||y>=N) return null;
+  return y*N+x;
+}
+padCv.addEventListener("pointerdown",function(e){
+  e.preventDefault();
+  padCv.setPointerCapture(e.pointerId);
+  var c=padCell(e);
+  var forceErase=(e.button===2)||e.ctrlKey;
+  erase = forceErase || (c!==null && pad[c]===1);   /* second click on a black cell clears it */
+  drawing=true;
+  if(c!==null){ pad[c]=erase?0:1; paintPad(); livePredict(); }
+});
+padCv.addEventListener("pointermove",function(e){
+  if(!drawing) return;
+  var c=padCell(e); if(c!==null){ pad[c]=erase?0:1; paintPad(); livePredict(); }
+});
+padCv.addEventListener("pointerup",function(){ drawing=false; });
+padCv.addEventListener("contextmenu",function(e){ e.preventDefault(); });
+/* keyboard painting: arrows move a cursor, space toggles */
+var kcur=0;
+padCv.addEventListener("keydown",function(e){
+  if(e.key==="ArrowRight") kcur=Math.min(N*N-1,kcur+1);
+  else if(e.key==="ArrowLeft") kcur=Math.max(0,kcur-1);
+  else if(e.key==="ArrowDown") kcur=Math.min(N*N-1,kcur+N);
+  else if(e.key==="ArrowUp") kcur=Math.max(0,kcur-N);
+  else if(e.key===" "){ pad[kcur]=pad[kcur]?0:1; }
+  else return;
+  e.preventDefault(); paintPad(); livePredict();
+  pctx.strokeStyle=css("--gold"); pctx.lineWidth=2;
+  pctx.strokeRect((kcur%N)*CELL, Math.floor(kcur/N)*CELL, CELL, CELL);
+});
+document.getElementById("clearPad").addEventListener("click",function(){
+  pad=blank(); paintPad(); document.getElementById("bars").innerHTML=""; clearNearMarks();
+});
+
+/* ---- shelves ---- */
+function thumb(v,ci,si){
+  var c=document.createElement("canvas"); c.width=THUMBPX; c.height=THUMBPX;
+  c.title="click this drawing to delete it";
+  if(heldBack(ci,si)){ c.className="held"; c.title="held back for testing · click this drawing to delete it"; }
+  var x=c.getContext("2d");
+  x.fillStyle=css("--paper"); x.fillRect(0,0,THUMBPX,THUMBPX);
+  x.fillStyle=css("--ink");
+  for(var j=0;j<N*N;j++) if(v[j]) x.fillRect((j%N)*TCELL, Math.floor(j/N)*TCELL, TCELL, TCELL);
+  c.dataset.ci=ci; c.dataset.si=si;
+  c.addEventListener("click",function(){
+    classes[ci].samples.splice(si,1); trained=false;
+    repaintAll(); say("Sample removed — retrain.");
+  });
+  return c;
+}
+function repaintShelves(){
+  var host=document.getElementById("shelves"); host.innerHTML="";
+  classes.forEach(function(c,ci){
+    var d=document.createElement("div"); d.className="shelf";
+    var h=document.createElement("h3");
+    var inp=document.createElement("input"); inp.value=c.name; inp.setAttribute("aria-label","class name");
+    inp.addEventListener("change",function(){ c.name=inp.value||("class "+(ci+1)); repaintAll(); });
+    h.appendChild(inp);
+    var n=c.samples.length, held=splitOn?heldCount(n):0;
+    var meta=document.createElement("span"); meta.className="muted";
+    meta.style.cssText="font-weight:400;font-size:var(--text-xs);margin-left:6px";
+    meta.textContent=n+" samples"+(splitOn?" ("+held+" held back)":"");
+    h.appendChild(meta);
+    d.appendChild(h);
+    var t=document.createElement("div"); t.className="thumbs";
+    c.samples.forEach(function(s,si){ t.appendChild(thumb(s,ci,si)); });
+    d.appendChild(t);
+    if(n<=2){ var w=document.createElement("div"); w.className="hint";
+      w.textContent="⚠ very few examples — expect a poor matrix"; d.appendChild(w); }
+    host.appendChild(d);
+  });
+  paintSplitBtn();
+  var ab=document.getElementById("addBtns"); ab.innerHTML="";
+  classes.forEach(function(c,ci){
+    var b=document.createElement("button"); b.type="button"; b.textContent="add to "+c.name;
+    b.addEventListener("click",function(){
+      if(pad.every(function(p){return !p;})){ say("Draw something first."); return; }
+      c.samples.push(pad.slice()); pad=blank(); trained=false;
+      paintPad(); repaintAll(); say("Added to "+c.name+" — retrain when ready.");
+    });
+    ab.appendChild(b);
+  });
+}
+function clearNearMarks(){
+  document.querySelectorAll(".thumbs canvas.near").forEach(function(c){c.classList.remove("near");});
+}
+
+/* ---- train & evaluate ---- */
+function say(s){ document.getElementById("status").innerHTML=s; }
+document.getElementById("train").addEventListener("click",function(){
+  trained=true; lastPred=null;
+  var t=trainingSet().length;
+  renderMath();
+  say("Trained — which for k-NN just means it <em>memorized "+t+" drawings</em>. Now test-draw, or read the matrix below.");
+  evaluate(); repaintAll();
+});
+document.getElementById("split").addEventListener("click",function(){
+  splitOn=!splitOn; trained=false;
+  paintSplitBtn();
+  say(splitOn?"Every "+EVERY+"th drawing per class is hidden from training and used only to grade.":"⚠ No held-back items — any 'accuracy' now grades the machine on drawings it memorized.");
+  document.getElementById("cmBox").innerHTML="";
+  repaintAll();
+});
+function evaluate(){
+  var host=document.getElementById("cmBox");
+  if(!splitOn){ host.innerHTML='<div class="callout">Split is off — there are no honest test items to grade with. That\'s the lesson.</div>'; return; }
+  var NC=classes.length;
+  var cm=classes.map(function(){ return classes.map(function(){ return 0; }); });
+  var items=[]; for(var q=0;q<NC*NC;q++) items.push([]);
+  classes.forEach(function(c,ci){ c.samples.forEach(function(s,si){
+    if(!heldBack(ci,si)) return;
+    var p=knn(s).win;
+    cm[ci][p]++; items[ci*NC+p].push({ci:ci,si:si,v:s});
+  }); });
+  var total=0, right=0;
+  for(var i=0;i<NC;i++)for(var j=0;j<NC;j++){ total+=cm[i][j]; if(i===j) right+=cm[i][j]; }
+  var html="<h2>Accuracy matrix <span class='muted' style='font-weight:400;font-size:var(--text-sm)'>(held-back items only · "+right+"/"+total+" correct)</span></h2>";
+  html+='<table class="cm"><tr><th>true \\ predicted</th>';
+  classes.forEach(function(c){ html+="<th>"+c.name+"</th>"; });
+  html+="</tr>";
+  classes.forEach(function(c,i){
+    html+="<tr><th>"+c.name+"</th>";
+    classes.forEach(function(_,j){
+      html+='<td class="'+(i===j?"diag":"")+'" data-cell="'+(i*NC+j)+'">'+cm[i][j]+"</td>";
+    });
+    html+="</tr>";
+  });
+  html+="</table><div id='cellDetail'></div>";
+  host.innerHTML=html;
+  host.querySelectorAll("td[data-cell]").forEach(function(td){
+    td.addEventListener("click",function(){
+      var cell=+td.getAttribute("data-cell"), list=items[cell];
+      var det=document.getElementById("cellDetail");
+      det.innerHTML="";
+      if(!list.length){ det.innerHTML='<div class="hint">no items in this cell</div>'; return; }
+      list.forEach(function(it){
+        var wrap=document.createElement("span");
+        wrap.appendChild(thumb(it.v,it.ci,it.si));
+        var mv=document.createElement("button"); mv.className="btn"; mv.type="button";
+        mv.style.cssText="font-size:var(--text-xs);padding:3px 8px;margin:0 10px 0 4px;";
+        mv.textContent="move into training";
+        mv.addEventListener("click",function(){
+          // smuggle: duplicate the test item as a training sample
+          classes[it.ci].samples.push(it.v.slice());
+          say("You just trained on a test item. Watch the score jump — that's <em>grading your own homework</em>, and it's why the split exists.");
+          evaluate(); repaintAll();
+        });
+        wrap.appendChild(mv);
+        det.appendChild(wrap);
+      });
+    });
+  });
+}
+
+/* ---- prediction ---- */
+function livePredict(){
+  if(padMode!=="test"||!trained) return;
+  if(pad.every(function(p){return !p;})){ lastPred=null; document.getElementById("bars").innerHTML=""; renderMath(); clearNearMarks(); return; }
+  var r=knn(pad);
+  lastPred=r;
+  var bars=document.getElementById("bars");
+  var html="<h2>Prediction</h2>";
+  r.shares.forEach(function(s,ci){
+    html+='<div class="row"><span class="lbl">'+classes[ci].name+'</span>'+
+      '<span class="bar'+(ci===r.win?" win":"")+'" style="width:'+(s*260)+'px"></span>'+
+      '<span class="pct">'+(s*100).toFixed(0)+'%</span></div>';
+  });
+  html+='<div class="hint">shares of a '+K+'-neighbour vote (weights 1/(distance+1)) — not probabilities; softmax comes later</div>';
+  html+='<div class="hint">nearest stored drawings (gold outline in the shelves): '+
+    r.near.map(function(nb){ return classes[nb.e.ci].name+" @ L1 "+nb.d; }).join(" · ")+"</div>";
+  bars.innerHTML=html;
+  renderMath();
+  clearNearMarks();
+  r.near.forEach(function(nb){
+    var c=document.querySelector('.thumbs canvas[data-ci="'+nb.e.ci+'"][data-si="'+nb.e.si+'"]');
+    if(c) c.classList.add("near");
+  });
+}
+document.getElementById("padMode").querySelectorAll("button").forEach(function(b){
+  b.addEventListener("click",function(){
+    padMode=b.getAttribute("data-m");
+    document.getElementById("padMode").querySelectorAll("button").forEach(function(x){
+      x.setAttribute("aria-pressed",String(x===b));});
+    document.getElementById("padLabel").textContent = padMode==="test"
+      ? "Test pad — draw something new; prediction updates live"
+      : "Draw an example (drag to paint, right-drag/ctrl to erase)";
+    pad=blank(); paintPad();
+    document.getElementById("bars").innerHTML=""; clearNearMarks();
+    if(padMode==="test"&&!trained) say("Train first — the machine has nothing memorized yet.");
+  });
+});
+
+/* ---- JSON i/o ---- */
+document.getElementById("dl").addEventListener("click",function(){
+  var data={format:"m170-trainable-machine-v1",
+    classes:classes.map(function(c){return {name:c.name,samples:c.samples};})};
+  var blob=new Blob([JSON.stringify(data)],{type:"application/json"});
+  var a=document.createElement("a");
+  a.href=URL.createObjectURL(blob); a.download="trainable-machine-set.json";
+  a.click(); URL.revokeObjectURL(a.href);
+});
+document.getElementById("ul").addEventListener("change",function(){
+  var f=this.files[0]; if(!f) return;
+  var r=new FileReader();
+  r.onload=function(){
+    try{
+      var d=JSON.parse(r.result);
+      if(d.format!=="m170-trainable-machine-v1"||!Array.isArray(d.classes)) throw 0;
+      classes=d.classes.slice(0,NCLASS).map(function(c){
+        return {name:String(c.name).slice(0,20),
+                samples:c.samples.filter(function(s){return Array.isArray(s)&&s.length===N*N;})};
+      });
+      while(classes.length<NCLASS) classes.push({name:"class "+(classes.length+1),samples:[]});
+      trained=false; repaintAll(); say("Set loaded — press Train.");
+    }catch(e){ say("That file isn't a trainable-machine set."); }
+  };
+  r.readAsText(f);
+});
+
+/* ---- reset (two-press confirm: drawings could be lost) ---- */
+var resetArmed=false, resetTimer=null;
+document.getElementById("reset").addEventListener("click",function(){
+  var b=this;
+  if(!resetArmed){
+    resetArmed=true; b.textContent="Really reset?";
+    resetTimer=setTimeout(function(){ resetArmed=false; b.textContent="Reset"; },2000);
+    return;
+  }
+  clearTimeout(resetTimer); resetArmed=false; b.textContent="Reset";
+  classes=blankClasses();
+  loadDemo(); trained=false; splitOn=true; padMode="train"; pad=blank(); lastPred=null;
+  paintSplitBtn();
+  document.getElementById("padMode").querySelectorAll("button").forEach(function(x){
+    x.setAttribute("aria-pressed",String(x.getAttribute("data-m")==="train"));});
+  document.getElementById("bars").innerHTML="";
+  document.getElementById("cmBox").innerHTML="";
+  paintPad(); repaintAll();
+  say("Demo set loaded. Press Train — training here just means <em>memorizing the examples</em>.");
+});
+
+/* ---- "Show the math": the criterion this page actually uses ---- */
+var mathToggle=document.getElementById("mathToggle"), mathReveal=document.getElementById("mathReveal");
+mathToggle.addEventListener("click",function(){
+  var open=mathReveal.hidden; mathReveal.hidden=!open;
+  mathToggle.setAttribute("aria-expanded",String(open));
+  mathToggle.textContent=open?"Hide the math ▾":"Show the math ▸";
+  if(open) renderMath();
+});
+function renderMath(){
+  if(mathReveal.hidden) return;
+  var cells=N*N, t=trainingSet(), L=[];
+  L.push("the rule: k-nearest neighbours, k = "+K+", distance = L1 on the "+N+"×"+N+" grid");
+  L.push("");
+  L.push("  L1(u, v) = |u1 − v1| + |u2 − v2| + … + |u"+cells+" − v"+cells+"|");
+  L.push("           = how many of the "+cells+" cells the two drawings disagree on");
+  L.push("");
+  L.push("  1. measure your drawing against EVERY drawing the machine may study ("+t.length+" of them)");
+  L.push("  2. keep the k = "+K+" smallest distances");
+  L.push("  3. each of those "+K+" votes for its own class, with weight 1 / (distance + 1)");
+  L.push("  4. the class holding the most weight wins");
+  L.push("");
+  if(lastPred){
+    L.push("your current test drawing:");
+    lastPred.near.forEach(function(nb,i){
+      L.push("  neighbour "+(i+1)+": "+classes[nb.e.ci].name+
+             "   L1 = "+nb.d+"   weight = "+(1/(nb.d+1)).toFixed(4));
+    });
+    L.push("");
+    L.push("  vote shares: "+lastPred.shares.map(function(sh,ci){
+      return classes[ci].name+" "+(sh*100).toFixed(0)+"%";
+    }).join("   ")+"   →  "+classes[lastPred.win].name);
+  } else {
+    L.push("draw on the TEST pad after training to see these numbers fill in.");
+  }
+  L.push("");
+  L.push("no averaging happens anywhere above: the machine stores every drawing whole.");
+  document.getElementById("mathbox").textContent=L.join("\n");
+}
+
+function repaintAll(){ paintPad(); repaintShelves(); renderMath(); if(trained&&splitOn) evaluate(); }
+loadDemo(); paintPad(); repaintShelves(); paintSplitBtn();
+})();
+</script>
+</body>
+</html>

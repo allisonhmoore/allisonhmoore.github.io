@@ -1,0 +1,594 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Draw the decision line · MATH 170</title>
+
+<!-- ================================================================
+     DESIGN-SYSTEM v2 TOKEN BLOCK — copied verbatim into every file.
+     A global tweak stays a find-replace across the set.
+     ================================================================ -->
+<style>
+/* hidden must always win over any author display rule */
+[hidden]{display:none !important}
+
+:root{
+  /* color — light */
+  --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+  --gold-soft:rgba(218,165,32,.12);
+  --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  /* type */
+  --font-body: ui-serif, Georgia, "Times New Roman", serif;
+  --font-ui:   system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+  --text-xl:1.75rem; --text-lg:1.25rem; --text-base:1rem; --text-sm:.875rem; --text-xs:.75rem;
+  --leading-prose:1.6; --leading-ui:1.3;
+  /* spacing */
+  --space-1:4px; --space-2:8px; --space-3:16px; --space-4:24px; --space-5:32px; --space-6:48px;
+  /* motion */
+  --ease:cubic-bezier(0.16,1,0.3,1); --dur:200ms;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+    --gold-soft:rgba(227,179,65,.16);
+    --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+  --gold-soft:rgba(227,179,65,.16);
+  --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+}
+@media (prefers-reduced-motion: reduce){ :root{ --dur:0ms; } }
+@media print{
+  :root, :root[data-theme="dark"]{
+    --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+    --gold-soft:rgba(218,165,32,.12);
+    --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  }
+  .theme-btn{display:none}
+  .stage{break-inside:avoid}
+}
+
+/* ================= base skin (design-system §3–§4) ================= */
+*{box-sizing:border-box}
+html{color-scheme:light dark}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--font-body); font-size:var(--text-base); line-height:var(--leading-prose);
+  -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:820px; margin:0 auto; padding:var(--space-5) var(--space-4) var(--space-6);}
+.topbar{display:flex; align-items:baseline; justify-content:space-between; gap:var(--space-3);
+  border-bottom:1px solid var(--gray-line); padding-bottom:var(--space-2); margin-bottom:var(--space-4);}
+.eyebrow{font-family:var(--font-ui); font-size:var(--text-xs); letter-spacing:.08em; text-transform:uppercase; color:var(--gray-text);}
+h1{font-family:var(--font-body); font-weight:600; font-size:var(--text-xl); line-height:1.2; margin:.2em 0 .1em;}
+h2{font-family:var(--font-ui); font-weight:600; font-size:var(--text-lg); line-height:1.3; margin:var(--space-5) 0 var(--space-2);}
+p{margin:0 0 var(--space-3);}
+.prose{max-width:66ch;}
+.muted{color:var(--gray-text);}
+.mono,code{font-family:var(--font-mono); font-variant-numeric:tabular-nums;}
+a{color:inherit;}
+:focus-visible{outline:2px solid var(--ink); outline-offset:2px; box-shadow:0 0 0 5px var(--gold-soft);}
+
+.theme-btn{font-family:var(--font-ui); font-size:var(--text-xs); background:none;
+  border:1px solid var(--gray-line); color:var(--gray-text); padding:6px 10px; cursor:pointer; border-radius:2px;}
+.theme-btn:hover{background:var(--gray-fill);}
+
+/* spec header */
+details.spec{border:1px solid var(--gray-line); border-radius:2px; margin:0 0 var(--space-4); background:var(--gray-fill);}
+details.spec>summary{font-family:var(--font-ui); font-size:var(--text-sm); cursor:pointer;
+  padding:var(--space-2) var(--space-3); list-style:none; color:var(--gray-text);}
+details.spec>summary::-webkit-details-marker{display:none}
+details.spec>summary::before{content:"▸ "; color:var(--gold);}
+details.spec[open]>summary::before{content:"▾ ";}
+.spec-body{padding:0 var(--space-3) var(--space-3); font-family:var(--font-ui); font-size:var(--text-sm); line-height:1.5;}
+.spec-body dt{font-weight:600; margin-top:var(--space-2);}
+.spec-body dd{margin:0; color:var(--gray-text);}
+
+/* stage */
+.stage{margin:var(--space-4) 0; text-align:center;}
+svg{max-width:100%; height:auto; font-family:var(--font-ui);}
+figcaption{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); margin-top:var(--space-2);}
+
+/* controls */
+.controls{border-top:1px solid var(--gray-line); padding-top:var(--space-3); margin-top:var(--space-4);
+  display:grid; grid-template-columns:1fr 1fr; gap:var(--space-3) var(--space-4);}
+.controls .full{grid-column:1/-1;}
+@media(max-width:560px){ .controls{grid-template-columns:1fr;} }
+.ctl label{display:flex; justify-content:space-between; align-items:baseline;
+  font-family:var(--font-ui); font-size:var(--text-sm); line-height:var(--leading-ui);}
+.ctl .val{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm); color:var(--ink);}
+.ctl .val.gold{color:var(--gold); font-weight:600;}
+.ctl .note{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); margin-top:4px;}
+
+/* range slider — filled track works in ALL engines (design-system v2 fix):
+   wireSlider() paints the webkit track with a two-stop gradient on input. */
+input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:18px;
+  background:transparent; margin:6px 0 0; cursor:pointer;}
+input[type=range]::-webkit-slider-runnable-track{height:2px; border-radius:1px;
+  background:var(--track, var(--gray-line));}
+input[type=range]::-moz-range-track{height:2px; background:var(--gray-line);}
+input[type=range]::-moz-range-progress{height:2px; background:var(--gold);}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; appearance:none;
+  width:18px; height:18px; margin-top:-8px; border-radius:50%; background:var(--gold); border:1px solid var(--ink);}
+input[type=range]::-moz-range-thumb{width:18px; height:18px; border-radius:50%; background:var(--gold); border:1px solid var(--ink);}
+
+/* buttons + segmented + stepper */
+.btn{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:1px solid var(--ink); padding:8px 14px; cursor:pointer; border-radius:2px;}
+.btn:hover{background:var(--gray-fill);}
+.btn.primary{background:var(--gold); border-color:var(--gold); color:#111111;}
+.btn[disabled]{border-color:var(--gray-line); color:var(--gray-line); cursor:default; background:var(--paper);}
+.seg{display:inline-flex; border:1px solid var(--ink); border-radius:2px; overflow:hidden;}
+.seg button{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:0; border-left:1px solid var(--ink); padding:7px 12px; cursor:pointer;}
+.seg button:first-child{border-left:0;}
+.seg button[aria-pressed="true"]{background:var(--gold); color:#111111;}
+.stepper{display:inline-flex; align-items:center; gap:var(--space-2); font-family:var(--font-ui); font-size:var(--text-sm);}
+.stepper .count{font-family:var(--font-mono); font-variant-numeric:tabular-nums; color:var(--gray-text);}
+
+.foot{display:flex; align-items:center; gap:var(--space-3); margin-top:var(--space-5);
+  border-top:1px solid var(--gray-line); padding-top:var(--space-3); flex-wrap:wrap;}
+.foot .btn{margin-right:auto;}
+.hint{font-family:var(--font-ui); font-size:var(--text-sm); color:var(--gray-text);}
+
+/* math reveal */
+.mathbox{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm);
+  background:var(--gray-fill); border-left:2px solid var(--gold); padding:var(--space-3);
+  margin:var(--space-3) 0; overflow-x:auto; white-space:pre; line-height:1.7; text-align:left;}
+.attach{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text);
+  border-top:1px dotted var(--gray-line); margin-top:var(--space-6); padding-top:var(--space-3);}
+.tag{display:inline-block; font-family:var(--font-ui); font-size:var(--text-xs);
+  border:1px solid var(--gray-line); border-radius:999px; padding:1px 8px; color:var(--gray-text); margin-left:6px;}
+.callout{font-family:var(--font-ui); font-size:var(--text-sm); border:1px solid var(--gray-line);
+  border-left:2px solid var(--gold); padding:var(--space-2) var(--space-3); margin:var(--space-3) 0; background:var(--paper);}
+</style>
+
+<!-- component CSS — added AFTER the shared skin, never restyling it -->
+<style>
+.readouts{display:grid; grid-template-columns:1fr 1fr 1fr; gap:var(--space-3); margin-top:var(--space-3); text-align:left;}
+@media(max-width:640px){ .readouts{grid-template-columns:1fr;} }
+.panel{border:1px solid var(--gray-line); border-radius:2px; padding:var(--space-2) var(--space-3);
+  font-family:var(--font-ui); font-size:var(--text-sm); line-height:1.5;}
+.panel .ptitle{font-size:var(--text-xs); letter-spacing:.06em; text-transform:uppercase;
+  color:var(--gray-text); margin:0 0 var(--space-1);}
+.panel .mono-line{font-family:var(--font-mono); font-variant-numeric:tabular-nums; margin:0;}
+.panel .sub{font-size:var(--text-xs); color:var(--gray-text); margin:var(--space-1) 0 0;}
+.misscount{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-lg); margin:0;}
+.handle{cursor:ns-resize;}
+.mystlist{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-xs);
+  text-align:left; margin:var(--space-2) auto 0; max-width:560px; line-height:1.7;}
+</style>
+
+<!-- theme boot: apply stored choice before first paint (no flash) -->
+<script>
+try{var t=localStorage.getItem("m170-theme");if(t)document.documentElement.dataset.theme=t;}catch(e){}
+</script>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="eyebrow">MATH 170 · Points, lines and regions · Algebra Review</div>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Color theme">◑ auto</button>
+  </div>
+
+  <h1 data-edit="title">Draw the decision line <span class="tag">a line is a rule</span></h1>
+  <p class="prose muted" data-edit="intro">You are the AI. Nine sandwiches sit on a calories-vs-fiber chart,
+  each labeled Healthy or Not. Your only tool is <strong>one straight line and an
+  inequality</strong> — everything on one side gets called Healthy. How few can you get wrong?</p>
+
+  <div data-slot="notes-top"></div>
+
+
+  <!-- build-time verification (python3, 2026-07-03) — discussion anchors, not shown in UI:
+       · Spec suggested reset "fiber = 6 (3 misses)" — VERIFIED WRONG: fiber ≥ 6 gives only 1 miss
+         (Avocado Toast). Corrected reset: horizontal fiber ≥ 9 → exactly 3 misses on the 9-point
+         set (Tofu Banh Mi, Chicken Caesar Wrap, Avocado Toast), so the first move improves it.
+       · Best achievable, 9 plotted sandwiches: 0 misses — e.g. the worksheet challenge line
+         fiber ≥ (calories − 250)/75 separates all 9 perfectly.
+       · Best achievable, all 20: 0 misses EXISTS but only razor-thin — e.g. fiber ≥ 0.0115·cal − 2
+         (margins: Roast Beef −0.05, Tuna Melt −0.13, Egg Salad +0.14 fiber). Practically not
+         findable by eye; comfortable hand-drawn lines land at ≈2 misses (the worksheet line gets
+         2/20 wrong: Roast Beef Classic, Tuna Melt). Frame as "nearly impossible by eye," not
+         "impossible."
+       · Mystery stamps at the reset line (fiber ≥ 9): Tuna Salad→Not, Garden Light→Healthy,
+         Buffalo "Chkn" Melt→Not, Mama's Meatball→Not, Bread-Lover's Loaf→Not (the loaf is the
+         worksheet's deliberate rule-breaker). -->
+
+  <figure class="stage">
+    <svg id="plot" viewBox="0 0 640 430" role="img"
+         aria-label="Scatter plot of sandwiches by calories and fiber with a draggable decision line"></svg>
+    <div class="mystlist" id="mystList" hidden></div>
+    <figcaption data-edit="caption">Healthy = gold filled circle · Not healthy = open square · misses marked ✗ ·
+    the gold-washed side is "predict Healthy". Drag the two solid black handles on the line, or use arrow keys on them.</figcaption>
+
+    <div class="readouts">
+      <div class="panel">
+        <p class="ptitle">the line</p>
+        <p class="mono-line" id="eqnOut"></p>
+        <p class="mono-line sub" id="eqnAlt" hidden></p>
+      </div>
+      <div class="panel">
+        <p class="ptitle">the rule (inequality)</p>
+        <p class="mono-line" id="ruleOut"></p>
+        <p class="sub">the inequality <em>is</em> the classifier</p>
+      </div>
+      <div class="panel">
+        <p class="ptitle">score</p>
+        <p class="misscount" id="missOut" aria-live="polite"></p>
+        <p class="sub" id="missSub"></p>
+      </div>
+    </div>
+  </figure>
+
+  <div class="controls">
+    <div class="full" style="display:flex; gap:var(--space-3); flex-wrap:wrap; align-items:center;">
+      <div class="seg" role="group" aria-label="Dataset" id="dataSeg">
+        <button type="button" id="dataSmall" data-d="9" aria-pressed="true">9 plotted</button>
+        <button type="button" id="dataAll" data-d="20" aria-pressed="false">all 20</button>
+      </div>
+      <div class="seg" role="group" aria-label="Which side predicts Healthy" id="sideSeg">
+        <button type="button" data-side="above" aria-pressed="true">healthy above (≥)</button>
+        <button type="button" data-side="below" aria-pressed="false">healthy below (≤)</button>
+      </div>
+      <div class="seg" role="group" aria-label="Mystery sandwiches">
+        <button type="button" id="mystBtn" aria-pressed="false">mystery sandwiches</button>
+      </div>
+    </div>
+    <div class="full" style="display:flex; gap:var(--space-3); flex-wrap:wrap; align-items:center;">
+      <button class="btn" id="holdBtn" type="button">Hold this line (compare)</button>
+      <button class="btn" id="clearBtn" type="button" disabled>Clear held lines</button>
+      <div class="seg" role="group" aria-label="Equation form">
+        <button type="button" id="psBtn" aria-pressed="false">show point–slope</button>
+      </div>
+    </div>
+  </div>
+
+  <div data-slot="notes-bottom"></div>
+
+  <div class="foot">
+    <button class="btn" id="reset" type="button">Reset</button>
+  </div>
+
+</div>
+
+<script type="application/json" id="m170-config">
+{
+  "_v": 1,
+  "sandwiches": [
+    ["Avocado Turkey",540,11,1],
+    ["Bacon, Egg & Cheddar",780,4,0],
+    ["Grilled Cheese",640,4,0],
+    ["Mediterranean",670,11,1],
+    ["Grilled Chicken Club",690,5,0],
+    ["Tofu Banh Mi",400,8,1],
+    ["Chicken Caesar Wrap",600,7,1],
+    ["Avocado Toast",510,5,1],
+    ["Smokestack Pork",1020,5,0],
+    ["Veggie Delight",290,9,1],
+    ["Roast Beef Classic",700,6,0],
+    ["Caprese Panini",430,5,1],
+    ["Egg Salad Sandwich",510,4,1],
+    ["Pulled Pork BBQ",850,7,0],
+    ["Spicy Black Bean Wrap",370,11,1],
+    ["Tuna Melt",620,5,0],
+    ["Seitan Reuben",440,8,1],
+    ["Fried Chicken Biscuit",780,4,0],
+    ["Falafel Pita",390,7,1],
+    ["Ham & Swiss",690,5,0]
+  ],
+  "plottedCount": 9,
+  "mystery": [
+    ["Tuna Salad",480,7,"T"],
+    ["Garden Light",310,12,"G"],
+    ["Buffalo “Chkn” Melt",890,6,"B"],
+    ["Mama's Meatball",980,5,"M"],
+    ["Bread-Lover's Loaf",1250,4,"L"]
+  ],
+  "initialLine": {"m": 0, "b": 9, "side": "above"},
+  "handleX": [400, 900],
+  "window": {"xmin": 200, "xmax": 1300, "ymin": 0, "ymax": 13},
+  "xLabel": "calories per sandwich",
+  "yLabel": "grams of fiber",
+  "maxHeldLines": 3,
+  "_meta": {
+    "sandwiches": { "label": "Sandwiches", "kind": "table",
+      "columns": ["name","calories","fiber","healthy 1/0"],
+      "regen": "labeled-table",
+      "help": "The first `plottedCount` rows are the worksheet's plotting exercise; the rest fill out the 20-row set." },
+    "plottedCount": { "label": "How many rows the small dataset shows", "kind": "number" },
+    "mystery": { "label": "Mystery sandwiches (unlabeled)", "kind": "table",
+      "columns": ["name","calories","fiber","plot letter"], "regen": "labeled-table" },
+    "initialLine": { "label": "Line after Reset", "kind": "table",
+      "columns": ["m","b","side"],
+      "help": "fiber = m·calories + b. side is 'above' or 'below' — which side predicts Healthy. The pinned miss counts in the page comment describe the DEFAULT line and data." },
+    "handleX": { "label": "Calorie positions of the two drag handles", "kind": "list" },
+    "window": { "label": "Plot window", "kind": "table", "columns": ["xmin","xmax","ymin","ymax"] },
+    "xLabel": { "label": "X-axis name" },
+    "yLabel": { "label": "Y-axis name" },
+    "maxHeldLines": { "label": "How many lines may be held for comparison", "kind": "number" }
+  }
+}
+</script>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- theme: auto → light → dark (design-system v2) ---------- */
+var root = document.documentElement, themeBtn = document.getElementById("themeBtn");
+function themeLabel(){
+  var m = root.dataset.theme || "auto";
+  themeBtn.textContent = m==="dark" ? "● dark" : m==="light" ? "○ light" : "◑ auto";
+}
+themeBtn.addEventListener("click", function(){
+  var cur = root.dataset.theme || "auto";
+  var next = cur==="auto" ? "light" : cur==="light" ? "dark" : "auto";
+  if(next==="auto"){ delete root.dataset.theme; try{localStorage.removeItem("m170-theme");}catch(e){} }
+  else { root.dataset.theme = next; try{localStorage.setItem("m170-theme", next);}catch(e){} }
+  themeLabel(); render();
+});
+if(window.matchMedia){ window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function(){ render(); }); }
+themeLabel();
+
+function css(v){ return getComputedStyle(document.body).getPropertyValue(v).trim(); }
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+
+/* ---------- data: everything tunable comes from the config island ---------- */
+var CFG = JSON.parse(document.getElementById("m170-config").textContent);
+/* [name, calories, fiber, healthy(1/0)] — the first CFG.plottedCount rows are the
+   worksheet's plotting exercise */
+var SW = CFG.sandwiches;
+/* mystery sandwiches (Activity 2, Q2): [name, cal, fiber, plot letter] */
+var MYST = CFG.mystery;
+var NPLOT = Math.max(1, Math.min(SW.length, +CFG.plottedCount || SW.length));
+
+/* ---------- state ---------- */
+/* line: fiber = m·cal + b. Reset = corrected mediocre line (see build comment). */
+var INIT = { m:+CFG.initialLine.m, b:+CFG.initialLine.b,
+             side: CFG.initialLine.side === "below" ? "below" : "above" };
+var state = { m:INIT.m, b:INIT.b, side:INIT.side, data:NPLOT, myst:false, ps:false, ghosts:[] };
+var HX = CFG.handleX.slice(0,2);   /* handle calorie positions */
+var MAXHOLD = +CFG.maxHeldLines || 3;
+
+var svg = document.getElementById("plot");
+var W=640,H=430,padL=52,padR=18,padT=26,padB=48;
+var XMIN=+CFG.window.xmin, XMAX=+CFG.window.xmax,
+    YMIN=+CFG.window.ymin, YMAX=+CFG.window.ymax;
+function sx(x){ return padL+(x-XMIN)/(XMAX-XMIN)*(W-padL-padR); }
+function sy(y){ return (H-padB)-(y-YMIN)/(YMAX-YMIN)*(H-padT-padB); }
+function clamp(v,a,b){ return Math.min(b,Math.max(a,v)); }
+function lineAt(c){ return state.m*c+state.b; }
+function active(){ return SW.slice(0, state.data); }
+function predictHealthy(f, c, m, b, side){
+  return side==="above" ? f >= m*c+b : f <= m*c+b;
+}
+function missList(pts, m, b, side){
+  return pts.filter(function(p){ return predictHealthy(p[2],p[1],m,b,side) !== !!p[3]; });
+}
+
+/* ---------- render ---------- */
+function txt(x,y,s,color,anchor,size,extra){
+  return '<text x="'+x+'" y="'+y+'" fill="'+color+'" text-anchor="'+(anchor||"start")+
+    '" font-size="'+(size||11)+'"'+(extra||"")+'>'+esc(s)+'</text>';
+}
+function markX(x,y,color){
+  return '<line x1="'+(x-6)+'" y1="'+(y-6)+'" x2="'+(x+6)+'" y2="'+(y+6)+'" stroke="'+color+'" stroke-width="1.8"/>'+
+         '<line x1="'+(x-6)+'" y1="'+(y+6)+'" x2="'+(x+6)+'" y2="'+(y-6)+'" stroke="'+color+'" stroke-width="1.8"/>';
+}
+function render(){
+  var ink=css("--ink"), gold=css("--gold"), gray=css("--gray-text"),
+      line=css("--gray-line"), soft=css("--gold-soft"), paper=css("--paper");
+  var pts=active(), misses=missList(pts, state.m, state.b, state.side);
+  var out='<defs><clipPath id="plotClip"><rect x="'+padL+'" y="'+padT+'" width="'+(W-padL-padR)+
+          '" height="'+(H-padT-padB)+'"/></clipPath></defs>';
+
+  /* gold wash: predicted-Healthy side (clipped) */
+  var yl=lineAt(XMIN), yr=lineAt(XMAX), BIG=1e4;
+  var washY = state.side==="above" ? -BIG : BIG;
+  out+='<g clip-path="url(#plotClip)"><polygon points="'+
+    sx(XMIN)+','+sy(yl)+' '+sx(XMAX)+','+sy(yr)+' '+sx(XMAX)+','+washY+' '+sx(XMIN)+','+washY+
+    '" fill="'+soft+'"/></g>';
+
+  /* grid + ticks */
+  for(var gx=300; gx<=1300; gx+=200){
+    out+='<line x1="'+sx(gx)+'" y1="'+padT+'" x2="'+sx(gx)+'" y2="'+(H-padB)+'" stroke="'+line+'" stroke-width="1"/>';
+    out+=txt(sx(gx), H-padB+16, String(gx), gray, "middle", 10);
+  }
+  for(var gy=0; gy<=12; gy+=2){
+    out+='<line x1="'+padL+'" y1="'+sy(gy)+'" x2="'+(W-padR)+'" y2="'+sy(gy)+'" stroke="'+line+'" stroke-width="1"/>';
+    out+=txt(padL-6, sy(gy)+3, String(gy), gray, "end", 10);
+  }
+  out+='<line x1="'+padL+'" y1="'+(H-padB)+'" x2="'+(W-padR)+'" y2="'+(H-padB)+'" stroke="'+ink+'" stroke-width="1.5"/>';
+  out+='<line x1="'+padL+'" y1="'+padT+'" x2="'+padL+'" y2="'+(H-padB)+'" stroke="'+ink+'" stroke-width="1.5"/>';
+  out+=txt((padL+W-padR)/2, H-8, CFG.xLabel, gray, "middle", 11);
+  out+=txt(padL, padT-10, CFG.yLabel, gray, "start", 11);
+
+  /* ghost lines with scores attached (recomputed against the active dataset) */
+  state.ghosts.forEach(function(g,gi){
+    var gy1=g.m*XMIN+g.b, gy2=g.m*XMAX+g.b;
+    out+='<g clip-path="url(#plotClip)"><line x1="'+sx(XMIN)+'" y1="'+sy(gy1)+'" x2="'+sx(XMAX)+'" y2="'+sy(gy2)+
+         '" stroke="'+gray+'" stroke-width="1.5" stroke-dasharray="6 4"/></g>';
+    var gm=missList(pts,g.m,g.b,g.side).length;
+    var labY=clamp(sy(g.m*1150+g.b), padT+10, H-padB-6);
+    out+=txt(sx(1150)+4, labY-6, "line "+(gi+1)+": "+gm+"✗", gray, "start", 10,
+             ' font-family="var(--font-mono)" style="font-variant-numeric:tabular-nums"');
+  });
+
+  /* data points: Healthy = gold filled circle · Not = ink open square (shape + fill) */
+  pts.forEach(function(p){
+    var X=sx(p[1]), Y=sy(p[2]), title='<title>'+esc(p[0])+' — '+p[1]+' cal, '+p[2]+' fiber, '+(p[3]?'Healthy':'Not healthy')+'</title>';
+    if(p[3]) out+='<circle cx="'+X+'" cy="'+Y+'" r="5.5" fill="'+gold+'" stroke="'+ink+'" stroke-width="1">'+title+'</circle>';
+    else out+='<rect x="'+(X-5)+'" y="'+(Y-5)+'" width="10" height="10" fill="'+paper+'" stroke="'+ink+'" stroke-width="1.5">'+title+'</rect>';
+  });
+  misses.forEach(function(p){ out+=markX(sx(p[1]), sy(p[2]), ink); });
+
+  /* mystery sandwiches: ink diamonds with letter, stamped by the current rule */
+  if(state.myst){
+    MYST.forEach(function(p){
+      var X=sx(p[1]), Y=sy(p[2]);
+      out+='<g><title>'+esc(p[0])+' — '+p[1]+' cal, '+p[2]+' fiber (unlabeled)</title>'+
+        '<rect x="-6" y="-6" width="12" height="12" transform="translate('+X+','+Y+') rotate(45)"'+
+        ' fill="'+paper+'" stroke="'+ink+'" stroke-width="1.5" stroke-dasharray="3 2"/>'+
+        txt(X, Y-10, p[3], ink, "middle", 10, ' font-weight="600"')+'</g>';
+    });
+  }
+
+  /* the decision line (gold) + handles */
+  out+='<g clip-path="url(#plotClip)"><line x1="'+sx(XMIN)+'" y1="'+sy(yl)+'" x2="'+sx(XMAX)+'" y2="'+sy(yr)+
+       '" stroke="'+gold+'" stroke-width="2.5"/></g>';
+  HX.forEach(function(hx,i){
+    var hy=lineAt(hx), cy=clamp(sy(clamp(hy,YMIN,YMAX)), padT, H-padB);
+    var off = hy<YMIN||hy>YMAX;
+    /* Drag handles are SOLID INK dots (professor's request, 2026-07-27). They stay
+       distinct from the gold filled "healthy" circles in both themes: ink fill vs gold
+       fill, a paper-coloured ring instead of an ink one, and a larger radius. When the
+       handle runs off the top or bottom of the window it becomes a dashed outline. */
+    out+='<g class="handle" data-h="'+i+'" tabindex="0" role="slider" aria-orientation="vertical"'+
+      ' aria-valuemin="'+YMIN+'" aria-valuemax="'+YMAX+'" aria-valuenow="'+clamp(hy,YMIN,YMAX).toFixed(1)+'"'+
+      ' aria-label="Line handle at '+hx+' calories; fiber '+hy.toFixed(1)+'. Arrow keys adjust.">'+
+      '<circle cx="'+sx(hx)+'" cy="'+cy+'" r="14" fill="transparent"/>'+
+      '<circle cx="'+sx(hx)+'" cy="'+cy+'" r="8" fill="'+(off?'none':ink)+'" stroke="'+(off?ink:paper)+'" stroke-width="1.5"'+(off?' stroke-dasharray="2 2"':'')+'/>'+
+      '</g>';
+  });
+  var focused=document.activeElement&&document.activeElement.dataset?document.activeElement.dataset.h:null;
+  svg.innerHTML=out;
+  if(focused!=null){ var g=svg.querySelector('[data-h="'+focused+'"]'); if(g) g.focus({preventScroll:true}); }
+
+  renderReadouts(pts, misses);
+}
+
+function fmtM(){ return state.m.toFixed(4); }
+function fmtB(){ return state.b.toFixed(1); }
+function eqRHS(){ return fmtM()+"·cal "+(state.b<0?"− ":"+ ")+Math.abs(state.b).toFixed(1); }
+
+function renderReadouts(pts, misses){
+  document.getElementById("eqnOut").textContent = "fiber = "+eqRHS();
+  var alt=document.getElementById("eqnAlt");
+  if(state.ps){
+    var x1=HX[0], y1=lineAt(x1);
+    alt.hidden=false;
+    alt.textContent="point–slope through ("+x1+", "+y1.toFixed(1)+"): fiber − "+y1.toFixed(1)+
+      " = "+fmtM()+"·(cal − "+x1+")";
+  } else alt.hidden=true;
+
+  var op = state.side==="above" ? "≥" : "≤";
+  document.getElementById("ruleOut").textContent =
+    "predict Healthy when fiber "+op+" "+eqRHS();
+
+  document.getElementById("missOut").textContent = misses.length+" of "+pts.length+" ✗";
+  document.getElementById("missSub").textContent = misses.length
+    ? "wrong side: "+misses.map(function(p){return p[0];}).join(", ")
+    : "every sandwich on the correct side";
+
+  /* mystery list */
+  var ml=document.getElementById("mystList");
+  if(state.myst){
+    ml.hidden=false;
+    ml.innerHTML=MYST.map(function(p){
+      var pred=predictHealthy(p[2],p[1],state.m,state.b,state.side);
+      return esc(p[3])+" — "+esc(p[0])+" ("+p[1]+" cal, "+p[2]+" fiber) → predict "+
+             (pred?"<strong>Healthy</strong>":"Not healthy");
+    }).join("<br>");
+  } else ml.hidden=true;
+
+}
+
+/* ---------- handle drag + keyboard ---------- */
+var dragging=null;
+function svgPoint(evt){
+  var pt=svg.createSVGPoint(); pt.x=evt.clientX; pt.y=evt.clientY;
+  return pt.matrixTransform(svg.getScreenCTM().inverse());
+}
+function setHandleY(i,yVal){
+  yVal=clamp(Math.round(yVal*10)/10, YMIN, YMAX);   /* snap 0.1 fiber */
+  var xi=HX[i], xo=HX[1-i], yo=lineAt(xo);
+  state.m=(yVal-yo)/(xi-xo);
+  state.b=yVal-state.m*xi;
+  render();
+}
+svg.addEventListener("pointerdown", function(e){
+  var g=e.target.closest("[data-h]"); if(!g) return;
+  dragging=+g.dataset.h; svg.setPointerCapture(e.pointerId); e.preventDefault();
+});
+svg.addEventListener("pointermove", function(e){
+  if(dragging===null) return;
+  var p=svgPoint(e);
+  setHandleY(dragging, YMIN+((H-padB)-p.y)/(H-padT-padB)*(YMAX-YMIN));
+});
+svg.addEventListener("pointerup", function(){ dragging=null; });
+svg.addEventListener("pointercancel", function(){ dragging=null; });
+svg.addEventListener("keydown", function(e){
+  var g=e.target.closest?e.target.closest("[data-h]"):null; if(!g) return;
+  var i=+g.dataset.h, step=0.1*(e.shiftKey?10:1), d=0;
+  if(e.key==="ArrowUp"||e.key==="ArrowRight") d=step;
+  else if(e.key==="ArrowDown"||e.key==="ArrowLeft") d=-step;
+  else return;
+  e.preventDefault();
+  setHandleY(i, lineAt(HX[i])+d);
+});
+
+/* ---------- segmented + buttons ---------- */
+function segWire(id, fn){
+  var seg=document.getElementById(id);
+  seg.addEventListener("click", function(e){
+    var b=e.target.closest("button"); if(!b) return;
+    Array.prototype.forEach.call(seg.querySelectorAll("button"), function(x){
+      x.setAttribute("aria-pressed", String(x===b));
+    });
+    fn(b);
+  });
+  return seg;
+}
+/* the dataset buttons follow the config island */
+var dataSmall=document.getElementById("dataSmall"), dataAll=document.getElementById("dataAll");
+dataSmall.dataset.d=String(NPLOT); dataSmall.textContent=NPLOT+" plotted";
+dataAll.dataset.d=String(SW.length); dataAll.textContent="all "+SW.length;
+segWire("dataSeg", function(b){ state.data=+b.dataset.d; render(); });
+segWire("sideSeg", function(b){ state.side=b.dataset.side; render(); });
+
+var mystBtn=document.getElementById("mystBtn");
+mystBtn.addEventListener("click", function(){
+  state.myst=!state.myst; mystBtn.setAttribute("aria-pressed", String(state.myst)); render();
+});
+var psBtn=document.getElementById("psBtn");
+psBtn.addEventListener("click", function(){
+  state.ps=!state.ps; psBtn.setAttribute("aria-pressed", String(state.ps)); render();
+});
+
+var holdBtn=document.getElementById("holdBtn"), clearBtn=document.getElementById("clearBtn");
+holdBtn.addEventListener("click", function(){
+  if(state.ghosts.length>=MAXHOLD) return;
+  state.ghosts.push({m:state.m, b:state.b, side:state.side});
+  holdBtn.disabled = state.ghosts.length>=MAXHOLD;
+  clearBtn.disabled = false;
+  render();
+});
+clearBtn.addEventListener("click", function(){
+  state.ghosts=[]; holdBtn.disabled=false; clearBtn.disabled=true; render();
+});
+
+/* ---------- Reset: mediocre horizontal line fiber ≥ 9, 3 misses on the 9 ---------- */
+document.getElementById("reset").addEventListener("click", function(){
+  state.m=INIT.m; state.b=INIT.b; state.side=INIT.side;
+  state.data=NPLOT; state.myst=false; state.ps=false; state.ghosts=[];
+  holdBtn.disabled=false; clearBtn.disabled=true;
+  mystBtn.setAttribute("aria-pressed","false");
+  psBtn.setAttribute("aria-pressed","false");
+  Array.prototype.forEach.call(document.getElementById("dataSeg").querySelectorAll("button"), function(x){
+    x.setAttribute("aria-pressed", String(+x.dataset.d===NPLOT));
+  });
+  Array.prototype.forEach.call(document.getElementById("sideSeg").querySelectorAll("button"), function(x){
+    x.setAttribute("aria-pressed", String(x.dataset.side==="above"));
+  });
+  render();
+});
+
+render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,619 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Where should the Avians campaign? · MATH 170</title>
+<style>
+:root{
+  --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+  --gold-soft:rgba(218,165,32,.12);
+  --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  /* optional sequential ramp (design/color-system.md §7, goldenrod) — used only
+     by the distribution-over-time chart, where the station encodes recency */
+  --gold-r1:#FFECC7; --gold-r2:#FBC54C; --gold-r3:#DAA520; --gold-r4:#B58700; --gold-r5:#906B00;
+  --font-body: ui-serif, Georgia, "Times New Roman", serif;
+  --font-ui:   system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+  --text-xl:1.75rem; --text-lg:1.25rem; --text-base:1rem; --text-sm:.875rem; --text-xs:.75rem;
+  --leading-prose:1.6; --leading-ui:1.3;
+  --space-1:4px; --space-2:8px; --space-3:16px; --space-4:24px; --space-5:32px; --space-6:48px;
+  --ease:cubic-bezier(0.16,1,0.3,1); --dur:200ms;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+    --gold-soft:rgba(227,179,65,.16);
+    --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+    --gold-r1:#594000; --gold-r2:#7B5A00; --gold-r3:#9F7600; --gold-r4:#C4920F; --gold-r5:#E3B341;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+  --gold-soft:rgba(227,179,65,.16);
+  --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+  --gold-r1:#594000; --gold-r2:#7B5A00; --gold-r3:#9F7600; --gold-r4:#C4920F; --gold-r5:#E3B341;
+}
+@media (prefers-reduced-motion: reduce){ :root{ --dur:0ms; } }
+@media print{
+  :root, :root[data-theme="dark"]{
+    --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+    --gold-soft:rgba(218,165,32,.12);
+    --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+    --gold-r1:#FFECC7; --gold-r2:#FBC54C; --gold-r3:#DAA520; --gold-r4:#B58700; --gold-r5:#906B00;
+  }
+  .theme-btn{display:none}
+  .stage{break-inside:avoid}
+}
+*{box-sizing:border-box}
+html{color-scheme:light dark}
+body{margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--font-body); font-size:var(--text-base); line-height:var(--leading-prose);
+  -webkit-text-size-adjust:100%;}
+.wrap{max-width:820px; margin:0 auto; padding:var(--space-5) var(--space-4) var(--space-6);}
+.topbar{display:flex; align-items:baseline; justify-content:space-between; gap:var(--space-3);
+  border-bottom:1px solid var(--gray-line); padding-bottom:var(--space-2); margin-bottom:var(--space-4);}
+.eyebrow{font-family:var(--font-ui); font-size:var(--text-xs); letter-spacing:.08em; text-transform:uppercase; color:var(--gray-text);}
+h1{font-family:var(--font-body); font-weight:600; font-size:var(--text-xl); line-height:1.2; margin:.2em 0 .1em;}
+p{margin:0 0 var(--space-3);}
+.prose{max-width:66ch;}
+.muted{color:var(--gray-text);}
+.mono,code{font-family:var(--font-mono); font-variant-numeric:tabular-nums;}
+a{color:inherit;}
+:focus-visible{outline:2px solid var(--ink); outline-offset:2px; box-shadow:0 0 0 5px var(--gold-soft);}
+.theme-btn{font-family:var(--font-ui); font-size:var(--text-xs); background:none;
+  border:1px solid var(--gray-line); color:var(--gray-text); padding:6px 10px; cursor:pointer; border-radius:2px;}
+.theme-btn:hover{background:var(--gray-fill);}
+details.spec{border:1px solid var(--gray-line); border-radius:2px; margin:0 0 var(--space-4); background:var(--gray-fill);}
+details.spec>summary{font-family:var(--font-ui); font-size:var(--text-sm); cursor:pointer;
+  padding:var(--space-2) var(--space-3); list-style:none; color:var(--gray-text);}
+details.spec>summary::-webkit-details-marker{display:none}
+details.spec>summary::before{content:"▸ "; color:var(--gold);}
+details.spec[open]>summary::before{content:"▾ ";}
+.spec-body{padding:0 var(--space-3) var(--space-3); font-family:var(--font-ui); font-size:var(--text-sm); line-height:1.5;}
+.spec-body dt{font-weight:600; margin-top:var(--space-2);}
+.spec-body dd{margin:0; color:var(--gray-text);}
+.stage{margin:var(--space-4) 0;}
+svg{max-width:100%; height:auto; font-family:var(--font-ui); display:block; margin:0 auto;}
+.controls{border-top:1px solid var(--gray-line); padding-top:var(--space-3); margin-top:var(--space-4);
+  display:grid; grid-template-columns:1fr 1fr; gap:var(--space-3) var(--space-4);}
+.controls .full{grid-column:1/-1;}
+@media(max-width:560px){ .controls{grid-template-columns:1fr;} }
+.ctl label{display:flex; justify-content:space-between; align-items:baseline;
+  font-family:var(--font-ui); font-size:var(--text-sm);}
+.ctl .val{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm);}
+input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:18px;
+  background:transparent; margin:6px 0 0; cursor:pointer;}
+input[type=range]::-webkit-slider-runnable-track{height:2px; border-radius:1px;
+  background:var(--track, var(--gray-line));}
+input[type=range]::-moz-range-track{height:2px; background:var(--gray-line);}
+input[type=range]::-moz-range-progress{height:2px; background:var(--gold);}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; appearance:none;
+  width:18px; height:18px; margin-top:-8px; border-radius:50%; background:var(--gold); border:1px solid var(--ink);}
+input[type=range]::-moz-range-thumb{width:18px; height:18px; border-radius:50%; background:var(--gold); border:1px solid var(--ink);}
+.btn{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:1px solid var(--ink); padding:8px 14px; cursor:pointer; border-radius:2px;}
+.btn:hover{background:var(--gray-fill);}
+.btn.primary{background:var(--gold); border-color:var(--gold); color:#111111;}
+.btn[disabled]{border-color:var(--gray-line); color:var(--gray-line); cursor:default;}
+.seg{display:inline-flex; border:1px solid var(--ink); border-radius:2px; overflow:hidden; flex-wrap:wrap;}
+.seg button{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:0; border-left:1px solid var(--ink); padding:7px 12px; cursor:pointer;}
+.seg button:first-child{border-left:0;}
+.seg button[aria-pressed="true"]{background:var(--gold); color:#111111;}
+.foot{display:flex; align-items:center; gap:var(--space-3); margin-top:var(--space-5);
+  border-top:1px solid var(--gray-line); padding-top:var(--space-3); flex-wrap:wrap;}
+.foot .btn{margin-right:auto;}
+.hint{font-family:var(--font-ui); font-size:var(--text-sm); color:var(--gray-text);}
+.mathbox{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm);
+  background:var(--gray-fill); border-left:2px solid var(--gold); padding:var(--space-3);
+  margin:var(--space-3) 0; overflow-x:auto; white-space:pre; line-height:1.7;}
+.attach{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text);
+  border-top:1px dotted var(--gray-line); margin-top:var(--space-6); padding-top:var(--space-3);}
+.tag{display:inline-block; font-family:var(--font-ui); font-size:var(--text-xs);
+  border:1px solid var(--gray-line); border-radius:999px; padding:1px 8px; color:var(--gray-text); margin-left:6px;}
+.callout{font-family:var(--font-ui); font-size:var(--text-sm); border:1px solid var(--gray-line);
+  border-left:2px solid var(--gold); padding:var(--space-2) var(--space-3); margin:var(--space-3) 0;}
+.chips{display:flex; gap:var(--space-2); flex-wrap:wrap; margin:var(--space-2) 0;}
+.chips button{font-family:var(--font-ui); font-size:var(--text-xs); border:1px solid var(--gray-line);
+  background:var(--paper); color:var(--ink); border-radius:999px; padding:3px 10px; cursor:pointer;}
+.chips button[aria-pressed="true"]{border-color:var(--gold); background:var(--gold-soft);}
+table.mx{border-collapse:collapse; font-family:var(--font-mono); font-variant-numeric:tabular-nums;
+  font-size:var(--text-sm); margin:var(--space-2) auto;}
+table.mx td,table.mx th{border:1px solid var(--gray-line); padding:4px 8px; text-align:center;}
+table.mx th{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); background:var(--gray-fill);}
+table.mx input{width:56px; font:inherit; text-align:center; border:none; background:transparent; color:var(--ink);}
+.warn{color:var(--gold); font-weight:700;}
+.stepbar{display:flex; gap:var(--space-2); align-items:center; margin:var(--space-2) 0; flex-wrap:wrap;}
+.count{font-family:var(--font-mono); font-variant-numeric:tabular-nums; color:var(--gray-text); font-size:var(--text-sm);}
+</style>
+<!-- ---- shared Markov component styles (added after the skin, never restyling it) ---- -->
+<style>
+h2{font-family:var(--font-ui); font-weight:600; font-size:var(--text-lg); line-height:1.3; margin:var(--space-5) 0 var(--space-2);}
+figcaption{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); margin-top:var(--space-2); text-align:center;}
+.duo{display:grid; grid-template-columns:1fr 1fr; gap:var(--space-3); align-items:start;}
+@media(max-width:680px){ .duo{grid-template-columns:1fr;} }
+table.mx{border-collapse:collapse; font-family:var(--font-mono); font-variant-numeric:tabular-nums;
+  font-size:var(--text-sm); margin:var(--space-2) auto;}
+table.mx td,table.mx th{border:1px solid var(--gray-line); padding:4px 8px; text-align:center;}
+table.mx th{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); background:var(--gray-fill);}
+table.mx th.rowh{text-align:left;}
+table.mx input{width:4.2em; font:inherit; text-align:center; color:var(--ink);
+  background:var(--paper); border:1px solid var(--gray-line); border-radius:2px; padding:2px 0;}
+table.mx td.sum{font-family:var(--font-ui); font-size:var(--text-xs); text-align:left; white-space:nowrap;}
+table.mx td.sum .sym{font-family:var(--font-mono); font-weight:700; margin-right:4px;}
+table.mx td.sum.ok{background:var(--gold-soft);}
+table.mx td.sum.bad{border:2px dashed var(--ink);}
+.vecwrap{margin:var(--space-3) 0 0;}
+.vecwrap .lbl{font-family:var(--font-ui); font-size:var(--text-sm); color:var(--gray-text);}
+.warnbox{font-family:var(--font-ui); font-size:var(--text-sm); border:1px solid var(--ink);
+  border-left:3px dashed var(--ink); padding:var(--space-2) var(--space-3); margin:var(--space-3) 0;}
+.callout{font-family:var(--font-ui); font-size:var(--text-sm); border:1px solid var(--gray-line);
+  border-left:2px solid var(--gold); padding:var(--space-2) var(--space-3); margin:var(--space-3) 0;}
+.chips{display:flex; gap:var(--space-2); flex-wrap:wrap; margin:var(--space-2) 0;}
+.chips button{font-family:var(--font-ui); font-size:var(--text-xs); border:1px solid var(--gray-line);
+  background:var(--paper); color:var(--ink); border-radius:999px; padding:3px 10px; cursor:pointer;}
+.chips button[aria-pressed="true"]{border-color:var(--ink); background:var(--gold); color:#111111;}
+.stepbar{display:flex; gap:var(--space-2); align-items:center; margin:var(--space-3) 0 0; flex-wrap:wrap;}
+.count{font-family:var(--font-mono); font-variant-numeric:tabular-nums; color:var(--gray-text); font-size:var(--text-sm);}
+.rampkey{display:flex; align-items:center; gap:6px; justify-content:center; flex-wrap:wrap;
+  font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); margin-top:var(--space-2);}
+.rampkey i{display:inline-block; width:16px; height:10px; border:1px solid var(--ink); font-style:normal;}
+.rampkey i.r1{background:var(--gold-r1);} .rampkey i.r2{background:var(--gold-r2);}
+.rampkey i.r3{background:var(--gold-r3);} .rampkey i.r4{background:var(--gold-r4);}
+.rampkey i.r5{background:var(--gold-r5);}
+.attach .warn{font-weight:700;}
+</style>
+
+<!-- theme boot: apply stored choice before first paint (no flash) -->
+<script>
+try{var t=localStorage.getItem("m170-theme");if(t)document.documentElement.dataset.theme=t;}catch(e){}
+</script>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="eyebrow">MATH 170 · Markov chains · Political Party Dynamics</div>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Color theme">◑ auto</button>
+  </div>
+
+  <h1 data-edit="title">Where should the Avians campaign? <span class="tag">Animalia · Markov chains</span></h1>
+  <p class="prose muted" data-edit="intro">You are a bird, and a grassroots organizer for the Avian
+  Advancement Party in the nation of Animalia. Your party has raised enough money for exactly
+  <strong>two</strong> campaigns, and there are four cities to choose between. The analysts have handed
+  you, for each city, a table of how voters change party in a single year. Elections come every four
+  years. These matrices and the 2024 populations are the analysts' report — you cannot edit them here,
+  because the argument you are being asked to make has to survive the numbers you were given. Step each
+  city forward and see which two are worth the money.</p>
+
+  <div data-slot="notes-top"></div>
+
+
+  <!-- PINNED (python power iteration, row-vector convention v⁰Pⁿ; every shipped row totals 1,
+       so nothing is renormalized). AA = Avian share, starting from the 2024 vote:
+       Snowdon     2024 .200  yr1 .255  yr2 .314  yr3 .364  yr4 .403   π ≈ [.169, .495, .185, .150]
+       Ciudad Seco 2024 .150  yr1 .177  yr2 .200  yr3 .218  yr4 .233   π ≈ [.206, .307, .333, .154]
+       St. Francis 2024 .250  yr1 .285  yr2 .308  yr3 .321  yr4 .329   π ≈ [.186, .329, .332, .152]
+       Waterville  2024 .700  yr1 .682  yr2 .666  yr3 .650  yr4 .636   π  = [0, .5, 0, .5] exactly
+       (Waterville checked in closed form: [0,.5,0,.5]·P = [0,.5,0,.5].)
+       St. Francis recomputed 2026-08-05 with the professor's corrected Feline row
+       [.7,.2,.05,.05]; the earlier pins came from the ÷1.05 renormalization. -->
+
+  <div class="chips" id="scen" role="group" aria-label="Which city"></div>
+  <div id="noteBox"></div>
+  <div id="flagBox"></div>
+
+  <h2 data-edit="h2-report">The analysts' report</h2>
+  <p class="prose muted" data-edit="report-intro" style="font-family:var(--font-ui); font-size:var(--text-sm)">
+    Row = the party someone belonged to in 2024. Column = the party they move to within one year.
+    Read across a row and the numbers should total 1.</p>
+  <div id="mxBox"></div>
+  <div id="v0Box"></div>
+
+  <h2 data-edit="h2-run">Step the city forward</h2>
+  <div class="stage">
+    <div class="duo">
+      <div>
+        <svg id="graphSvg" viewBox="0 0 340 330" aria-label="Party graph: node size is the current share of voters"></svg>
+        <figcaption data-edit="cap-graph">Each circle is a party; its size is the share of voters affiliated with it right now. Each arc carries the probability of switching that way in one year.</figcaption>
+      </div>
+      <div>
+        <svg id="chartSvg" viewBox="0 0 420 300" aria-label="Distribution over time"></svg>
+        <div class="rampkey"><span>older</span><i class="r1"></i><i class="r2"></i><i class="r3"></i><i class="r4"></i><i class="r5"></i><span>now</span></div>
+        <figcaption data-edit="cap-chart">One bar per year, oldest at the top and palest. Left to right inside a bar, the four parties always sit in the same order; the numbers under the newest bar are the current shares.</figcaption>
+      </div>
+    </div>
+
+    <div class="stepbar">
+      <button class="btn" id="back" type="button">◂ Back</button>
+      <button class="btn primary" id="step" type="button">Step ▸</button>
+      <button class="btn" id="run" type="button">Run ▸▸</button>
+      <span class="count" id="count">t = 0</span>
+      <span class="hint" id="status" aria-live="polite"></span>
+    </div>
+
+    <h2 data-edit="h2-questions">The worksheet's questions, for this city</h2>
+    <div class="chips" id="qchips"></div>
+    <p class="hint" id="answer" aria-live="polite"></p>
+
+    <div class="mathbox" id="mathbox" aria-live="polite"></div>
+  </div>
+
+  <div data-slot="notes-bottom"></div>
+
+  <div class="foot">
+    <button class="btn" id="reset" type="button">Reset</button>
+    <span class="hint" data-edit="hint-try">Try: ask each city for its 2024 Avian share, then for its long-term one. The two rankings are not the same — that is the whole recommendation.</span>
+  </div>
+
+</div>
+
+<script type="application/json" id="m170-config">
+{
+  "_v": 1,
+  "states": ["Feline First", "Avian Advancement", "Canine Comrades", "Reptile & Amphibian"],
+  "short": ["FF", "AA", "CC", "RA"],
+  "unit": "year",
+  "focusState": 1,
+  "electionYears": 4,
+  "openCity": "Snowdon",
+  "historyRows": 6,
+  "settleTolerance": 0.001,
+  "maxRun": 500,
+  "cities": {
+    "Snowdon": {
+      "pop": 1000000,
+      "note": "Northern Territory, population 1M. A Feline First stronghold with a large summer Avian population.",
+      "P": [[0.70, 0.10, 0.10, 0.10],
+            [0.05, 0.80, 0.10, 0.05],
+            [0.10, 0.20, 0.60, 0.10],
+            [0.05, 0.30, 0.05, 0.60]],
+      "v0": [0.70, 0.20, 0.05, 0.05],
+      "v0label": "2024 vote — 700k / 200k / 50k / 50k"
+    },
+    "Ciudad Seco": {
+      "pop": 2000000,
+      "note": "Population 2M. Canine and Reptile & Amphibian country; the R&A share has been slipping.",
+      "P": [[0.80, 0.10, 0.05, 0.05],
+            [0.03, 0.85, 0.05, 0.07],
+            [0.05, 0.03, 0.90, 0.02],
+            [0.10, 0.10, 0.05, 0.75]],
+      "v0": [0.05, 0.15, 0.50, 0.30],
+      "v0label": "2024 vote — 100k / 300k / 1M / 600k"
+    },
+    "St. Francis": {
+      "pop": 4000000,
+      "note": "Population 4M. All four parties came out level in 2024 — one million voters each.",
+      "P": [[0.70, 0.20, 0.05, 0.05],
+            [0.05, 0.80, 0.10, 0.05],
+            [0.05, 0.04, 0.85, 0.06],
+            [0.15, 0.10, 0.05, 0.70]],
+      "v0": [0.25, 0.25, 0.25, 0.25],
+      "v0label": "2024 vote — 1M each"
+    },
+    "Waterville": {
+      "pop": 1000000,
+      "note": "Population 1M. Historically Avian; the Amphibian sect has been growing.",
+      "P": [[0.55, 0.30, 0.10, 0.05],
+            [0.00, 0.95, 0.00, 0.05],
+            [0.10, 0.05, 0.80, 0.05],
+            [0.00, 0.05, 0.00, 0.95]],
+      "v0": [0.01, 0.70, 0.01, 0.28],
+      "v0label": "2024 vote — 10k / 700k / 10k / 280k"
+    }
+  },
+  "messages": {
+    "rowFlag": "As printed, this row totals {sum}, not 1.00. The page shows you the printed numbers and works with the row scaled by 1 ÷ {sum} → {fixed}. It is not silently corrected: this is a question for your instructor.",
+    "settled": "Settled after {n} steps — nothing moves any more. That is π.",
+    "settledNow": "Settled — nothing moves any more. That is π.",
+    "qNow": "{city}, 2024: {share} of voters were {state} — about {people} people.",
+    "qYear1": "{city}, after one year: {share} {state}.",
+    "qElection": "{city}, at the next election ({years} years): {share} {state}.",
+    "qLong": "{city}, long term: {state} settles near {share}. π = [{pi}]."
+  },
+  "_meta": {
+    "states": {"label": "The four parties", "kind": "list"},
+    "short": {"label": "Short labels used on the graph and chart", "kind": "list"},
+    "unit": {"label": "What one step of time is called", "kind": "text"},
+    "focusState": {"label": "Which party the questions are about (0-based)", "kind": "number",
+      "help": "1 = Avian Advancement, the party the student is organizing for."},
+    "electionYears": {"label": "Years between elections", "kind": "number"},
+    "openCity": {"label": "City on show at load", "kind": "choice",
+      "options": ["Snowdon", "Ciudad Seco", "St. Francis", "Waterville"]},
+    "historyRows": {"label": "How many past years the chart shows", "kind": "number"},
+    "settleTolerance": {"label": "Called settled when no share moves more than this", "kind": "number"},
+    "maxRun": {"label": "Safety cap on Run", "kind": "number"},
+    "cities": {"label": "The analysts' report — DISPLAY ONLY on the page", "kind": "table",
+      "help": "Transcribed from the worksheet, with St. Francis's Feline row as corrected by the professor on 2026-08-05. Every row should total 1: if an edit leaves a row that does not, the page prints the row as given, says what it is doing about it, and scales that row rather than silently correcting it. Students cannot edit these values (professor, 2026-07-27)."},
+    "messages": {"label": "Flag and question wording", "kind": "text",
+      "help": "Placeholders: {sum} {fixed} {n} {city} {state} {share} {people} {years} {pi}."}
+  }
+}
+</script>
+
+<script>
+(function(){
+"use strict";
+
+/* ROUND 2 (professor, 2026-07-27): the combined Markov page was split in two. This is
+   the Animalia half: the four-city toggle survives, but the matrices and the starting
+   vectors are DISPLAY ONLY. Any row that does not total 1 keeps a visible flag — the page
+   prints the row as given and says out loud what it does about it. (2026-08-05: the professor
+   confirmed the St. Francis Feline row was a worksheet typo and supplied [.7,.2,.05,.05], so
+   with the shipped data no row now trips the flag; the detection stays as a net for edits.) */
+
+var CFG = JSON.parse(document.getElementById("m170-config").textContent);
+function isArr(v){ return Object.prototype.toString.call(v)==="[object Array]"; }
+function num(v,d){ v=+v; return isFinite(v)?v:d; }
+function fill(t,vars){ return String(t==null?"":t).replace(/\{(\w+)\}/g,function(m,k){
+  return vars[k]!==undefined?vars[k]:m; }); }
+
+var STATES = isArr(CFG.states)&&CFG.states.length===4 ? CFG.states.map(String)
+           : ["State 1","State 2","State 3","State 4"];
+var SHORT  = isArr(CFG.short)&&CFG.short.length===4 ? CFG.short.map(String)
+           : STATES.map(function(s){ return s.slice(0,2); });
+var UNIT   = String(CFG.unit||"step");
+var MSG    = CFG.messages||{};
+var FOCUS  = Math.min(3, Math.max(0, Math.round(num(CFG.focusState,1))));
+var ELECT  = Math.max(1, Math.round(num(CFG.electionYears,4)));
+var ROWS   = Math.max(2, Math.round(num(CFG.historyRows,6)));
+var TOL    = Math.max(1e-6, num(CFG.settleTolerance,0.001));
+var MAXRUN = Math.max(1, Math.round(num(CFG.maxRun,500)));
+
+var CITIES = CFG.cities||{};
+var NAMES  = Object.keys(CITIES);
+var cur    = CITIES[CFG.openCity] ? CFG.openCity : NAMES[0];
+
+function printedP(name){
+  var c=CITIES[name]||{}, out=[], i, j;
+  for(i=0;i<4;i++){ out.push([]); for(j=0;j<4;j++){
+    out[i].push(Math.max(0, (isArr(c.P)&&isArr(c.P[i])) ? num(c.P[i][j],0) : 0)); } }
+  return out;
+}
+function startV(name){
+  var c=CITIES[name]||{}, out=[], i;
+  for(i=0;i<4;i++) out.push(Math.max(0, isArr(c.v0)?num(c.v0[i],0):0));
+  return out;
+}
+function sum4(a){ return a[0]+a[1]+a[2]+a[3]; }
+/* rows that do not total 1 are SCALED, and the page says so — never silently */
+function workingP(name){
+  var Pp=printedP(name);
+  return Pp.map(function(r){
+    var s=sum4(r);
+    if(Math.abs(s-1)<0.0005 || s<=0) return r.slice();
+    return r.map(function(x){ return x/s; });
+  });
+}
+
+var P = workingP(cur), v0 = startV(cur), hist=[v0.slice()];
+
+/* ---------- theme ---------- */
+var root=document.documentElement, themeBtn=document.getElementById("themeBtn");
+function themeLabel(){ var m=root.dataset.theme||"auto";
+  themeBtn.textContent=m==="dark"?"● dark":m==="light"?"○ light":"◑ auto"; }
+themeBtn.addEventListener("click",function(){
+  var c2=root.dataset.theme||"auto",next=c2==="auto"?"light":c2==="light"?"dark":"auto";
+  if(next==="auto"){delete root.dataset.theme;try{localStorage.removeItem("m170-theme");}catch(e){}}
+  else{root.dataset.theme=next;try{localStorage.setItem("m170-theme",next);}catch(e){}}
+  themeLabel(); drawAll();});
+if(window.matchMedia){ window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",function(){ drawAll(); }); }
+themeLabel();
+
+function css(v){ return getComputedStyle(document.body).getPropertyValue(v).trim(); }
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+function pct(x){ return (x*100).toFixed(1)+"%"; }
+function commas(n){ return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
+function stepv(v,M){
+  var r=[0,0,0,0], i, j;
+  for(j=0;j<4;j++) for(i=0;i<4;i++) r[j]+=v[i]*M[i][j];
+  return r;
+}
+function settled(a,b){ for(var i=0;i<4;i++) if(Math.abs(a[i]-b[i])>TOL) return false; return true; }
+function steady(name){
+  var M=workingP(name), v=startV(name), t;
+  for(t=0;t<2000;t++) v=stepv(v,M);
+  return v;
+}
+
+/* ---------- the report, display only ---------- */
+function drawMatrix(){
+  var Pp=printedP(cur);
+  var html='<table class="mx"><tr><th>2024 party \\ within a year</th>';
+  STATES.forEach(function(s){ html+="<th>"+esc(s)+"</th>"; });
+  html+="<th>row total</th></tr>";
+  Pp.forEach(function(row,i){
+    html+='<tr><th class="rowh">'+esc(STATES[i])+"</th>";
+    row.forEach(function(p){ html+="<td>"+p.toFixed(2)+"</td>"; });
+    var s=sum4(row), ok=Math.abs(s-1)<0.0005;
+    html+='<td class="sum '+(ok?"ok":"bad")+'"><span class="sym">'+(ok?"✓":"✗")+'</span>'+
+          s.toFixed(2)+(ok?"":" — see the note")+"</td></tr>";
+  });
+  html+="</table>";
+  document.getElementById("mxBox").innerHTML=html;
+
+  var vv=startV(cur), c=CITIES[cur]||{};
+  var h2='<table class="mx"><tr><th>v⁰</th>';
+  STATES.forEach(function(s){ h2+="<th>"+esc(s)+"</th>"; });
+  h2+="<th>total</th></tr><tr><th class=\"rowh\">"+esc(c.v0label||"2024 vote")+"</th>";
+  vv.forEach(function(p){ h2+="<td>"+p.toFixed(2)+"</td>"; });
+  var vs=sum4(vv), vok=Math.abs(vs-1)<0.0005;
+  h2+='<td class="sum '+(vok?"ok":"bad")+'"><span class="sym">'+(vok?"✓":"✗")+'</span>'+
+      vs.toFixed(2)+"</td></tr></table>";
+  document.getElementById("v0Box").innerHTML=h2;
+
+  document.getElementById("noteBox").innerHTML =
+    '<div class="callout">'+esc(c.note||"")+"</div>";
+
+  /* the flag: any printed row that does not total 1 */
+  var flag="";
+  Pp.forEach(function(row,i){
+    var s=sum4(row);
+    if(Math.abs(s-1)<0.0005) return;
+    var fixed=row.map(function(x){ return (x/s).toFixed(3); }).join(", ");
+    flag+='<div class="warnbox"><strong>⚠ '+esc(STATES[i])+' row, as printed: '+
+          row.map(function(x){return x.toFixed(2);}).join(" + ")+" = "+s.toFixed(2)+
+          '</strong><br>'+esc(fill(MSG.rowFlag,{sum:s.toFixed(2), fixed:fixed}))+"</div>";
+  });
+  document.getElementById("flagBox").innerHTML=flag;
+}
+
+/* ---------- state graph ---------- */
+function drawGraph(){
+  var ink=css("--ink"), gray=css("--gray-text"), line=css("--gray-line"), fillc=css("--gray-fill");
+  var v=hist[hist.length-1], out="";
+  var centers=[[95,80],[245,80],[95,250],[245,250]];
+  P.forEach(function(row,i){ row.forEach(function(p,j){
+    if(i===j||p<0.005) return;
+    var a=centers[i], b=centers[j];
+    var mx=(a[0]+b[0])/2 + (a[1]-b[1])*0.18, my=(a[1]+b[1])/2 + (b[0]-a[0])*0.18;
+    out+='<path d="M'+a[0]+' '+a[1]+' Q'+mx+' '+my+' '+b[0]+' '+b[1]+'" fill="none" stroke="'+line+
+         '" stroke-width="'+(0.5+p*4).toFixed(2)+'"/>';
+    out+='<text x="'+mx+'" y="'+my+'" font-size="9" fill="'+gray+
+         '" text-anchor="middle" font-family="var(--font-mono)">'+p.toFixed(2).replace("0.",".")+'</text>';
+  });});
+  centers.forEach(function(c,i){
+    var r=10+Math.max(0,Math.min(1,v[i]))*40;
+    out+='<circle cx="'+c[0]+'" cy="'+c[1]+'" r="'+r.toFixed(1)+'" fill="'+fillc+'" stroke="'+ink+'" stroke-width="1.5"/>';
+    out+='<text x="'+c[0]+'" y="'+(c[1]-r-6).toFixed(1)+'" font-size="10" fill="'+ink+'" text-anchor="middle">'+esc(SHORT[i])+'</text>';
+    out+='<text x="'+c[0]+'" y="'+(c[1]+4)+'" font-size="11" fill="'+ink+
+         '" text-anchor="middle" font-family="var(--font-mono)">'+pct(v[i])+'</text>';
+    out+='<text x="'+c[0]+'" y="'+(c[1]+15)+'" font-size="8" fill="'+gray+
+         '" text-anchor="middle">stay '+P[i][i].toFixed(2).replace("0.",".")+'</text>';
+  });
+  document.getElementById("graphSvg").innerHTML=out;
+}
+
+/* ---------- distribution over time ----------
+   The ramp (design/color-system.md §7) encodes RECENCY, a sequential quantity. It never
+   encodes which party a segment is: the four parties keep the same left-to-right order in
+   every bar, are separated by ink hairlines, and are named and numbered under the newest bar. */
+function rampVar(i, n){
+  if(n<=1) return "--gold-r5";
+  var st = 1 + Math.round(i/(n-1)*4);
+  return "--gold-r"+Math.min(5,Math.max(1,st));
+}
+function drawChart(){
+  var ink=css("--ink"), gray=css("--gray-text");
+  var shown=hist.slice(-ROWS), t0=hist.length-shown.length;
+  var x0=54, w=340, rowH=Math.min(30, Math.floor(230/Math.max(1,shown.length))), barH=Math.max(9,rowH-10);
+  var out="";
+  out+='<text x="'+x0+'" y="14" font-size="10" fill="'+gray+'">left to right in every bar: '+
+       esc(SHORT.join(" · "))+'</text>';
+  shown.forEach(function(hv,hi){
+    var y=26+hi*rowH, x=x0, st=css(rampVar(hi, shown.length));
+    out+='<text x="'+(x0-6)+'" y="'+(y+barH/2+3)+'" font-size="9" fill="'+gray+
+         '" text-anchor="end" font-family="var(--font-mono)">t='+(t0+hi)+'</text>';
+    hv.forEach(function(p){
+      var seg=Math.max(0.5, Math.max(0,Math.min(1,p))*w);
+      out+='<rect x="'+x.toFixed(1)+'" y="'+y+'" width="'+seg.toFixed(1)+'" height="'+barH+
+           '" fill="'+st+'" stroke="'+ink+'" stroke-width="1"/>';
+      x+=seg;
+    });
+  });
+  var last=shown[shown.length-1], yN=26+(shown.length-1)*rowH+barH+13, xc=x0;
+  last.forEach(function(p,i){
+    var seg=Math.max(0.5, Math.max(0,Math.min(1,p))*w);
+    if(seg>36) out+='<text x="'+(xc+seg/2).toFixed(1)+'" y="'+yN+'" font-size="9" fill="'+ink+
+      '" text-anchor="middle" font-family="var(--font-mono)">'+esc(SHORT[i])+' '+pct(p)+'</text>';
+    xc+=seg;
+  });
+  out+='<text x="'+x0+'" y="'+(yN+16)+'" font-size="9" fill="'+gray+'" font-family="var(--font-mono)">now: '+
+       esc(SHORT.map(function(s,i){ return s+" "+pct(last[i]); }).join("   "))+'</text>';
+  document.getElementById("chartSvg").innerHTML=out;
+}
+
+/* ---------- receipt ---------- */
+function drawMath(){
+  var v=hist[hist.length-1], L=[];
+  var prev=hist.length>1?hist[hist.length-2]:null;
+  if(prev){
+    var terms=prev.map(function(p,i){ return p.toFixed(3)+"·"+P[i][FOCUS].toFixed(2); }).join(" + ");
+    L.push("one entry of v·P, expanded — next "+STATES[FOCUS]+" share:");
+    L.push("  "+terms+" = "+v[FOCUS].toFixed(3));
+    L.push("(each term: the share sitting with a party × the probability of switching to "+STATES[FOCUS]+")");
+  } else {
+    L.push("v⁰ = ["+v.map(function(x){return x.toFixed(2);}).join(", ")+"]   — press Step ▸ to multiply by P once.");
+  }
+  document.getElementById("mathbox").textContent=L.join("\n");
+}
+
+/* ---------- the worksheet's questions ---------- */
+function drawQ(){
+  var host=document.getElementById("qchips"); host.innerHTML="";
+  var c=CITIES[cur]||{}, pop=num(c.pop,0), start=startV(cur), M=workingP(cur);
+  var qs=[
+    ["% "+SHORT[FOCUS]+" in 2024", function(){
+      return fill(MSG.qNow,{city:cur, state:STATES[FOCUS], share:pct(start[FOCUS]),
+                            people:commas(start[FOCUS]*pop)}); }],
+    ["after 1 "+UNIT, function(){
+      return fill(MSG.qYear1,{city:cur, state:STATES[FOCUS], share:pct(stepv(start,M)[FOCUS])}); }],
+    ["at the next election (t = "+ELECT+")", function(){
+      var v=start.slice(), t;
+      for(t=0;t<ELECT;t++) v=stepv(v,M);
+      return fill(MSG.qElection,{city:cur, state:STATES[FOCUS], years:ELECT, share:pct(v[FOCUS])}); }],
+    ["long term (π)", function(){
+      var pv=steady(cur);
+      return fill(MSG.qLong,{city:cur, state:STATES[FOCUS], share:pct(pv[FOCUS]),
+                             pi:pv.map(function(x){return x.toFixed(3);}).join(", ")}); }]
+  ];
+  qs.forEach(function(q){
+    var b=document.createElement("button"); b.type="button"; b.textContent=q[0];
+    b.addEventListener("click",function(){ document.getElementById("answer").textContent=q[1](); });
+    host.appendChild(b);
+  });
+}
+
+function drawAll(){
+  drawMatrix(); drawGraph(); drawChart(); drawMath(); drawQ();
+  var t=hist.length-1;
+  document.getElementById("count").textContent="t = "+t+" "+UNIT+(t===1?"":"s");
+}
+
+/* ---------- time ---------- */
+function say(s){ document.getElementById("status").textContent=s||""; }
+function resetTime(){ hist=[v0.slice()]; say(""); document.getElementById("answer").textContent=""; }
+document.getElementById("step").addEventListener("click",function(){
+  var v=stepv(hist[hist.length-1],P), done=settled(v,hist[hist.length-1]);
+  hist.push(v); drawAll(); say(done?(MSG.settledNow||"Settled."):"");
+});
+document.getElementById("back").addEventListener("click",function(){
+  if(hist.length>1){ hist.pop(); say(""); drawAll(); }
+});
+document.getElementById("run").addEventListener("click",function(){
+  var guard=0, done=false;
+  while(guard++<MAXRUN){
+    var v=stepv(hist[hist.length-1],P);
+    done=settled(v,hist[hist.length-1]);
+    hist.push(v);
+    if(done) break;
+  }
+  drawAll(); say(done?fill(MSG.settled,{n:hist.length-1}):"");
+});
+
+/* ---------- the city toggle ---------- */
+var sc=document.getElementById("scen");
+function loadCity(name){
+  cur=name; P=workingP(cur); v0=startV(cur);
+  Array.prototype.forEach.call(sc.querySelectorAll("button"),function(x){
+    x.setAttribute("aria-pressed", String(x.getAttribute("data-city")===name));
+  });
+  resetTime(); drawAll();
+}
+NAMES.forEach(function(name){
+  var b=document.createElement("button"); b.type="button"; b.textContent=name;
+  b.setAttribute("data-city",name);
+  b.setAttribute("aria-pressed",String(name===cur));
+  b.addEventListener("click",function(){ loadCity(name); });
+  sc.appendChild(b);
+});
+
+document.getElementById("reset").addEventListener("click",function(){
+  loadCity(CITIES[CFG.openCity]?CFG.openCity:NAMES[0]);
+});
+
+loadCity(cur);
+})();
+</script>
+</body>
+</html>

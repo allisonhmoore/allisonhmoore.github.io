@@ -1,0 +1,552 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Minimax on Tic-Tac-Toe · MATH 170</title>
+<style>
+/* hidden must always win over any author display rule */
+[hidden]{display:none !important}
+
+:root{
+  --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+  --gold-soft:rgba(218,165,32,.12);
+  --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  --font-body: ui-serif, Georgia, "Times New Roman", serif;
+  --font-ui:   system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+  --text-xl:1.75rem; --text-lg:1.25rem; --text-base:1rem; --text-sm:.875rem; --text-xs:.75rem;
+  --leading-prose:1.6; --leading-ui:1.3;
+  --space-1:4px; --space-2:8px; --space-3:16px; --space-4:24px; --space-5:32px; --space-6:48px;
+  --ease:cubic-bezier(0.16,1,0.3,1); --dur:200ms;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+    --gold-soft:rgba(227,179,65,.16);
+    --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#ECECEC; --paper:#151515; --gold:#E3B341;
+  --gold-soft:rgba(227,179,65,.16);
+  --gray-text:#9A9A9A; --gray-line:#3A3A3A; --gray-fill:#1F1F1F;
+}
+@media (prefers-reduced-motion: reduce){ :root{ --dur:0ms; } }
+@media print{
+  :root, :root[data-theme="dark"]{
+    --ink:#111111; --paper:#FFFFFF; --gold:#DAA520;
+    --gold-soft:rgba(218,165,32,.12);
+    --gray-text:#666666; --gray-line:#CCCCCC; --gray-fill:#F2F2F2;
+  }
+  .theme-btn{display:none}
+  .stage{break-inside:avoid}
+}
+*{box-sizing:border-box}
+html{color-scheme:light dark}
+body{margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--font-body); font-size:var(--text-base); line-height:var(--leading-prose);
+  -webkit-text-size-adjust:100%;}
+.wrap{max-width:820px; margin:0 auto; padding:var(--space-5) var(--space-4) var(--space-6);}
+.topbar{display:flex; align-items:baseline; justify-content:space-between; gap:var(--space-3);
+  border-bottom:1px solid var(--gray-line); padding-bottom:var(--space-2); margin-bottom:var(--space-4);}
+.eyebrow{font-family:var(--font-ui); font-size:var(--text-xs); letter-spacing:.08em; text-transform:uppercase; color:var(--gray-text);}
+h1{font-family:var(--font-body); font-weight:600; font-size:var(--text-xl); line-height:1.2; margin:.2em 0 .1em;}
+p{margin:0 0 var(--space-3);}
+.prose{max-width:66ch;}
+.muted{color:var(--gray-text);}
+.mono,code{font-family:var(--font-mono); font-variant-numeric:tabular-nums;}
+a{color:inherit;}
+:focus-visible{outline:2px solid var(--ink); outline-offset:2px; box-shadow:0 0 0 5px var(--gold-soft);}
+.theme-btn{font-family:var(--font-ui); font-size:var(--text-xs); background:none;
+  border:1px solid var(--gray-line); color:var(--gray-text); padding:6px 10px; cursor:pointer; border-radius:2px;}
+.theme-btn:hover{background:var(--gray-fill);}
+details.spec{border:1px solid var(--gray-line); border-radius:2px; margin:0 0 var(--space-4); background:var(--gray-fill);}
+details.spec>summary{font-family:var(--font-ui); font-size:var(--text-sm); cursor:pointer;
+  padding:var(--space-2) var(--space-3); list-style:none; color:var(--gray-text);}
+details.spec>summary::-webkit-details-marker{display:none}
+details.spec>summary::before{content:"▸ "; color:var(--gold);}
+details.spec[open]>summary::before{content:"▾ ";}
+.spec-body{padding:0 var(--space-3) var(--space-3); font-family:var(--font-ui); font-size:var(--text-sm); line-height:1.5;}
+.spec-body dt{font-weight:600; margin-top:var(--space-2);}
+.spec-body dd{margin:0; color:var(--gray-text);}
+.stage{margin:var(--space-4) 0;}
+figcaption{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text); margin-top:var(--space-2);}
+.controls{border-top:1px solid var(--gray-line); padding-top:var(--space-3); margin-top:var(--space-4);
+  display:grid; grid-template-columns:1fr 1fr; gap:var(--space-3) var(--space-4);}
+.controls .full{grid-column:1/-1;}
+@media(max-width:560px){ .controls{grid-template-columns:1fr;} }
+.btn{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:1px solid var(--ink); padding:8px 14px; cursor:pointer; border-radius:2px;}
+.btn:hover{background:var(--gray-fill);}
+.btn.primary{background:var(--gold); border-color:var(--gold); color:#111111;}
+.btn[disabled]{border-color:var(--gray-line); color:var(--gray-line); cursor:default; background:var(--paper);}
+.seg{display:inline-flex; border:1px solid var(--ink); border-radius:2px; overflow:hidden;}
+.seg button{font-family:var(--font-ui); font-size:var(--text-sm); background:var(--paper); color:var(--ink);
+  border:0; border-left:1px solid var(--ink); padding:7px 12px; cursor:pointer;}
+.seg button:first-child{border-left:0;}
+.seg button[aria-pressed="true"]{background:var(--gold); color:#111111;}
+.foot{display:flex; align-items:center; gap:var(--space-3); margin-top:var(--space-5);
+  border-top:1px solid var(--gray-line); padding-top:var(--space-3); flex-wrap:wrap;}
+.foot .btn{margin-right:auto;}
+.hint{font-family:var(--font-ui); font-size:var(--text-sm); color:var(--gray-text);}
+.mathbox{font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:var(--text-sm);
+  background:var(--gray-fill); border-left:2px solid var(--gold); padding:var(--space-3);
+  margin:var(--space-3) 0; overflow-x:auto; white-space:pre; line-height:1.7;}
+.attach{font-family:var(--font-ui); font-size:var(--text-xs); color:var(--gray-text);
+  border-top:1px dotted var(--gray-line); margin-top:var(--space-6); padding-top:var(--space-3);}
+.tag{display:inline-block; font-family:var(--font-ui); font-size:var(--text-xs);
+  border:1px solid var(--gray-line); border-radius:999px; padding:1px 8px; color:var(--gray-text); margin-left:6px;}
+.callout{font-family:var(--font-ui); font-size:var(--text-sm); border:1px solid var(--gray-line);
+  border-left:2px solid var(--gold); padding:var(--space-2) var(--space-3); margin:var(--space-3) 0;}
+
+/* ---- file-specific ---- */
+.treewrap{overflow-x:auto; border:1px solid var(--gray-line); border-radius:2px; padding:var(--space-3); background:var(--paper);}
+/* ROUND 2 (professor, 2026-07-27): at the third iteration the row of boards ran off
+   the frame. Levels now WRAP, sibling sets get their own box, and a rule separates
+   one depth from the next. */
+.lvl{display:flex; flex-wrap:wrap; gap:var(--space-3) var(--space-4);
+  align-items:flex-start; justify-content:flex-start; margin-bottom:var(--space-4);}
+.lvl + .lvl{border-top:1px solid var(--gray-line); padding-top:var(--space-4);}
+.lvlhead{flex:1 0 100%; font-family:var(--font-ui); font-size:var(--text-xs);
+  letter-spacing:.08em; text-transform:uppercase; color:var(--gray-text); margin-bottom:2px;}
+.sibs{display:flex; flex-wrap:wrap; gap:var(--space-3); align-items:flex-start;
+  border:1px solid var(--gray-line); border-radius:2px;
+  padding:var(--space-2) var(--space-3); background:var(--paper); max-width:100%;}
+.sibs.rootbox{border-style:dashed;}
+.sibhead{flex:1 0 100%; font-family:var(--font-ui); font-size:var(--text-xs);
+  color:var(--gray-text); margin-bottom:2px;}
+.node{display:inline-flex; flex-direction:column; align-items:center; gap:4px; font-family:var(--font-ui); font-size:var(--text-xs);}
+.mini{display:grid; grid-template-columns:repeat(3,22px); grid-template-rows:repeat(3,22px); border:1px solid var(--ink); cursor:pointer;}
+.mini div{border:1px solid var(--gray-line); display:flex; align-items:center; justify-content:center;
+  font-family:var(--font-mono); font-size:14px; line-height:1;}
+.node.sel .mini{outline:2px solid var(--gold); outline-offset:1px;}
+.node .val{font-family:var(--font-mono); font-weight:600; min-height:1.2em;}
+.node .val.ok{color:var(--gold);}
+.node .mover{color:var(--gray-text);}
+.node.stub .mini{border-style:dashed; opacity:.6;}
+/* ROUND 3 (professor, 2026-08-03): a finished board looked exactly like one whose
+   children hadn't been revealed yet, so tapping it read as "nothing happened".
+   A leaf now carries a heavier frame, the three-in-a-row is ringed in ink, and the
+   chip says WHO won in words — colour is never the carrier. */
+.node.leaf .mini{border-width:2px;}
+/* border, not box-shadow: the winning line has to survive a printer with background
+   graphics off. box-sizing:border-box keeps the 22px cells the same size. */
+.mini div.win{border:2px solid var(--ink); font-weight:700;}
+.node .mover.endchip{color:var(--ink); font-weight:600;}
+.sibs.fresh{border-color:var(--gold); box-shadow:0 0 0 3px var(--gold-soft);}
+.edge-opt{color:var(--gold); font-weight:700;}
+.bigboard{display:grid; grid-template-columns:repeat(3,56px); grid-template-rows:repeat(3,56px);
+  border:2px solid var(--ink); width:fit-content; margin:0 auto;}
+.bigboard button{border:1px solid var(--gray-line); background:var(--paper); color:var(--ink);
+  font-family:var(--font-mono); font-size:28px; cursor:pointer;}
+.panel{font-family:var(--font-ui); font-size:var(--text-sm); border:1px solid var(--gray-line);
+  border-radius:2px; padding:var(--space-2) var(--space-3); margin-top:var(--space-3); min-height:2.4em;}
+</style>
+<script>
+try{var t=localStorage.getItem("m170-theme");if(t)document.documentElement.dataset.theme=t;}catch(e){}
+</script>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="eyebrow">MATH 170 · Game trees · Minimax notes &amp; whiteboard pairs activity</div>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Color theme">◑ auto</button>
+  </div>
+
+  <h1 data-edit="title">Minimax on the whiteboard's tic-tac-toe <span class="tag">game trees</span></h1>
+  <p class="prose muted" data-edit="intro">It's O's move. Who will win? Expand the tree like you did on the whiteboard,
+  score the endings yourself, and back the values up — X takes the <strong>max</strong>, O takes the
+  <strong>min</strong>.</p>
+
+  <div data-slot="notes-top"></div>
+
+
+  <!-- PINNED (python, exhaustive solve): preset board X{0,1,5} O{2,3}, O to move.
+       Values for O's four moves: cell4→0, cell6→+1 (THE TRAP: X then wins), cell7→0, cell8→0.
+       Root value 0 = forced draw under best play. Whole tree = 61 boards, 37 of them
+       expandable (re-verified in Python 2026-08-03). -->
+
+  <!-- ROUND-3 REPRO (professor, 2026-08-03) — kept because the answer is counter-intuitive.
+       Entered position: X O X / _ X X / O _ O, O to move (cells 3 and 7 empty).
+       Iteration 1 — O's two replies, one per empty cell:
+         cell 3 → X O X / O X X / O _ O   open; X to move; minimax 0
+         cell 7 → X O X / _ X X / O O O   FINISHED: O has three in a row on 6,7,8.
+       Iteration 2 — only the first board has children:
+         from cell 3, X's one reply, cell 7 → X O X / O X X / O X O   full board, a draw.
+       The professor expected a second iteration-2 board (X O X / X X X / O O O). That
+       board cannot occur: O won the game one move earlier, so the line stops there — the
+       root is −1, not a draw. Nothing was wrong with the loop over cells (the harness at
+       studio/tests/js/minimax-tree.js proves it exhaustively); what was wrong is that a
+       finished board looked identical to an unexplored one. Finished boards now carry a
+       heavier frame, an ink ring on the winning three, a chip naming the winner, and a
+       panel line saying why they have no children. -->
+
+
+  <div class="stage">
+    <div class="treewrap" id="tree" aria-label="Game tree"></div>
+    <figcaption data-edit="caption">Tap a board to expand its children — you get one child per empty cell, and the box heading lists those cells · tap a finished board to score it · tap a scored parent to back up its value. Each boxed group is one player's set of replies to the board above it. Chips: <span class="mono">X ▲ max</span> · <span class="mono">O ▼ min</span> · a board whose game is already over is ringed on its three-in-a-row, says who won, and stops there — it has no children.</figcaption>
+    <div class="panel" id="panel" aria-live="polite"></div>
+  </div>
+
+  <div class="controls">
+    <div>
+      <div style="font-family:var(--font-ui);font-size:var(--text-sm);margin-bottom:6px;">Set up a position (X = O or O+1):</div>
+      <div class="bigboard" id="editor" aria-label="Board editor"></div>
+    </div>
+    <div>
+      <div style="display:flex;flex-direction:column;gap:var(--space-2);align-items:flex-start;">
+        <button class="btn" id="loadPreset" type="button">Load the class position</button>
+        <button class="btn" id="useEditor" type="button">Explore the edited position</button>
+        <button class="btn" id="reveal" type="button">Reveal remaining values</button>
+        <button class="btn" id="blunder" type="button" disabled>What if X blunders?</button>
+      </div>
+    </div>
+    <div class="full">
+      <button class="btn" id="mathToggle" type="button" aria-expanded="false">Show the math ▸</button>
+      <div id="mathReveal" hidden>
+        <div class="mathbox" id="mathbox"></div>
+        <p class="muted prose" style="font-family:var(--font-ui);font-size:var(--text-sm)" data-edit="math-note">
+          Scoring: X wins = +1, O wins = −1, draw = 0. On X's turn the value is the
+          <strong>max</strong> of the children (X wants the score high); on O's turn it's the
+          <strong>min</strong> (O wants it low). That single rule, applied bottom-up, is the whole algorithm.</p>
+      </div>
+    </div>
+  </div>
+
+  <div data-slot="notes-bottom"></div>
+
+  <div class="foot">
+    <button class="btn" id="reset" type="button">Reset</button>
+    <span class="hint" data-edit="hint-try">Try: score O's four replies — one of them hands X the game.</span>
+  </div>
+
+</div>
+
+<script type="application/json" id="m170-config">
+{
+  "_v": 1,
+  "preset": {"cells": ["X","X","O","O",null,"X",null,null,null], "mover": "O"},
+  "groupLabel": "{mover}'s {n} choices from the board above — cells {cells}",
+  "openMessage": "Start by expanding the root — it's O's move.",
+  "endMessage": "This line is already over — {why} — so this board has no children.",
+  "_meta": {
+    "preset": {"label": "The starting position",
+      "help": "Nine cells reading left-to-right, top-to-bottom: \"X\", \"O\" or null. `mover` is whose turn it is. X's count must equal O's count or be one more. Changing this invalidates the pinned values in the footer — the page re-solves the tree itself, but the printed numbers are stale."},
+    "groupLabel": {"label": "Heading above each boxed set of replies", "kind": "text",
+      "help": "{mover} is the player who made the move, {n} how many replies are in the box, {cells} the cell numbers they took — one per empty cell, so the heading itself shows the loop was complete."},
+    "openMessage": {"label": "First line in the status panel", "kind": "text"},
+    "endMessage": {"label": "What the panel says when a finished board is tapped", "kind": "text",
+      "help": "Shown when a student taps a board where the game has already ended. {why} is filled in with the reason — \"O has three in a row (cells 6, 7, 8)\" or \"the board is full with no three in a row\". The scoring question is appended after it."}
+  }
+}
+</script>
+
+<script>
+(function(){
+"use strict";
+var LINES=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+var CFG=JSON.parse(document.getElementById("m170-config").textContent);
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function fillMsg(t,v){ return String(t||"").replace(/\{(\w+)\}/g,function(m,k){
+  return v[k]!==undefined?v[k]:m; }); }
+var P0=CFG.preset||{};
+var PRESET={
+  cells:(Object.prototype.toString.call(P0.cells)==="[object Array]"&&P0.cells.length===9)
+        ? P0.cells.map(function(c){ return (c==="X"||c==="O")?c:null; })
+        : ["X","X","O","O",null,"X",null,null,null],
+  mover:(P0.mover==="X"||P0.mover==="O")?P0.mover:"O"
+};
+var GROUPLBL=CFG.groupLabel||"{mover}'s {n} choices from the board above — cells {cells}";
+var OPENMSG=CFG.openMessage||"Start by expanding the root — it's O's move.";
+var ENDMSG=CFG.endMessage||"This line is already over — {why} — so this board has no children.";
+
+var root=document.documentElement, themeBtn=document.getElementById("themeBtn");
+function themeLabel(){var m=root.dataset.theme||"auto";
+  themeBtn.textContent=m==="dark"?"● dark":m==="light"?"○ light":"◑ auto";}
+themeBtn.addEventListener("click",function(){
+  var cur=root.dataset.theme||"auto",next=cur==="auto"?"light":cur==="light"?"dark":"auto";
+  if(next==="auto"){delete root.dataset.theme;try{localStorage.removeItem("m170-theme");}catch(e){}}
+  else{root.dataset.theme=next;try{localStorage.setItem("m170-theme",next);}catch(e){}}
+  themeLabel();});
+themeLabel();
+
+function winLine(b){for(var i=0;i<8;i++){var L=LINES[i];
+  if(b[L[0]]&&b[L[0]]===b[L[1]]&&b[L[0]]===b[L[2]])return L;}return null;}
+function winner(b){var L=winLine(b); return L?b[L[0]]:null;}
+function full(b){return b.every(function(c){return c;});}
+function cellList(a){ return (a.length===1?"cell ":"cells ")+a.join(", "); }
+function whyEnd(n){ return n.win
+  ? n.win+" has three in a row ("+cellList(n.wline)+")"
+  : "the board is full with no three in a row"; }
+function solve(b,mover){ // true minimax value
+  var w=winner(b); if(w==="X")return 1; if(w==="O")return -1; if(full(b))return 0;
+  var best=(mover==="X")?-2:2;
+  for(var i=0;i<9;i++) if(!b[i]){
+    b[i]=mover; var v=solve(b,mover==="X"?"O":"X"); b[i]=null;
+    if(mover==="X") best=Math.max(best,v); else best=Math.min(best,v);
+  }
+  return best;
+}
+
+// tree node: {board, mover, move (cell taken to get here), children:null|[], sv:null|number,
+//             terminal:bool, win:"X"|"O"|null, wline:[a,b,c]|null}
+var ROOT=null, selected=null, freshOf=null, blunderBtn=document.getElementById("blunder");
+function mk(board,mover,move){
+  var wl=winLine(board), w=wl?board[wl[0]]:null, t=!!w||full(board);
+  return {board:board.slice(), mover:mover, move:move, children:null,
+          sv:null, terminal:t, tv:null, win:w, wline:wl};
+}
+function tval(n){ if(n.tv===null) n.tv=solve(n.board.slice(),n.mover); return n.tv; }
+
+function expand(n){
+  if(n.terminal||n.children) return;
+  n.children=[];
+  for(var i=0;i<9;i++) if(!n.board[i]){
+    var b=n.board.slice(); b[i]=n.mover;
+    n.children.push(mk(b, n.mover==="X"?"O":"X", i));
+  }
+}
+function say(msg){ document.getElementById("panel").textContent=msg; }
+
+function levels(){ // BFS into rows of SIBLING GROUPS, one group per expanded parent
+  var rows=[[{parent:null, kids:[ROOT]}]];
+  for(;;){
+    var last=rows[rows.length-1], next=[];
+    last.forEach(function(g){
+      g.kids.forEach(function(n){
+        if(n.children && n.children.length) next.push({parent:n, kids:n.children});
+      });
+    });
+    if(!next.length) break;
+    rows.push(next);
+  }
+  return rows;
+}
+function endText(n){ return n.win ? n.win+" wins · end of line" : "draw · end of line"; }
+function boardLabel(n){ // what a screen reader hears before the tap
+  if(n.terminal) return "finished board, "+whyEnd(n);
+  var e=[]; for(var i=0;i<9;i++) if(!n.board[i]) e.push(i);
+  return "board with "+e.length+" empty "+(e.length===1?"cell":"cells")+
+         " ("+e.join(", ")+"), "+n.mover+" to move";
+}
+function boardHTML(n){
+  var s='<div class="mini" role="button" tabindex="0" aria-label="'+esc(boardLabel(n))+'">';
+  for(var i=0;i<9;i++){
+    var w=n.wline&&n.wline.indexOf(i)>=0;
+    s+="<div"+(w?' class="win"':"")+">"+(n.board[i]||"")+"</div>";
+  }
+  return s+"</div>";
+}
+function render(){
+  var rows=levels(), host=document.getElementById("tree"), out="";
+  rows.forEach(function(row,ri){
+    out+='<div class="lvl">';
+    out+='<div class="lvlhead">'+(ri===0?"the position":"iteration "+ri)+"</div>";
+    row.forEach(function(g){
+      out+='<div class="sibs'+(g.parent?"":" rootbox")+(g.parent&&g.parent===freshOf?" fresh":"")+'">';
+      if(g.parent){
+        out+='<div class="sibhead">'+esc(fillMsg(GROUPLBL,
+              {mover:g.parent.mover, n:g.kids.length,
+               cells:g.kids.map(function(k){return k.move;}).join(", ")}))+"</div>";
+      }
+      g.kids.forEach(function(n){
+        var cls="node"+(n===selected?" sel":"")
+                +((!n.children&&!n.terminal)?" stub":"")+(n.terminal?" leaf":"");
+        var moverChip=n.terminal?endText(n):(n.mover==="X"?"X ▲ max":"O ▼ min");
+        var val=n.sv===null?"·":(n.sv>0?"+1":n.sv<0?"−1":"0");
+        var opt=(n.parentOpt?" edge-opt":"");
+        out+='<div class="'+cls+'" data-id="'+n.id+'">'
+          +(n.move!=null?'<div class="mover'+opt+'">'+(opt?'▸ ':'')+'cell '+n.move+"</div>":"")
+          +boardHTML(n)
+          +'<div class="mover'+(n.terminal?" endchip":"")+'">'+esc(moverChip)+"</div>"
+          +'<div class="val'+(n.sv!==null?" ok":"")+'">'+val+"</div>"
+          +"</div>";
+      });
+      out+="</div>";
+    });
+    out+="</div>";
+  });
+  host.innerHTML=out;
+  // wire
+  var ids={};
+  (function walk(n){ ids[n.id]=n; if(n.children)n.children.forEach(walk); })(ROOT);
+  host.querySelectorAll(".node").forEach(function(el){
+    var n=ids[el.getAttribute("data-id")];
+    var b=el.querySelector(".mini");
+    function act(){ onTap(n); }
+    b.addEventListener("click",act);
+    b.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){e.preventDefault();act();} });
+  });
+  // Bring a just-revealed set of children into view: deep in the tree the new row can
+  // land below the fold, which reads as "the children weren't displayed" (round 3).
+  var fb=host.querySelector(".sibs.fresh");
+  if(fb&&fb.scrollIntoView){ try{ fb.scrollIntoView({block:"nearest",inline:"nearest"}); }catch(e){} }
+  updateMath();
+}
+var idc=0;
+function tag(n){ n.id="n"+(idc++); if(n.children)n.children.forEach(tag); }
+
+var pending=null; // node awaiting a score/mover answer
+function onTap(n){
+  selected=n; pending=null; freshOf=null;
+  if(!n.children&&!n.terminal){
+    expand(n); tag(ROOT); freshOf=n;
+    var took=n.children.map(function(c){ return c.move; });
+    say("Expanded — "+n.mover+" had "+took.length+" "+(took.length===1?"choice":"choices")+
+        ", one for every empty cell ("+cellList(took)+").");
+    render(); return;
+  }
+  if(n.terminal&&n.sv===null){
+    pending={node:n,kind:"score"};
+    say(fillMsg(ENDMSG,{why:whyEnd(n)})+
+        " Score the ending instead: is it +1 (X wins), 0 (draw), or −1 (O wins)?");
+    showChoices(["+1","0","−1"]); render(); return;
+  }
+  if(!n.terminal&&n.children&&n.sv===null){
+    var unscored=n.children.filter(function(c){return c.sv===null;});
+    if(unscored.length){ say("Score all "+n.children.length+" children first ("+unscored.length+" left)."); render(); return; }
+    pending={node:n,kind:"mover"};
+    say("Back up this value: whose turn is it here — and do they take the max or the min?");
+    showChoices(["X takes the MAX","O takes the MIN"]); render(); return;
+  }
+  say((n.terminal?fillMsg(ENDMSG,{why:whyEnd(n)})+" ":"")+
+      "Value already set: "+(n.sv>0?"+1":n.sv<0?"−1":"0")+".");
+  render();
+}
+function showChoices(labels){
+  var p=document.getElementById("panel");
+  p.innerHTML=p.textContent+" &nbsp;";
+  labels.forEach(function(l){
+    var b=document.createElement("button");
+    b.className="btn"; b.type="button"; b.textContent=l; b.style.marginRight="8px";
+    b.addEventListener("click",function(){ answer(l); });
+    p.appendChild(b);
+  });
+}
+function answer(label){
+  if(!pending) return;
+  var n=pending.node;
+  if(pending.kind==="score"){
+    var v=label==="+1"?1:label==="−1"?-1:0;
+    var truth=winner(n.board)==="X"?1:winner(n.board)==="O"?-1:0;
+    if(v===truth){ n.sv=v; say("Scored. "+(v===1?"X won this line.":v===-1?"O won this line.":"A draw.")); afterValue(n); }
+    else say("Check this ending again — look at the three-in-a-rows.");
+  } else {
+    var saidMax=label.indexOf("MAX")>=0;
+    var isMax=n.mover==="X";
+    if(saidMax===isMax){
+      var vals=n.children.map(function(c){return c.sv;});
+      n.sv=isMax?Math.max.apply(null,vals):Math.min.apply(null,vals);
+      // mark optimal child edge(s)
+      n.children.forEach(function(c){ c.parentOpt=(c.sv===n.sv); });
+      say((isMax?"X picks the max":"O picks the min")+" of ["+vals.join(", ")+"] → "+(n.sv>0?"+1":n.sv<0?"−1":"0")+".");
+      afterValue(n);
+    } else say("Look at the mover chip on this node — "+(isMax?"it's X's choice here.":"it's O's choice here."));
+  }
+  pending=null; freshOf=null; render();
+}
+function afterValue(n){
+  if(n===ROOT){
+    blunderBtn.disabled=false;
+    say("Root value "+(n.sv===0?"0 — a draw is forced with best play.":(n.sv>0?"+1 — X wins with best play.":"−1 — O wins with best play."))+" The best move at the root is marked ▸.");
+  }
+}
+
+document.getElementById("reveal").addEventListener("click",function(){
+  freshOf=null;
+  (function fill(n){
+    if(n.terminal){ n.sv=tval(n); return; }
+    if(!n.children){ expand(n); tag(ROOT); }
+    n.children.forEach(fill);
+    var vals=n.children.map(function(c){return c.sv;});
+    n.sv=(n.mover==="X")?Math.max.apply(null,vals):Math.min.apply(null,vals);
+    n.children.forEach(function(c){ c.parentOpt=(c.sv===n.sv); });
+  })(ROOT);
+  afterValue(ROOT);
+  say("All values revealed. Root: "+(ROOT.sv===0?"forced draw.":(ROOT.sv>0?"X wins.":"O wins.")));
+  render();
+});
+
+blunderBtn.addEventListener("click",function(){
+  // find an X-mover node on the optimal path with a suboptimal move
+  var line=[], n=ROOT;
+  while(n && n.children){
+    if(n.mover==="X"){
+      var best=Math.max.apply(null,n.children.map(function(c){return tval(c);}));
+      var bad=n.children.filter(function(c){return tval(c)<best;})[0];
+      if(bad){
+        say("If X blunders here (cell "+bad.move+"), the value drops to "+
+            (tval(bad)>0?"+1":tval(bad)<0?"−1":"0")+" — X's mistake can only help O. "+
+            "Planning against X's BEST reply is O's safe floor; anything less is hoping.");
+        return;
+      }
+    }
+    var pick=null;
+    n.children.forEach(function(c){ if(pick===null||((n.mover==="X")?tval(c)>tval(pick):tval(c)<tval(pick))) pick=c; });
+    line.push(pick); n=pick;
+  }
+  say("No X blunder available on the explored line — expand deeper (or Reveal) and try again.");
+});
+
+function updateMath(){
+  var L=[];
+  L.push("scoring:  X wins = +1   O wins = -1   draw = 0");
+  if(ROOT.sv!==null && ROOT.children){
+    var vals=ROOT.children.map(function(c){return c.sv===null?"·":c.sv;});
+    L.push("");
+    L.push("root ("+ROOT.mover+" to move, "+(ROOT.mover==="X"?"max":"min")+"):");
+    L.push("  children values = ["+vals.join(", ")+"]");
+    L.push("  "+(ROOT.mover==="X"?"max":"min")+" -> "+ROOT.sv);
+  } else {
+    L.push(""); L.push("(back values up to the root to see the arithmetic)");
+  }
+  document.getElementById("mathbox").textContent=L.join("\n");
+}
+
+/* board editor */
+var EB=PRESET.cells.slice();
+function renderEditor(){
+  var host=document.getElementById("editor"); host.innerHTML="";
+  EB.forEach(function(c,i){
+    var b=document.createElement("button"); b.type="button"; b.textContent=c||"";
+    b.setAttribute("aria-label","cell "+i);
+    b.addEventListener("click",function(){
+      EB[i]=c===null?"X":c==="X"?"O":null; c=EB[i]; renderEditor();
+    });
+    host.appendChild(b);
+  });
+}
+document.getElementById("useEditor").addEventListener("click",function(){
+  var x=EB.filter(function(c){return c==="X";}).length,
+      o=EB.filter(function(c){return c==="O";}).length;
+  if(!(x===o||x===o+1)){ say("Illegal position: X count must equal O count or O+1 (X moves first)."); return; }
+  if(winner(EB)){ say("That game is already over — clear a line first."); return; }
+  var mover=(x===o)?"X":"O";
+  start(EB.slice(),mover);
+  say("Exploring your position — "+mover+" to move.");
+});
+document.getElementById("loadPreset").addEventListener("click",function(){
+  EB=PRESET.cells.slice(); renderEditor(); start(PRESET.cells,PRESET.mover);
+  say("The class position: O to move. Expand the root.");
+});
+
+var mt=document.getElementById("mathToggle"), mr=document.getElementById("mathReveal");
+mt.addEventListener("click",function(){
+  var open=mr.hidden; mr.hidden=!open; mt.setAttribute("aria-expanded",String(open));
+  mt.textContent=open?"Hide the math ▾":"Show the math ▸";});
+
+function start(cells,mover){
+  idc=0; ROOT=mk(cells,mover,null); tag(ROOT); selected=null; pending=null; freshOf=null;
+  blunderBtn.disabled=true; render();
+}
+document.getElementById("reset").addEventListener("click",function(){
+  EB=PRESET.cells.slice(); renderEditor(); start(PRESET.cells,PRESET.mover);
+  say(OPENMSG);
+});
+
+renderEditor(); start(PRESET.cells,PRESET.mover); say(OPENMSG);
+})();
+</script>
+</body>
+</html>
