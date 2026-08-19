@@ -11,30 +11,30 @@ nav_order: 4
 
 In Spring 2026, I am on sabbatical from teaching. 
 
-In Fall 2026, I will teach Math 409: General Topology and Math 170: The Language of Artificial Intelligence. 
-
-For linear algebra students, I have a series of linear algebra tutorials online: 
-<a href= "https://www.youtube.com/playlist?list=PL1oREv7xaaknZHxESRhMP24GeL9-xABFi">Linear Algebra on YouTube</a>. 
-Enrolled students can also access lecture notes, practice exams and other materials in Canvas.
-
+In Fall 2026, I am teaching Math 409: General Topology and Math 170: The Language of Artificial Intelligence. 
 
 <b>Prospective student researchers:</b> VCU undergraduates or graduate students curious about a research project, summer project, or interested in doing a reading course, do please get in touch with me by email (moorea14 at VCU dot edu). I'm often looking for student collaborators and would love to hear from you.
 
+<b>Videos</b>:
+Archived linear algebra tutorials (from before 2026): 
+<a href= "https://www.youtube.com/playlist?list=PL1oREv7xaaknZHxESRhMP24GeL9-xABFi">Linear Algebra on YouTube</a>. 
+
+
 <b>Other classes I've taught at VCU</b>
 
-- Directed Research, Math 697, Fall 2021 – Fall 2022
+- Directed Research, Math 697
 - Graduate Advanced Linear Algebra, Math 610, Spring 2025
 - Graduate Abstract Algebra II, Math 602, Spring 2022
 - Graduate Abstract Algebra I, Math 502, Fall 2021, Fall 2025
 - Independent Study, Math 492, Summer 2021
 - Mathematical Exposition, Math 490, Spring 2023 and Fall 2023
 - Excursions in Geometry, Math 411, Fall 2023
-- General Topology, Math 409, Fall 2022
+- General Topology, Math 409, Fall 2022, Fall 2026
 - Intro to Abstract Algebra, Math 401, Fall 2020 and Fall 2024
 - Linear Algebra, Math 310: Fall 2019, Fall 2020, Spring 2021, Spring 2022, Spring 2025
 - Multivariate (Vector) Calculus, Math 307: Spring 2021 and Spring 2024
 - Calculus, Math 200, Spring 2020 and Fall 2024
-- Math: The Language of AI, Math 170, Fall 2025
+- Math: The Language of AI, Math 170, Fall 2025, Fall 2026
 
 <b>Previous classes I taught at UC Davis</b>
 - Linear Algebra (Mat 22A) - Fall 2018
