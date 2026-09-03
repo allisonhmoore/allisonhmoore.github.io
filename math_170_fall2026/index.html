@@ -85,7 +85,7 @@ try{var t=localStorage.getItem("m170-theme");if(t)document.documentElement.datas
   </div>
 
   <h1>Manipulatives Gallery</h1>
-  <p class="muted" id="m170-count" style="font-family:var(--font-ui); font-size:var(--text-xs);">4 activities</p>
+  <p class="muted" id="m170-count" style="font-family:var(--font-ui); font-size:var(--text-xs);">8 activities</p>
 
   <section class="topic">
   <h2>What type of learning is it?</h2>
@@ -107,6 +107,26 @@ try{var t=localStorage.getItem("m170-theme");if(t)document.documentElement.datas
   </ul>
   </section>
 
+  <section class="topic">
+  <h2>Images become vectors</h2>
+  <ul class="cards">
+    <li data-slug="digit-vectors"><a href="digit-vectors.html"><span class="t">Grid Digits → Binary Vectors → L1</span>
+      <div class="d">The scary Σ formula as fifteen tiny same-or-different questions, tallied one cell at a time.</div></a></li>
+    <li data-slug="trainable-machine"><a href="trainable-machine.html"><span class="t">Trainable Machine</span> <span class="chip gold">native</span>
+      <div class="d">A self-hosted stand-in for Teachable Machine: draw examples, train, test on held-back data, read the accuracy matrix — and see exactly why it decided.</div></a></li>
+  </ul>
+  </section>
+
+  <section class="topic">
+  <h2>Distance is a choice</h2>
+  <ul class="cards">
+    <li data-slug="norm-circles"><a href="norm-circles.html"><span class="t">Three Rulers on One Grid</span>
+      <div class="d">Two points, three answers: walk the grid (L1), cut straight across (L2), or take the biggest single step (L∞). Then switch modes and see the circle each ruler draws — a diamond, a circle, a square.</div></a></li>
+    <li data-slug="knn-playground"><a href="knn-playground.html"><span class="t">Nearest Neighbors Playground</span>
+      <div class="d">Drag anything — squares, circles, the star. Change k, switch rulers. The vote, and the answer, moves.</div></a></li>
+  </ul>
+  </section>
+
   <h2>The Shared Plane</h2>
   <div class="note">One coordinate plane on the projector; every student is a named cursor on it from their own
     device. Three modes: <strong>Cluster Yourselves</strong>, <strong>Human Coordinate
@@ -116,7 +136,7 @@ try{var t=localStorage.getItem("m170-theme");if(t)document.documentElement.datas
     to run it (FastAPI, one process, no database).</div>
 
   <script type="application/json" id="m170-gating">
-  {"generated": "2026-08-27", "pages": {"learning-type-sorter": "2026-08-07", "sandwich-reveal": "2026-08-23", "line-explorer": "2026-08-25", "decision-line": "2026-08-25"}}
+  {"generated": "2026-09-03", "pages": {"learning-type-sorter": "2026-08-07", "sandwich-reveal": "2026-08-23", "line-explorer": "2026-08-25", "decision-line": "2026-08-25", "digit-vectors": "2026-09-02", "trainable-machine": "2026-09-01", "norm-circles": "2026-09-02", "knn-playground": "2026-09-02"}}
   </script>
   <script>
 (function(){
