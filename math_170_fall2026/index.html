@@ -85,7 +85,7 @@ try{var t=localStorage.getItem("m170-theme");if(t)document.documentElement.datas
   </div>
 
   <h1>Manipulatives Gallery</h1>
-  <p class="muted" id="m170-count" style="font-family:var(--font-ui); font-size:var(--text-xs);">8 activities</p>
+  <p class="muted" id="m170-count" style="font-family:var(--font-ui); font-size:var(--text-xs);">16 activities</p>
 
   <section class="topic">
   <h2>What type of learning is it?</h2>
@@ -127,6 +127,52 @@ try{var t=localStorage.getItem("m170-theme");if(t)document.documentElement.datas
   </ul>
   </section>
 
+  <section class="topic">
+  <h2>Regression</h2>
+  <ul class="cards">
+    <li data-slug="regression"><a href="regression.html"><span class="t">Guess the Line, Then Beat It</span>
+      <div class="d">Fit sleep-vs-scores by eye, watch the squared misses, then reveal the best fit. Then: which curve <em>should</em> fit an ice-cream year?</div></a></li>
+  </ul>
+  </section>
+
+  <section class="topic">
+  <h2>Clustering</h2>
+  <ul class="cards">
+    <li data-slug="cluster-by-hand"><a href="cluster-by-hand.html"><span class="t">You Are the Algorithm</span> <span class="chip gold">new</span>
+      <div class="d">Twelve plants, three markers, and no demonstration: you claim every plant for its nearest marker, walk each marker to its group's balance point, and repeat until nothing moves. Every half-step is marked right or wrong. Then start it somewhere else and find out that the answer moves too.</div></a></li>
+    <li data-slug="movie-clusters"><a href="movie-clusters.html"><span class="t">Clustering What You Can't Plot</span>
+      <div class="d">You are 16 ratings. No scatterplot anywhere — the math never needed one.</div></a></li>
+  </ul>
+  </section>
+
+  <section class="topic">
+  <h2>Logic</h2>
+  <ul class="cards">
+    <li data-slug="truth-tables"><a href="truth-tables.html"><span class="t">The Four Cousins of If-Then</span>
+      <div class="d">Four possible worlds, one broken promise. The contrapositive never disagrees; the converse fools you.</div></a></li>
+    <li data-slug="negation-checker"><a href="negation-checker.html"><span class="t">Negation Machine</span> <span class="chip">after the game</span>
+      <div class="d">Play the paper rounds first — then check yourself, one named rule per step.</div></a></li>
+  </ul>
+  </section>
+
+  <section class="topic">
+  <h2>Game trees</h2>
+  <ul class="cards">
+    <li data-slug="minimax"><a href="minimax.html"><span class="t">Minimax on Tic-Tac-Toe</span>
+      <div class="d">Score the endings yourself, back the values up, and find out if the draw is forced.</div></a></li>
+  </ul>
+  </section>
+
+  <section class="topic">
+  <h2>Graphs</h2>
+  <ul class="cards">
+    <li data-slug="graph-sandbox"><a href="graph-sandbox.html"><span class="t">Build Me This Graph</span>
+      <div class="d">Ten commissions, one blank board: K₃, P₄, C₆, a tree on six vertices. Check my work — the board checks the shape, not just the degrees, and you read your own graph.</div></a></li>
+    <li data-slug="shannon-switching"><a href="shannon-switching.html"><span class="t">Short and Cut</span>
+      <div class="d">The Shannon switching game against a computer that has solved every board. Claim edges to join A to B, or delete them to keep A and B apart. Two routes are not enough — find out why on the ring road.</div></a></li>
+  </ul>
+  </section>
+
   <h2>The Shared Plane</h2>
   <div class="note">One coordinate plane on the projector; every student is a named cursor on it from their own
     device. Three modes: <strong>Cluster Yourselves</strong>, <strong>Human Coordinate
@@ -136,7 +182,7 @@ try{var t=localStorage.getItem("m170-theme");if(t)document.documentElement.datas
     to run it (FastAPI, one process, no database).</div>
 
   <script type="application/json" id="m170-gating">
-  {"generated": "2026-09-03", "pages": {"learning-type-sorter": "2026-08-07", "sandwich-reveal": "2026-08-23", "line-explorer": "2026-08-25", "decision-line": "2026-08-25", "digit-vectors": "2026-09-02", "trainable-machine": "2026-09-01", "norm-circles": "2026-09-02", "knn-playground": "2026-09-02"}}
+  {"generated": "2026-10-22", "pages": {"learning-type-sorter": "2026-08-07", "sandwich-reveal": "2026-08-23", "line-explorer": "2026-08-25", "decision-line": "2026-08-25", "digit-vectors": "2026-09-02", "trainable-machine": "2026-09-01", "norm-circles": "2026-09-02", "knn-playground": "2026-09-02", "regression": "2026-10-22", "cluster-by-hand": "2026-10-22", "movie-clusters": null, "truth-tables": "2026-10-22", "negation-checker": "2026-10-22", "minimax": null, "graph-sandbox": "2026-10-22", "shannon-switching": "2026-10-22"}}
   </script>
   <script>
 (function(){
